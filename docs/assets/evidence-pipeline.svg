@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 410" role="img" aria-labelledby="title desc">
+<title id="title">RESTMORE evidence pipeline</title><desc id="desc">Authorized target is validated, documentation is fetched, provenance is recorded, OpenAPI is parsed, and graph and collection exports are generated.</desc>
+<defs><linearGradient id="b" x2="1" y2="1"><stop stop-color="#132b3c"/><stop offset="1" stop-color="#0b1928"/></linearGradient><filter id="glow"><feGaussianBlur stdDeviation="7"/></filter></defs>
+<rect width="1200" height="410" rx="20" fill="#07101b"/>
+<g opacity=".25" stroke="#23465a" stroke-width="1"><path d="M0 90H1200M0 180H1200M0 270H1200M0 360H1200M100 0V410M200 0V410M300 0V410M400 0V410M500 0V410M600 0V410M700 0V410M800 0V410M900 0V410M1000 0V410M1100 0V410"/></g>
+<text x="48" y="52" fill="#79f9dc" font-family="monospace" font-size="14" letter-spacing="3">RESTMORE / DATA LINEAGE</text><text x="1142" y="52" text-anchor="end" fill="#96acbf" font-family="monospace" font-size="13">FIGURE 01 / 42</text>
+<g font-family="monospace">
+<g fill="url(#b)" stroke="#396173" stroke-width="1.5"><rect x="42" y="128" width="200" height="145" rx="9"/><rect x="271" y="128" width="200" height="145" rx="9"/><rect x="500" y="128" width="200" height="145" rx="9"/><rect x="729" y="128" width="200" height="145" rx="9"/><rect x="958" y="128" width="200" height="145" rx="9"/></g>
+<g stroke="#79f9dc" stroke-width="2.3" fill="none"><path d="M242 201H269m-8-7 8 7-8 7M471 201H498m-8-7 8 7-8 7M700 201H727m-8-7 8 7-8 7M929 201H956m-8-7 8 7-8 7"/></g>
+<g fill="#79f9dc" font-size="13"><text x="60" y="153">01 / SCOPE</text><text x="289" y="153">02 / FETCH</text><text x="518" y="153">03 / VERIFY</text><text x="747" y="153">04 / PARSE</text><text x="976" y="153">05 / EXPORT</text></g>
+<g fill="#eef9f7" font-size="17" font-weight="bold"><text x="60" y="196">Authorized</text><text x="60" y="220">origin</text><text x="289" y="196">Documentation</text><text x="289" y="220">GET only</text><text x="518" y="196">SHA-256</text><text x="518" y="220">provenance</text><text x="747" y="196">OpenAPI</text><text x="747" y="220">operations</text><text x="976" y="196">Atlas</text><text x="976" y="220">artifacts</text></g>
+<g fill="#96acbf" font-size="11"><text x="60" y="253">Explicit permission</text><text x="289" y="253">Bounded requests</text><text x="518" y="253">Source fingerprints</text><text x="747" y="253">Documented paths</text><text x="976" y="253">Graphs + collections</text></g>
+<path d="M42 312H1158" stroke="#2d4e62" stroke-dasharray="5 7"/><text x="42" y="340" fill="#9bb9c7" font-size="12">OBSERVED EVIDENCE IS ALWAYS DISTINGUISHED FROM INFERENCE.</text><text x="1158" y="375" fill="#79f9dc" font-size="12" text-anchor="end">ISO C11 · SOURCE-OF-TRUTH ENGINE</text>
+</g></svg>
