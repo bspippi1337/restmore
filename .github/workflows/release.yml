@@ -1,4 +1,4 @@
-name: RESTMORE v0.1.0-alpha.1 release
+name: RESTMORE v0.1.0-alpha.2 release
 on:
   push:
     branches: [main]
@@ -10,11 +10,11 @@ permissions:
   contents: read
 
 concurrency:
-  group: restmore-release-0.1.0-alpha.1
+  group: restmore-release-0.1.0-alpha.2
   cancel-in-progress: false
 
 env:
-  RESTMORE_TAG: v0.1.0-alpha.1
+  RESTMORE_TAG: v0.1.0-alpha.2
 
 jobs:
   package:
@@ -31,8 +31,8 @@ jobs:
             label: macos-native
             network: "ON"
           - os: windows-2022
-            label: windows-x64-offline
-            network: "OFF"
+            label: windows-x64-https
+            network: "ON"
     steps:
       - uses: actions/checkout@v4
       - name: Linux GUI + curl dependencies
@@ -42,8 +42,23 @@ jobs:
           sudo apt-get install -y libcurl4-openssl-dev libasound2-dev libgl1-mesa-dev \
             libx11-dev libxcursor-dev libxi-dev libxinerama-dev libxrandr-dev \
             libwayland-dev libxkbcommon-dev xvfb
-      - name: Configure native C11 and raylib
-        run: cmake -S . -B build-release -DRESTMORE_GUI=ON -DRESTMORE_NETWORK=${{ matrix.network }} -DRESTMORE_TESTS=ON -DCMAKE_BUILD_TYPE=Release
+      - name: Install native Windows Schannel libcurl
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $root = $env:VCPKG_INSTALLATION_ROOT
+          if (-not $root) { $root = 'C:\vcpkg' }
+          & "$root\vcpkg.exe" install 'curl:x64-windows-static'
+          if ($LASTEXITCODE -ne 0) { throw 'Native Windows libcurl installation failed' }
+          "VCPKG_ROOT=$root" >> $env:GITHUB_ENV
+      - name: Configure native Windows HTTPS + raylib
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          cmake -S . -B build-release -DRESTMORE_NETWORK=ON -DRESTMORE_GUI=ON -DRESTMORE_TESTS=ON "-DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-windows-static -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+      - name: Configure native Unix HTTPS + raylib
+        if: runner.os != 'Windows'
+        run: cmake -S . -B build-release -DRESTMORE_GUI=ON -DRESTMORE_NETWORK=ON -DRESTMORE_TESTS=ON -DCMAKE_BUILD_TYPE=Release
       - name: Compile
         run: cmake --build build-release --config Release --parallel 2
       - name: Run native regression suite
@@ -74,12 +89,12 @@ jobs:
           fi
           cp README.md LICENSE examples/openapi-petstore.json dist/
           cat > dist/RELEASE-NOTES.txt <<'EOF'
-          RESTMORE v0.1.0-alpha.1 / Native technical preview
+          RESTMORE v0.1.0-alpha.2 / Native technical preview
 
           Native application and CLI source: ISO C11. Optional raylib GUI.
           Linux and macOS binaries: libcurl HTTPS documentation discovery.
-          Windows preview binary: offline OpenAPI JSON import and atlas export.
-          The Windows HTTPS crawler is not included in this alpha build.
+          Windows binary: libcurl HTTPS documentation discovery with Schannel TLS.
+          All desktop binaries support documented HTTPS discovery and local import.
           Android/iOS C core cross-builds are separate CI artifacts, not APK/IPA.
 
           Experimental preview, not security-certified or production hardened.
@@ -126,14 +141,14 @@ jobs:
             exit 0
           fi
           cat > notes.md <<'EOF'
-          ## RESTMORE / v0.1.0-alpha.1
+          ## RESTMORE / v0.1.0-alpha.2
 
-          First native C11 **technical preview** with graphical raylib interface,
-          OpenAPI JSON import, local atlas exports and auditable C regression tests.
+          Updated native C11 **technical preview** with graphical raylib interface,
+          OpenAPI JSON import, local atlas exports and auditable C regression tests, including strict JSON number validation.
 
           - Linux x86_64 and macOS: libcurl HTTPS documentation crawler is compiled in.
-          - Windows x64: native GUI and CLI support **offline JSON import**;
-            HTTPS crawling is disabled pending Windows parity validation.
+          - Windows x64: native GUI and CLI now include the validated
+            libcurl/Schannel HTTPS documentation crawler.
           - Android and iOS: the C11 static cores are built in CI, but there is
             **no installable APK or IPA** in this release.
           - Each archive includes the executables, a sample OpenAPI document,
