@@ -1,0 +1,153 @@
+name: RESTMORE v0.1.0-alpha.1 release
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/release.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: restmore-release-0.1.0-alpha.1
+  cancel-in-progress: false
+
+env:
+  RESTMORE_TAG: v0.1.0-alpha.1
+
+jobs:
+  package:
+    name: Build, test and package / ${{ matrix.label }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            label: linux-x86_64
+            network: "ON"
+          - os: macos-15
+            label: macos-native
+            network: "ON"
+          - os: windows-2022
+            label: windows-x64-offline
+            network: "OFF"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Linux GUI + curl dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libasound2-dev libgl1-mesa-dev \
+            libx11-dev libxcursor-dev libxi-dev libxinerama-dev libxrandr-dev \
+            libwayland-dev libxkbcommon-dev xvfb
+      - name: Configure native C11 and raylib
+        run: cmake -S . -B build-release -DRESTMORE_GUI=ON -DRESTMORE_NETWORK=${{ matrix.network }} -DRESTMORE_TESTS=ON -DCMAKE_BUILD_TYPE=Release
+      - name: Compile
+        run: cmake --build build-release --config Release --parallel 2
+      - name: Run native regression suite
+        run: ctest --test-dir build-release -C Release --output-on-failure
+      - name: Import and export OpenAPI fixture
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            CLI=build-release/Release/restmore-cli.exe
+          else
+            CLI=build-release/restmore-cli
+          fi
+          "$CLI" --version
+          "$CLI" --import examples/openapi-petstore.json --out build-release/release-smoke
+          test -s build-release/release-smoke/library.json
+      - name: GUI startup smoke (X11 virtual display)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a ./build-release/restmore-gui --smoke
+      - name: Package programs, sample and license
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            cp build-release/Release/restmore-gui.exe build-release/Release/restmore-cli.exe dist/
+          else
+            cp build-release/restmore-gui build-release/restmore-cli dist/
+          fi
+          cp README.md LICENSE examples/openapi-petstore.json dist/
+          cat > dist/RELEASE-NOTES.txt <<'EOF'
+          RESTMORE v0.1.0-alpha.1 / Native technical preview
+
+          Native application and CLI source: ISO C11. Optional raylib GUI.
+          Linux and macOS binaries: libcurl HTTPS documentation discovery.
+          Windows preview binary: offline OpenAPI JSON import and atlas export.
+          The Windows HTTPS crawler is not included in this alpha build.
+          Android/iOS C core cross-builds are separate CI artifacts, not APK/IPA.
+
+          Experimental preview, not security-certified or production hardened.
+          Obtain permission before crawling any external documentation target.
+          For local preview/import, no network execution is required.
+          EOF
+          cmake -E tar cf "restmore-${RESTMORE_TAG}-${{ matrix.label }}.zip" --format=zip dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: packaged-${{ matrix.label }}
+          path: restmore-${{ env.RESTMORE_TAG }}-${{ matrix.label }}.zip
+          if-no-files-found: error
+          retention-days: 60
+
+  publish:
+    name: Create GitHub prerelease with checksums
+    needs: package
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: packaged-*
+          path: release-assets
+          merge-multiple: true
+      - name: Verify packages and generate checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd release-assets
+          test "$(find . -maxdepth 1 -name '*.zip' | wc -l)" -eq 3
+          sha256sum *.zip > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+      - name: Publish alpha release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "$RESTMORE_TAG" >/dev/null 2>&1; then
+            echo "Existing release $RESTMORE_TAG retained unchanged."
+            exit 0
+          fi
+          cat > notes.md <<'EOF'
+          ## RESTMORE / v0.1.0-alpha.1
+
+          First native C11 **technical preview** with graphical raylib interface,
+          OpenAPI JSON import, local atlas exports and auditable C regression tests.
+
+          - Linux x86_64 and macOS: libcurl HTTPS documentation crawler is compiled in.
+          - Windows x64: native GUI and CLI support **offline JSON import**;
+            HTTPS crawling is disabled pending Windows parity validation.
+          - Android and iOS: the C11 static cores are built in CI, but there is
+            **no installable APK or IPA** in this release.
+          - Each archive includes the executables, a sample OpenAPI document,
+            the repository license, and build/readme instructions.
+          - Verify your archive against `SHA256SUMS.txt`.
+
+          The release is **prerelease/experimental**, not security-certified.
+          Network discovery requires explicit authorization; use only on permitted sources.
+
+          Build details: https://github.com/bspippi1337/restmore/actions
+          EOF
+          gh release create "$RESTMORE_TAG" \
+            --target "$GITHUB_SHA" \
+            --title "RESTMORE 0.1.0 alpha 1 | Native C11 Atlas" \
+            --notes-file notes.md \
+            --prerelease \
+            release-assets/*.zip release-assets/SHA256SUMS.txt
