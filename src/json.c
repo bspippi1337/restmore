@@ -21,6 +21,28 @@ static int quoted(json *j,size_t *begin,size_t *end){
  }
  return -1;
 }
+/* Strict RFC 8259 JSON numbers. strtod alone would accept NaN, Infinity,
+ * hexadecimal, leading zeros and locale-dependent representations. */
+static int json_number(const char *s,size_t n){
+ size_t i=0;
+ if(i<n&&s[i]=='-')i++;
+ if(i>=n)return 0;
+ if(s[i]=='0')i++;
+ else {
+  if(s[i]<'1'||s[i]>'9')return 0;
+  do {i++;} while(i<n&&s[i]>='0'&&s[i]<='9');
+ }
+ if(i<n&&s[i]=='.'){
+  i++;if(i>=n||s[i]<'0'||s[i]>'9')return 0;
+  do{i++;}while(i<n&&s[i]>='0'&&s[i]<='9');
+ }
+ if(i<n&&(s[i]=='e'||s[i]=='E')){
+  i++;if(i<n&&(s[i]=='+'||s[i]=='-'))i++;
+  if(i>=n||s[i]<'0'||s[i]>'9')return 0;
+  do{i++;}while(i<n&&s[i]>='0'&&s[i]<='9');
+ }
+ return i==n;
+}
 static int skip(json *j,unsigned depth){
  if(depth>64)return -1;
  ws(j);if(j->pos>=j->len)return -1;
@@ -44,11 +66,7 @@ static int skip(json *j,unsigned depth){
  size_t n=j->pos-start;
  if((n==4&&!strncmp(j->s+start,"true",4))||(n==5&&!strncmp(j->s+start,"false",5))||
     (n==4&&!strncmp(j->s+start,"null",4)))return 0;
- char *endptr=NULL;
- char buffer[64];if(n>=sizeof(buffer))return -1;
- memcpy(buffer,j->s+start,n);buffer[n]=0;
- (void)strtod(buffer,&endptr);
- return endptr!=buffer&&*endptr==0?0:-1;
+ return json_number(j->s+start,n)?0:-1;
 }
 static int same(const json *j,size_t a,size_t b,const char *s){
  return (b-a)==strlen(s)&&!memcmp(j->s+a,s,b-a);
