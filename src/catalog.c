@@ -59,6 +59,8 @@ int rm_catalog_save(const rm_catalog *cat,const char *dir,char *error,size_t cap
  remove(file);
 #endif
  if(rename(tmp,file)){remove(tmp);return rm_error(error,cap,"cannot install catalog");}
+ if(rm_export_postman(cat,dir,error,cap)||rm_export_mermaid(cat,dir,error,cap)||
+    rm_export_svg(cat,dir,error,cap)||rm_export_openapi(cat,dir,error,cap))return -1;
  if(error&&cap)error[0]=0;
  return 0;
 }

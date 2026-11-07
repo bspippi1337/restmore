@@ -50,6 +50,10 @@ void rm_sha256(const void *input, size_t length, char hex[65]);
 int rm_openapi_import(rm_catalog *catalog, const char *source_url, const char *sha256,
                       const char *json, size_t length, char *error, size_t error_cap);
 int rm_catalog_import_json(rm_catalog *catalog,const char *json,size_t length,char *error,size_t error_cap);
+int rm_export_postman(const rm_catalog *catalog,const char *directory,char *error,size_t error_cap);
+int rm_export_mermaid(const rm_catalog *catalog,const char *directory,char *error,size_t error_cap);
+int rm_export_svg(const rm_catalog *catalog,const char *directory,char *error,size_t error_cap);
+int rm_export_openapi(const rm_catalog *catalog,const char *directory,char *error,size_t error_cap);
 int rm_catalog_save(const rm_catalog *catalog, const char *directory, char *error, size_t error_cap);
 int rm_crawl(const rm_options *options, rm_catalog *catalog, rm_progress progress,
              void *context, char *error, size_t error_cap);
