@@ -22,6 +22,8 @@ This is a **documentation atlas**, **not** a fuzzer or an aggressive endpoint en
 
 The application's implementation is written in **C11**. CMake handles native builds. libcurl supplies HTTPS connectivity, and raylib provides the optional graphical interface. The browser-only GitHub Pages site is a product showcase with an illustrative interactive topology, not the scanner.
 
+![RESTMORE evidence pipeline](docs/assets/evidence-pipeline.svg)
+
 ## The pipeline
 
 ```text
