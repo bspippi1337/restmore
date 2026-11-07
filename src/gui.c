@@ -31,9 +31,9 @@ typedef struct {
  float scroll;
 } app;
 static const Color BG={11,17,23,255},PANEL={22,31,40,255},PANEL2={27,40,49,255};
-static const Color WHITE={238,245,236,255},MUTED={148,167,171,255};
+static const Color RM_WHITE={238,245,236,255},MUTED={148,167,171,255};
 static const Color MINT={184,243,153,255},AQUA={106,214,196,255};
-static const Color BORDER={49,66,73,255},ORANGE={251,185,120,255};
+static const Color BORDER={49,66,73,255},RM_ORANGE={251,185,120,255};
 static void mutex_init(work *w){
 #ifdef _WIN32
  InitializeCriticalSection(&w->mutex);
@@ -68,7 +68,7 @@ static int button(Rectangle r,const char *caption,Color color,int enabled){
  DrawRectangleRounded(r,0.20f,8,fill);
  DrawRectangleRoundedLinesEx(r,0.20f,8,1,enabled?color:BORDER);
  int tw=MeasureText(caption,17);
- textx(caption,(int)(r.x+(r.width-tw)/2),(int)(r.y+(r.height-17)/2),17,enabled?WHITE:MUTED);
+ textx(caption,(int)(r.x+(r.width-tw)/2),(int)(r.y+(r.height-17)/2),17,enabled?RM_WHITE:MUTED);
  return enabled&&hit(r)&&IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
 }
 static void line(int x,int y,int width,const char *caption){
@@ -81,7 +81,7 @@ static void inputbox(Rectangle r,char *dest,size_t cap,int *focused,int id,int e
  const char *shown=dest;
  int n=(int)strlen(dest);
  while(n>0&&MeasureText(shown,17)>r.width-26){shown++;n--;}
- textx(shown,(int)r.x+12,(int)r.y+12,17,WHITE);
+ textx(shown,(int)r.x+12,(int)r.y+12,17,RM_WHITE);
  EndScissorMode();
  if(enabled&&hit(r)&&IsMouseButtonPressed(MOUSE_BUTTON_LEFT))*focused=id;
  if(!enabled||*focused!=id)return;
@@ -100,7 +100,7 @@ static void inputbox(Rectangle r,char *dest,size_t cap,int *focused,int id,int e
 static Color method_color(const char *verb){
  if(!strcmp(verb,"GET"))return MINT;
  if(!strcmp(verb,"POST"))return AQUA;
- if(!strcmp(verb,"DELETE"))return ORANGE;
+ if(!strcmp(verb,"DELETE"))return RM_ORANGE;
  if(!strcmp(verb,"PUT")||!strcmp(verb,"PATCH"))return (Color){219,175,255,255};
  return MUTED;
 }
@@ -202,8 +202,8 @@ static void draw_brand(int width){
  DrawCircleLines((int)c.x,(int)c.y,21,MINT);
  DrawLineEx((Vector2){35,49},(Vector2){51,30},4,MINT);
  DrawLineEx((Vector2){51,30},(Vector2){61,45},4,AQUA);
- DrawCircle(49,34,3,WHITE);
- textx("RESTMORE",85,17,32,WHITE);
+ DrawCircle(49,34,3,RM_WHITE);
+ textx("RESTMORE",85,17,32,RM_WHITE);
  textx("NATIVE API ATLAS  /  C11",87,54,13,MUTED);
  const char *badge="EVIDENCE BEFORE ENDPOINTS";
  int b=MeasureText(badge,14);
@@ -212,7 +212,7 @@ static void draw_brand(int width){
 static void draw_scope(app *ui,Rectangle area,int busy){
  card(area,PANEL);
  int x=(int)area.x+22,y=(int)area.y+24;
- textx("01 / SCOPE",x,y,20,WHITE);y+=45;
+ textx("01 / SCOPE",x,y,20,RM_WHITE);y+=45;
  line(x,y,16,"ONE HTTPS HOST");y+=24;
  inputbox((Rectangle){(float)x,(float)y,area.width-44,45},ui->domain,sizeof(ui->domain),&ui->focus,1,!busy);y+=67;
  textx("Bounded. Robots-aware. No guessed paths.",x,y,15,MUTED);y+=36;
@@ -229,14 +229,14 @@ static void draw_scope(app *ui,Rectangle area,int busy){
  DrawRectangleLinesEx(check,1,MINT);
  if(ui->consent)DrawText("X",x+4,y+2,15,BG);
  if(!busy&&hit((Rectangle){(float)x,(float)y,area.width-44,38})&&IsMouseButtonPressed(MOUSE_BUTTON_LEFT))ui->consent=!ui->consent;
- textx("I AM AUTHORIZED",x+30,y+2,15,WHITE);y+=45;
+ textx("I AM AUTHORIZED",x+30,y+2,15,RM_WHITE);y+=45;
  if(button((Rectangle){(float)x,(float)y,area.width-44,47},"BUILD SOURCE LIBRARY",MINT,ui->consent&&!busy)){
   if(start(&ui->task,ui->domain))snprintf(ui->message,sizeof(ui->message),"Cannot start crawler thread");
   ui->focus=0;
  }
  y+=69;
  DrawLine(x,y,(int)area.x+(int)area.width-22,y,BORDER);y+=21;
- textx("02 / IMPORT",x,y,20,WHITE);y+=43;
+ textx("02 / IMPORT",x,y,20,RM_WHITE);y+=43;
  line(x,y,15,"LOCAL OPENAPI 3 / LIBRARY.JSON");y+=21;
  inputbox((Rectangle){(float)x,(float)y,area.width-44,43},ui->filename,sizeof(ui->filename),&ui->focus,2,!busy);y+=56;
  if(button((Rectangle){(float)x,(float)y,area.width-44,42},"OPEN LOCAL FILE",AQUA,!busy)){
@@ -249,12 +249,12 @@ static void draw_scope(app *ui,Rectangle area,int busy){
 static void graph(app *ui,Rectangle area){
  card(area,PANEL);
  int x=(int)area.x+24,y=(int)area.y+24;
- textx("03 / RESOURCE TOPOLOGY",x,y,20,WHITE);
+ textx("03 / RESOURCE TOPOLOGY",x,y,20,RM_WHITE);
  char count[96];snprintf(count,sizeof(count),"%zu declared methods",ui->catalog?ui->catalog->operation_count:0u);
  textx(count,x,y+30,15,MUTED);
  DrawLine(x,y+62,(int)(area.x+area.width-24),y+62,BORDER);
  if(!ui->catalog||!ui->catalog->operation_count){
-  textx("No documented API loaded",x+24,y+110,21,WHITE);
+  textx("No documented API loaded",x+24,y+110,21,RM_WHITE);
   textx("Import an OpenAPI file or archive authorized docs.",x+24,y+150,16,MUTED);
   return;
  }
@@ -282,7 +282,7 @@ static void graph(app *ui,Rectangle area){
   textx(op->method,(int)node_x+16,(int)yy+19,16,mc);
   const char *path=op->path;
   while(MeasureText(path,16)>r.width-115&&strlen(path)>5)path++;
-  textx(path,(int)node_x+87,(int)yy+19,16,WHITE);
+  textx(path,(int)node_x+87,(int)yy+19,16,RM_WHITE);
   if(hit(r)&&IsMouseButtonPressed(MOUSE_BUTTON_LEFT))ui->selected=(int)i;
  }
  EndScissorMode();
@@ -290,7 +290,7 @@ static void graph(app *ui,Rectangle area){
 static void inspector(app *ui,Rectangle area){
  card(area,PANEL);
  int x=(int)area.x+22,y=(int)area.y+24;
- textx("04 / INSPECTOR",x,y,20,WHITE);y+=50;
+ textx("04 / INSPECTOR",x,y,20,RM_WHITE);y+=50;
  if(!ui->catalog||!ui->catalog->operation_count){textx("Select an operation",x,y,16,MUTED);return;}
  if(ui->selected<0||ui->selected>=(int)ui->catalog->operation_count)ui->selected=0;
  const rm_operation *op=&ui->catalog->operations[ui->selected];
@@ -300,18 +300,18 @@ static void inspector(app *ui,Rectangle area){
  textx("DECLARED PATH",x,y,14,MUTED);y+=25;
  char shown[RM_MAX_PATH];snprintf(shown,sizeof(shown),"%s",op->path);
  if(MeasureText(shown,16)>area.width-47){size_t cut=(size_t)(area.width/10);if(cut<sizeof(shown))shown[cut]=0;}
- textx(shown,x,y,16,WHITE);y+=56;
+ textx(shown,x,y,16,RM_WHITE);y+=56;
  textx("DOCUMENTATION SUMMARY",x,y,14,MUTED);y+=23;
  char shortsum[256];snprintf(shortsum,sizeof(shortsum),"%.45s",op->summary[0]?op->summary:"Not documented");
- textx(shortsum,x,y,16,WHITE);y+=52;
+ textx(shortsum,x,y,16,RM_WHITE);y+=52;
  textx("OPERATION ID",x,y,14,MUTED);y+=23;
- textx(op->operation_id[0]?op->operation_id:"Not provided",x,y,15,WHITE);y+=51;
+ textx(op->operation_id[0]?op->operation_id:"Not provided",x,y,15,RM_WHITE);y+=51;
  textx("SOURCE PROVENANCE / SHA-256",x,y,14,MUTED);y+=27;
  char sha[27];snprintf(sha,sizeof(sha),"%.24s",op->source_sha256);
  textx(op->source_sha256[0]?sha:"Local JSON - unverified",x,y,15,AQUA);y+=46;
  textx("SOURCE DOCUMENT",x,y,14,MUTED);y+=22;
  char url[70];snprintf(url,sizeof(url),"%.34s",op->source_url);
- textx(url,x,y,14,WHITE);y+=58;
+ textx(url,x,y,14,RM_WHITE);y+=58;
  if(button((Rectangle){(float)x,(float)y,area.width-44,43},"COPY REQUEST PREVIEW",AQUA,1)){
   char copy[RM_MAX_PATH+128];
   snprintf(copy,sizeof(copy),"curl -X %s '{{baseUrl}}%s'",op->method,op->path);
