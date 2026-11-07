@@ -1,0 +1,47 @@
+name: RESTMORE native C11 core
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  core:
+    name: C11 ${{ matrix.os }} (HTTPS=${{ matrix.network }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            network: ON
+          - os: macos-15
+            network: ON
+          - os: windows-2022
+            network: OFF
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Linux native development libraries
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev
+      - name: Configure portable C11
+        run: cmake -S . -B build -DRESTMORE_NETWORK=${{ matrix.network }} -DRESTMORE_GUI=OFF -DRESTMORE_TESTS=ON -DCMAKE_BUILD_TYPE=Debug
+      - name: Compile native CLI + pure C tests
+        run: cmake --build build --config Debug --parallel 2
+      - name: Run native unit tests
+        run: ctest --test-dir build -C Debug --output-on-failure
+      - name: Offline import smoke
+        shell: bash
+        run: |
+          if [ "${{ runner.os }}" = Windows ]; then BIN=build/Debug/restmore-cli.exe; else BIN=build/restmore-cli; fi
+          "$BIN" --version
+          "$BIN" docs.example.org
+          "$BIN" --import examples/openapi-petstore.json --out build/atlas-test
+          test -s build/atlas-test/library.json
+      - name: Portable C11 source audit
+        shell: bash
+        run: |
+          if grep -REn '^import |^package |<script|#include <(jni|android/)' src include; then
+            echo "Unexpected non-C program source"; exit 1
+          fi

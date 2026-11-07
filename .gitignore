@@ -1,0 +1,16 @@
+build/
+cmake-build-*/
+.restmore/
+restmore-test-out/
+.DS_Store
+*.o
+*.obj
+*.exe
+*.a
+*.lib
+*.dll
+*.so
+*.dylib
+*.pdb
+.idea/
+.vscode/

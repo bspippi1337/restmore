@@ -1,0 +1,15 @@
+{
+  "openapi": "3.1.0",
+  "info": { "title": "RESTMORE offline demo", "version": "0.1.0" },
+  "servers": [{ "url": "https://api.demo.invalid" }],
+  "paths": {
+    "/v1/pets": {
+      "get": { "operationId": "listPets", "summary": "List documented pets" },
+      "post": { "operationId": "createPet", "summary": "Create a documented pet", "requestBody": { "content": { "application/json": { "schema": { "type": "object" } } } } }
+    },
+    "/v1/pets/{petId}": {
+      "get": { "operationId": "showPet", "summary": "Show a pet" },
+      "delete": { "operationId": "deletePet", "summary": "Delete a pet" }
+    }
+  }
+}
