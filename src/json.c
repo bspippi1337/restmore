@@ -146,3 +146,75 @@ int rm_openapi_import(rm_catalog *cat,const char *source,const char *sha,const c
  if(err&&cap)err[0]=0;
  return (int)(cat->operation_count-starting_count);
 }
+
+/* Import our own saved library.json and compatible RESTLESS library.json.
+ * This reads only local bytes; it does not send network requests. */
+int rm_catalog_import_json(rm_catalog *cat,const char *text,size_t len,char *err,size_t cap){
+ if(!cat||!text||len>RM_MAX_DOCUMENT_BYTES)return rm_error(err,cap,"catalog exceeds 2 MiB");
+ json j={text,len,0,0};ws(&j);
+ if(j.pos>=len||j.s[j.pos]!='{')return rm_error(err,cap,"expected catalog JSON object");
+ size_t root=j.pos;if(skip(&j,0))return rm_error(err,cap,"invalid catalog JSON");
+ ws(&j);if(j.pos!=len)return rm_error(err,cap,"trailing catalog JSON");
+ size_t a,b;
+ if(field(&j,root,len,"openapi",&a,&b)==1){
+  memset(cat,0,sizeof(*cat));
+  return rm_openapi_import(cat,"local OpenAPI JSON","",text,len,err,cap);
+ }
+ if(field(&j,root,len,"schema_version",&a,&b)!=1||b-a!=1||text[a]!='1')
+  return rm_error(err,cap,"expected RESTMORE/RESTLESS schema_version 1 or OpenAPI 3");
+ memset(cat,0,sizeof(*cat));
+ if(field(&j,root,len,"target",&a,&b)==1 && j.s[a]=='{'){
+  if(read_field_string(&j,a,b,"host",cat->target.host,sizeof(cat->target.host))||
+     read_field_string(&j,a,b,"seed_url",cat->target.url,sizeof(cat->target.url)))
+   return rm_error(err,cap,"invalid catalog target");
+ }
+ if(field(&j,root,len,"documents",&a,&b)==1 && j.s[a]=='['){
+  json p=j;p.pos=a+1;
+  for(;;){
+   ws(&p);if(p.pos>=b)return rm_error(err,cap,"invalid documents");
+   if(p.s[p.pos]==']')break;
+   size_t ds=p.pos;if(skip(&p,0))return rm_error(err,cap,"invalid document object");
+   if(j.s[ds]=='{'){
+    if(cat->document_count>=RM_MAX_DOCUMENTS)return rm_error(err,cap,"too many catalog documents");
+    rm_document *d=&cat->documents[cat->document_count++];
+    if(read_field_string(&j,ds,p.pos,"url",d->url,sizeof(d->url)) ||
+       read_field_string(&j,ds,p.pos,"sha256",d->sha256,sizeof(d->sha256)) ||
+       read_field_string(&j,ds,p.pos,"content_type",d->content_type,sizeof(d->content_type)))
+     return rm_error(err,cap,"invalid document metadata");
+   }
+   ws(&p);if(p.pos<b&&p.s[p.pos]==']')break;
+   if(p.pos>=b||p.s[p.pos++]!=',')return rm_error(err,cap,"invalid documents separator");
+  }
+ }
+ if(field(&j,root,len,"operations",&a,&b)!=1||j.s[a]!='[')
+  return rm_error(err,cap,"catalog operations array missing");
+ json p=j;p.pos=a+1;
+ for(;;){
+  ws(&p);if(p.pos>=b)return rm_error(err,cap,"invalid operations");
+  if(p.s[p.pos]==']')break;
+  size_t os=p.pos;if(skip(&p,0))return rm_error(err,cap,"invalid operation");
+  if(j.s[os]=='{'){
+   if(cat->operation_count>=RM_MAX_OPERATIONS)return rm_error(err,cap,"too many catalog operations");
+   rm_operation *op=&cat->operations[cat->operation_count];
+   if(read_field_string(&j,os,p.pos,"method",op->method,sizeof(op->method)) ||
+      read_field_string(&j,os,p.pos,"path",op->path,sizeof(op->path)) ||
+      read_field_string(&j,os,p.pos,"summary",op->summary,sizeof(op->summary)) ||
+      read_field_string(&j,os,p.pos,"operation_id",op->operation_id,sizeof(op->operation_id)) ||
+      read_field_string(&j,os,p.pos,"source_url",op->source_url,sizeof(op->source_url)) ||
+      read_field_string(&j,os,p.pos,"source_sha256",op->source_sha256,sizeof(op->source_sha256)))
+     return rm_error(err,cap,"invalid operation metadata");
+   /* RESTLESS's library.json may use operationId rather than operation_id. */
+   if(!op->operation_id[0]&&read_field_string(&j,os,p.pos,"operationId",op->operation_id,sizeof(op->operation_id)))
+    return rm_error(err,cap,"invalid operationId");
+   static const char *verbs[]={"GET","POST","PUT","PATCH","DELETE","HEAD","OPTIONS","TRACE"};
+   int valid=0;for(size_t i=0;i<8;i++)if(!strcmp(op->method,verbs[i]))valid=1;
+   if(!valid||op->path[0]!='/'||strchr(op->path,'\r')||strchr(op->path,'\n'))
+    return rm_error(err,cap,"invalid catalog method or path");
+   cat->operation_count++;
+  }
+  ws(&p);if(p.pos<b&&p.s[p.pos]==']')break;
+  if(p.pos>=b||p.s[p.pos++]!=',')return rm_error(err,cap,"invalid operations separator");
+ }
+ if(err&&cap)err[0]=0;
+ return (int)cat->operation_count;
+}
