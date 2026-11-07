@@ -35,6 +35,29 @@ int main(void){
  assert(!strcmp(cat->operations[0].path,"/v1/people"));
  assert(!strcmp(cat->operations[0].summary,"List people"));
  assert(!strcmp(cat->operations[2].method,"DELETE"));
+
+ /* Number grammar regression: these are invalid JSON per RFC 8259. */
+ const char *bad_numbers[]={
+  "{\"openapi\":\"3.0.3\",\"paths\":{},\"x\":NaN}",
+  "{\"openapi\":\"3.0.3\",\"paths\":{},\"x\":Infinity}",
+  "{\"openapi\":\"3.0.3\",\"paths\":{},\"x\":+1}",
+  "{\"openapi\":\"3.0.3\",\"paths\":{},\"x\":01}",
+  "{\"openapi\":\"3.0.3\",\"paths\":{},\"x\":1.}",
+  "{\"openapi\":\"3.0.3\",\"paths\":{},\"x\":.1}",
+  "{\"openapi\":\"3.0.3\",\"paths\":{},\"x\":2e}",
+  "{\"openapi\":\"3.0.3\",\"paths\":{},\"x\":-}",
+  "{\"openapi\":\"3.0.3\",\"paths\":{},\"x\":0x10}"
+ };
+ for(size_t k=0;k<sizeof(bad_numbers)/sizeof(bad_numbers[0]);k++)
+  assert(rm_openapi_import(cat,"","",bad_numbers[k],strlen(bad_numbers[k]),err,sizeof(err))<0);
+ const char *valid_numbers[]={
+  "{\"openapi\":\"3.0.3\",\"paths\":{},\"x\":0}",
+  "{\"openapi\":\"3.0.3\",\"paths\":{},\"x\":-0.1e+4}",
+  "{\"openapi\":\"3.0.3\",\"paths\":{},\"x\":1E-3}",
+  "{\"openapi\":\"3.0.3\",\"paths\":{},\"x\":12345}"
+ };
+ for(size_t k=0;k<sizeof(valid_numbers)/sizeof(valid_numbers[0]);k++)
+  assert(rm_openapi_import(cat,"","",valid_numbers[k],strlen(valid_numbers[k]),err,sizeof(err))>=0);
  const char *bad="{\"openapi\":\"2.0\",\"paths\":{}}";
  assert(rm_openapi_import(cat,"","",bad,strlen(bad),err,sizeof(err))<0);
  assert(cat->operation_count==3);
