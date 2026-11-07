@@ -1,0 +1,38 @@
+# RESTMORE / Changelog
+
+This changelog separates shipped and verified artifacts from platform support that still requires packaging and device testing.
+
+## [v0.1.0-alpha.2](https://github.com/bspippi1337/restmore/releases/tag/v0.1.0-alpha.2) · 2026-11-08
+
+**Native C11 preview with full desktop HTTPS support.**
+
+- Windows x64 builds now include the libcurl HTTPS documentation crawler with native Schannel TLS; the corresponding Windows HTTPS CI job passed.
+- New strict JSON number lexer rejects malformed or non-RFC 8259 numeric literals such as `NaN`, `Infinity`, `+1`, `01`, `0x10`, `1.` and `2e`.
+- Regression tests cover valid and invalid JSON number tokens.
+- Release pipeline produced three native desktop archives and `SHA256SUMS.txt`.
+- All release build/test/package jobs passed on Linux x86-64, macOS and Windows x64.
+
+### Verify downloads
+
+Download from the versioned release page and compare the ZIP's SHA-256 against `SHA256SUMS.txt`. These builds are unsigned developer previews; no production security certification or notarization is claimed.
+
+## [v0.1.0-alpha.1](https://github.com/bspippi1337/restmore/releases/tag/v0.1.0-alpha.1) · 2026-11-08
+
+**First native downloadable RESTMORE preview.**
+
+- ISO C11 engine, CLI and graphical raylib interface packaged for Linux, macOS and Windows.
+- OpenAPI JSON import and structured atlas export.
+- Linux/macOS included HTTPS documentation discovery; Windows was an offline-only native preview.
+- Automated C regression testing and release SHA-256 manifests.
+- A unified visual design system, illustrative HTML/CSS/SVG website and architecture/build docs.
+
+## Known gaps
+
+- Android and iOS **C11 core libraries** compile in dedicated CI workflows, but there are no installable Android APK or iOS IPA assets in these releases.
+- GitHub Pages site source lives in `docs/`. Initial activation requires the repository owner to select **Settings > Pages > Build and deployment > GitHub Actions**. The configured deployment workflow cannot enable Pages with its present integration privileges.
+- Native GUI runtime smoke testing is currently automated on Linux with Xvfb; device-level interactive validation, accessibility testing, package signing and macOS notarization remain separate release requirements.
+- This is an evidence-based documentation mapper, not a fuzzer and not a complete API client or request executor.
+
+## Release workflow
+
+`.github/workflows/release.yml` captures the latest alpha release pipeline. Future tags should be versioned separately and published only after their own build/test matrix passes.
