@@ -83,9 +83,8 @@ int rm_export_postman(const rm_catalog *cat,const char *dir,char *err,size_t cap
   const rm_operation *o=&cat->operations[i];
   if(i)fputc(',',f);
   fputs("{\"name\":",f);
-  rm_json_escape(f,o->method);fputc(' ',f);
-  /* Name includes both verb and path, escaped as one JSON string. */
-  if(fseek(f,-1,SEEK_CUR)==0){ /* no-op compatibility: separators are written below */ }
+  char name[RM_MAX_PATH+32];snprintf(name,sizeof(name),"%s %s",o->method,o->path);
+  rm_json_escape(f,name);
   fputs(",\"request\":{\"method\":",f);
   rm_json_escape(f,o->method);
   fputs(",\"url\":",f);

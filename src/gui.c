@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #include <string.h>
 #ifdef _WIN32
+#define NOGDI
+#define NOUSER
 #include <windows.h>
 #else
 #include <pthread.h>

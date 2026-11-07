@@ -19,10 +19,21 @@ jobs:
       - name: Install Android NDK
         run: |
           echo "SDK: $ANDROID_HOME"
-          if [ ! -d "$ANDROID_HOME/ndk/27.2.12479018" ]; then sdkmanager --install "ndk;27.2.12479018"; fi
+          NDK="${ANDROID_NDK_LATEST_HOME:-}"
+          if [ -z "$NDK" ] || [ ! -f "$NDK/build/cmake/android.toolchain.cmake" ]; then
+            NDK="$(find "$ANDROID_HOME/ndk" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort -V | tail -1)"
+          fi
+          if [ -z "$NDK" ] || [ ! -f "$NDK/build/cmake/android.toolchain.cmake" ]; then
+            SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | head -1)"
+            test -n "$SDKMANAGER"
+            "$SDKMANAGER" --sdk_root="$ANDROID_HOME" --install "ndk;27.2.12479018"
+            NDK="$ANDROID_HOME/ndk/27.2.12479018"
+          fi
+          echo "NDK_ROOT=$NDK" >> "$GITHUB_ENV"
+          echo "Using NDK: $NDK"
       - name: Build Android NDK static core
         run: |
-          cmake -S . -B build-android -DCMAKE_TOOLCHAIN_FILE="$ANDROID_HOME/ndk/27.2.12479018/build/cmake/android.toolchain.cmake"             -DANDROID_ABI=${{ matrix.abi }} -DANDROID_PLATFORM=26             -DRESTMORE_NETWORK=OFF -DRESTMORE_GUI=OFF -DRESTMORE_TESTS=OFF             -DCMAKE_BUILD_TYPE=Release
+          cmake -S . -B build-android -DCMAKE_TOOLCHAIN_FILE="$NDK_ROOT/build/cmake/android.toolchain.cmake"             -DANDROID_ABI=${{ matrix.abi }} -DANDROID_PLATFORM=26             -DRESTMORE_NETWORK=OFF -DRESTMORE_GUI=OFF -DRESTMORE_TESTS=OFF             -DCMAKE_BUILD_TYPE=Release
           cmake --build build-android --parallel 2
           test -s build-android/librestmore.a
       - uses: actions/upload-artifact@v4

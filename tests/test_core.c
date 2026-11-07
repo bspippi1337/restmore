@@ -1,5 +1,8 @@
 #include "restmore/restmore.h"
-#include <assert.h>
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
+#include <assert.h> /* Keep regression calls active in Release. */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
