@@ -18,8 +18,9 @@ jobs:
           $root = $env:VCPKG_INSTALLATION_ROOT
           if (-not $root) { $root = 'C:\vcpkg' }
           Write-Host "vcpkg: $root"
-          & "$root\vcpkg.exe" install 'curl[schannel]:x64-windows-static'
+          & "$root\vcpkg.exe" install 'curl:x64-windows-static'
           if ($LASTEXITCODE -ne 0) { throw 'vcpkg curl install failed' }
+          # The default curl[ssl] feature selects Windows Schannel via SSPI.
           "VCPKG_ROOT=$root" >> $env:GITHUB_ENV
       - name: Configure native C11 + full HTTPS + GUI
         shell: pwsh
