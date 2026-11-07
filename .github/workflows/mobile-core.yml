@@ -1,0 +1,51 @@
+name: RESTMORE native mobile C libraries
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  android:
+    name: Android NDK C11 ${{ matrix.abi }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        abi: [arm64-v8a, armeabi-v7a, x86_64]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: android-actions/setup-android@v3
+      - name: Install Android NDK
+        run: sdkmanager "ndk;27.2.12479018"
+      - name: Build Android NDK static core
+        run: |
+          cmake -S . -B build-android -DCMAKE_TOOLCHAIN_FILE="$ANDROID_HOME/ndk/27.2.12479018/build/cmake/android.toolchain.cmake"             -DANDROID_ABI=${{ matrix.abi }} -DANDROID_PLATFORM=26             -DRESTMORE_NETWORK=OFF -DRESTMORE_GUI=OFF -DRESTMORE_TESTS=OFF             -DCMAKE_BUILD_TYPE=Release
+          cmake --build build-android --parallel 2
+          test -s build-android/librestmore.a
+      - uses: actions/upload-artifact@v4
+        with:
+          name: restmore-android-ndk-${{ matrix.abi }}
+          path: |
+            build-android/librestmore.a
+            include/restmore/restmore.h
+          if-no-files-found: error
+  ios:
+    name: iOS arm64 native C11 static core
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile native iOS ARM64 library
+        run: |
+          cmake -S . -B build-ios -G Xcode             -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_SYSROOT=iphoneos             -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0             -DCMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO             -DRESTMORE_NETWORK=OFF -DRESTMORE_GUI=OFF -DRESTMORE_TESTS=OFF
+          cmake --build build-ios --config Release --parallel 2
+          find build-ios -name librestmore.a -type f -print
+          test -f build-ios/Release-iphoneos/librestmore.a
+      - uses: actions/upload-artifact@v4
+        with:
+          name: restmore-ios-arm64-core
+          path: |
+            build-ios/Release-iphoneos/librestmore.a
+            include/restmore/restmore.h
+          if-no-files-found: error

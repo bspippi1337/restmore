@@ -1,0 +1,64 @@
+name: RESTMORE native C GUI and executable archives
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native:
+    name: Native raylib GUI on ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            network: ON
+            label: linux-x64
+          - os: macos-15
+            network: ON
+            label: macos-arm64
+          - os: windows-2022
+            network: OFF
+            label: windows-x64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Linux X11/OpenGL development environment
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libasound2-dev libgl1-mesa-dev             libx11-dev libxcursor-dev libxi-dev libxinerama-dev libxrandr-dev             libwayland-dev libxkbcommon-dev xvfb
+      - name: CMake configure pure C application and raylib
+        run: cmake -S . -B build-gui -DRESTMORE_GUI=ON -DRESTMORE_NETWORK=${{ matrix.network }} -DRESTMORE_TESTS=ON -DCMAKE_BUILD_TYPE=Release
+      - name: Compile native atlas
+        run: cmake --build build-gui --config Release --parallel 2
+      - name: C11 tests
+        run: ctest --test-dir build-gui -C Release --output-on-failure
+      - name: Real native GUI smoke under virtual X11
+        if: runner.os == 'Linux'
+        run: xvfb-run -a ./build-gui/restmore-gui --smoke
+      - name: Package programs
+        shell: bash
+        run: |
+          mkdir -p dist
+          if [ "${{ runner.os }}" = Windows ]; then
+            cp build-gui/Release/restmore-gui.exe build-gui/Release/restmore-cli.exe dist/
+          else
+            cp build-gui/restmore-gui build-gui/restmore-cli dist/
+          fi
+          cp examples/openapi-petstore.json dist/demo-openapi.json
+          cat > dist/README.txt <<'EOF'
+          RESTMORE 0.1: Native executable, pure C11 application code.
+          The desktop GUI can import local OpenAPI 3 JSON or RESTMORE/RESTLESS library.json.
+          Live crawling requires --execute AND --authorized and a permitted HTTPS documentation source.
+          Windows first CI binary builds with networking OFF; Linux/macOS build libcurl HTTPS.
+          See https://github.com/bspippi1337/restmore for limitations and build instructions.
+          EOF
+      - uses: actions/upload-artifact@v4
+        with:
+          name: restmore-native-${{ matrix.label }}
+          path: dist/
+          if-no-files-found: error
+          retention-days: 30
