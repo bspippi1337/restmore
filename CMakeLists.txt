@@ -24,6 +24,11 @@ target_compile_definitions(restmore PRIVATE _POSIX_C_SOURCE=200809L)
 if(RESTMORE_NETWORK)
   target_sources(restmore PRIVATE src/network.c)
   target_link_libraries(restmore PUBLIC CURL::libcurl)
+  # The bounded HTTPS resolver uses Winsock directly for address validation.
+  # MSVC does not link Winsock automatically when linking libcurl.
+  if(WIN32)
+    target_link_libraries(restmore PUBLIC ws2_32)
+  endif()
 else()
   target_sources(restmore PRIVATE src/network_off.c)
 endif()
