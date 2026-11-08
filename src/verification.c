@@ -56,11 +56,8 @@ int rm_verify_plan(const rm_catalog *catalog,const char *domain,rm_verification 
   snprintf(item->expected_content_type,sizeof(item->expected_content_type),"%s",op->expected_content_type);
   snprintf(item->expected_json_type,sizeof(item->expected_json_type),"%s",op->expected_json_type);
   item->expected_status=op->expected_status;
-  if(!plan->source_bound && op->source_url[0]){
-   rm_target src={0};
-   if(!rm_normalize(op->source_url,&src,NULL,0)&&!strcmp(src.host,target.host))
-    plan->source_bound=1;
-  }
+  /* A documentation URL alone is not proof of the API server origin.
+     source_bound comes only from the catalog's explicit bound target. */
  }
  if(!plan->count)
   return rm_error(error,cap,"No eligible documented GET with explicit 200/204 response; import a matching OpenAPI 3 document");
