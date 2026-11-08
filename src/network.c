@@ -31,6 +31,16 @@ static void delay_ms(unsigned ms) {
 #endif
 }
 static int is_public(const struct sockaddr *sa) {
+#if defined(RESTMORE_TEST_ONLY_LOOPBACK)
+ /* Debug Linux CI fixture only. This branch is never built with this macro
+    for release artifacts. The matching runtime guard is also mandatory. */
+ if(sa&&sa->sa_family==AF_INET){
+  const unsigned char *a=(const unsigned char *)&((const struct sockaddr_in*)sa)->sin_addr;
+  const char *guard=getenv("RESTMORE_CI_LOOPBACK_FIXTURE");
+  if(a[0]==127&&a[1]==0&&a[2]==0&&a[3]==1&&
+     guard&&!strcmp(guard,"restmore-e2e-fixture.example.org"))return 1;
+ }
+#endif
  if(sa->sa_family==AF_INET){
   const unsigned char *p=(const unsigned char *)&((const struct sockaddr_in *)sa)->sin_addr;
   unsigned a=p[0],b=p[1],c=p[2];
@@ -109,6 +119,7 @@ static int fetch(const char *url,const char *agent,size_t limit,response *out,
                  const char *etag,const char *modified,http_validators *seen){
  out->data=(char *)malloc(limit+1);out->length=0;out->limit=limit;out->overflow=0;
  if(!out->data)return rm_error(err,cap,"cannot allocate response buffer");
+ out->data[0]=0; /* Empty HTTP responses remain NUL terminated. */
  CURL *c=curl_easy_init();if(!c){free(out->data);out->data=NULL;return rm_error(err,cap,"curl initialization failed");}
  curl_easy_setopt(c,CURLOPT_URL,url);
  curl_easy_setopt(c,CURLOPT_USERAGENT,agent);
@@ -307,9 +318,8 @@ int rm_crawl(const rm_options *options,rm_catalog *cat,rm_progress cb,void *ctx,
   int duplicate=0;
   for(size_t i=0;i+1<qhead;i++)if(!strcmp(queue[i].url,item->url)){duplicate=1;break;}
   if(duplicate||!allowed(&rules,item->url,cat->target.host))continue;
-  if(cb)cb("fetch",item->url,ctx);
-  delay_ms(delay); /* conservatively wait after the robots fetch and each prior GET */
-
+  /* Cache integrity is checked before a conditional request. The single
+     pacing interval below applies to the actual HTTP GET. */
   /* Verify all cached source bytes BEFORE sending conditional headers.
      A tampered archive blocks the network request rather than being reused. */
   rm_document cached={0};char *old_body=NULL;size_t old_len=0;
