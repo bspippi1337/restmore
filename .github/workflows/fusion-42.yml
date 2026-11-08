@@ -32,6 +32,8 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+      - name: Install libcurl headers for HTTPS parity
+        run: sudo apt-get update -qq && sudo apt-get install -y libcurl4-openssl-dev
       - name: Configure network-enabled library (no external runtime calls)
         run: cmake -S . -B build-fusion-https -DRESTMORE_NETWORK=ON -DRESTMORE_TESTS=ON -DRESTMORE_GUI=OFF -DCMAKE_BUILD_TYPE=Release
       - name: Build
