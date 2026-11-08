@@ -12,7 +12,7 @@ int main(void){
  assert(!strcmp(github,"https://github.com/search?q=api.example.org&type=repositories"));
  assert(rm_github_lookup("https://api.example.org/private",github,sizeof(github),error,sizeof(error))!=0);
  assert(rm_github_lookup("127.0.0.1",github,sizeof(github),error,sizeof(error))!=0);
- const char *fixture="{\"openapi\":\"3.1.0\",\"paths\":{"
+ const char *fixture="{\"openapi\":\"3.1.0\",\"servers\":[{\"url\":\"https://api.example.org\"}],\"paths\":{"
  "\"/v1/pets\":{\"get\":{\"operationId\":\"listPets\",\"responses\":{\"200\":{\"content\":{\"application/json\":{\"schema\":{\"type\":\"array\"}}}}}}},"
  "\"/v1/ping\":{\"get\":{\"responses\":{\"204\":{\"description\":\"empty\"}}}},"
  "\"/v1/pets/{id}\":{\"get\":{\"responses\":{\"200\":{}}}},"
@@ -35,13 +35,23 @@ int main(void){
  assert(rm_verify_plan(cat,"api.example.org",plan,error,sizeof(error))==0);
  assert(plan->count==2);
  assert(plan->authorized==0);
- assert(plan->source_bound==0);
+ assert(plan->source_bound==1);
  assert(!strcmp(plan->checks[0].path,"/v1/pets"));
  assert(plan->checks[0].expected_status==200);
  assert(!strcmp(plan->checks[0].expected_content_type,"application/json"));
  assert(!strcmp(plan->checks[1].path,"/v1/ping"));
  assert(plan->checks[1].expected_status==204);
  assert(rm_verify_run(plan,NULL,NULL,error,sizeof(error))!=0); /* no network */
+ /* Even an explicit authorization token cannot test an unbound sample atlas. */
+ cat->target.host[0]=0;cat->target.url[0]=0;
+ assert(rm_verify_plan(cat,"api.example.org",plan,error,sizeof(error))==0);
+ assert(plan->source_bound==0);
+ plan->authorized=1;
+ assert(rm_verify_run(plan,NULL,NULL,error,sizeof(error))!=0);
+ assert(strstr(error,"not bound")!=NULL);
+ assert(rm_normalize("api.example.org",&cat->target,error,sizeof(error))==0);
+ assert(rm_verify_plan(cat,"api.example.org",plan,error,sizeof(error))==0);
+ assert(plan->source_bound==1&&plan->authorized==0);
  assert(rm_json_valid("{\"ok\":true}",11)==1);
  assert(rm_json_valid("{\"ok\":NaN}",10)==0);
  /* local catalog roundtrip retains response status and MIME */
