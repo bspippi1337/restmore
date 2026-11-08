@@ -74,6 +74,25 @@ int rm_json_valid(const char *text,size_t length){
  if(skip(&j,0))return 0;
  ws(&j);return j.pos==length;
 }
+int rm_json_root_is(const char *text,size_t length,const char *kind){
+ if(!rm_json_valid(text,length)||!kind||!kind[0])return 0;
+ json j={text,length,0,0};ws(&j);
+ const char c=text[j.pos];
+ if(!strcmp(kind,"object"))return c=='{';
+ if(!strcmp(kind,"array"))return c=='[';
+ if(!strcmp(kind,"string"))return c=='"';
+ if(!strcmp(kind,"boolean"))return c=='t'||c=='f';
+ if(!strcmp(kind,"null"))return c=='n';
+ if(!strcmp(kind,"number")||!strcmp(kind,"integer")){
+  if(c!='-'&&!(c>='0'&&c<='9'))return 0;
+  if(!strcmp(kind,"integer")){
+   for(size_t i=j.pos;i<length;i++)
+    if(text[i]=='.'||text[i]=='e'||text[i]=='E')return 0;
+  }
+  return 1;
+ }
+ return 0;
+}
 static int same(const json *j,size_t a,size_t b,const char *s){
  return (b-a)==strlen(s)&&!memcmp(j->s+a,s,b-a);
 }
@@ -168,9 +187,20 @@ int rm_openapi_import(rm_catalog *cat,const char *source,const char *sha,const c
       if(field(&j,ra,rb,"200",&sa,&sb)==1&&j.s[sa]=='{'){
         op->expected_status=200;
         if(field(&j,sa,sb,"content",&ca,&cb)==1&&j.s[ca]=='{'){
-          if(field(&j,ca,cb,"application/json",&ma,&mb)==1)
+          if(field(&j,ca,cb,"application/json",&ma,&mb)==1){
             snprintf(op->expected_content_type,sizeof(op->expected_content_type),"application/json");
-          else if(field(&j,ca,cb,"text/plain",&ma,&mb)==1)
+            size_t schema_start,schema_end;
+            if(j.s[ma]=='{' && field(&j,ma,mb,"schema",&schema_start,&schema_end)==1&&
+               j.s[schema_start]=='{'){
+              char kind[16]={0};
+              if(!read_field_string(&j,schema_start,schema_end,"type",kind,sizeof(kind)) &&
+                 (!strcmp(kind,"object")||!strcmp(kind,"array")||
+                  !strcmp(kind,"string")||!strcmp(kind,"integer")||
+                  !strcmp(kind,"number")||!strcmp(kind,"boolean")||
+                  !strcmp(kind,"null")))
+                snprintf(op->expected_json_type,sizeof(op->expected_json_type),"%s",kind);
+            }
+          }else if(field(&j,ca,cb,"text/plain",&ma,&mb)==1)
             snprintf(op->expected_content_type,sizeof(op->expected_content_type),"text/plain");
         }
       }else if(field(&j,ra,rb,"204",&sa,&sb)==1&&j.s[sa]=='{'){
@@ -251,6 +281,9 @@ int rm_catalog_import_json(rm_catalog *cat,const char *text,size_t len,char *err
    if(read_field_string(&j,os,p.pos,"expected_content_type",op->expected_content_type,
                         sizeof(op->expected_content_type)))
       return rm_error(err,cap,"invalid documented response type");
+   if(read_field_string(&j,os,p.pos,"expected_json_type",op->expected_json_type,
+                        sizeof(op->expected_json_type)))
+      return rm_error(err,cap,"invalid documented JSON root type");
    /* RESTLESS's library.json may use operationId rather than operation_id. */
    if(!op->operation_id[0]&&read_field_string(&j,os,p.pos,"operationId",op->operation_id,sizeof(op->operation_id)))
     return rm_error(err,cap,"invalid operationId");
