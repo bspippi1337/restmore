@@ -69,8 +69,23 @@ static void mutex_unlock(work *w){
 }
 static Font FACE={0};
 static int FACE_OWNED=0;
-static float UI_SCALE=1.0f;
-static Vector2 pointer(void){Vector2 p=GetMousePosition();return (Vector2){p.x/UI_SCALE,p.y/UI_SCALE};}
+static float UI_SCALE=1.0f,TOUCH_DY=0;
+static Vector2 LAST_TOUCH={0};
+static int TOUCH_ACTIVE=0,TOUCH_PRESSED=0;
+static void sample_touch(void){
+ int now=GetTouchPointCount()>0;
+ TOUCH_DY=0;TOUCH_PRESSED=now&&!TOUCH_ACTIVE;
+ if(now){
+  Vector2 p=GetTouchPosition(0);
+  if(TOUCH_ACTIVE)TOUCH_DY=(p.y-LAST_TOUCH.y)/UI_SCALE;
+  LAST_TOUCH=p;
+ }
+ TOUCH_ACTIVE=now;
+}
+static Vector2 pointer(void){
+ Vector2 p=TOUCH_ACTIVE?GetTouchPosition(0):GetMousePosition();
+ return (Vector2){p.x/UI_SCALE,p.y/UI_SCALE};
+}
 static int textwidth(const char *str,int px){
  return (int)MeasureTextEx(FACE,str?str:"",(float)px,1.0f).x;
 }
@@ -122,11 +137,11 @@ static void glyph_line(float x1,float y1,float x2,float y2,float weight,Color co
 static void rule(float x,float y,float width){glyph_line(x,y,x+width,y,1,BORDER);}
 static void line(int x,int y,int font,const char *caption){textx(caption,x,y,font,MUTED);}
 static int hit(Rectangle r){return CheckCollisionPointRec(pointer(),r);}
-static int clicked(Rectangle r){return hit(r)&&IsMouseButtonPressed(MOUSE_BUTTON_LEFT);}
+static int clicked(Rectangle r){return hit(r)&&(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)||TOUCH_PRESSED);}
 static void label(int x,int y,const char *s){textx(s,x,y,11,MUTED);}
 static void method_pill(const char *verb,float x,float y,int width);
 static int button(Rectangle r,const char *caption,Color color,int enabled){
- int over=enabled&&hit(r),press=over&&IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+ int over=enabled&&hit(r),press=enabled&&clicked(r);
  Color fill=enabled?(over?Fade(color,.25f):Fade(color,.12f)):Fade(PANEL2,.5f);
  DrawRectangleRounded(r,.12f,8,fill);
  DrawRectangleRoundedLinesEx(r,.12f,8,1,enabled?Fade(color,.8f):BORDER);
@@ -329,7 +344,7 @@ static void draw_scope(app *ui,Rectangle area,int busy){
  panel(area,PANEL);
  float maxscroll=770-area.height+28;
  if(maxscroll<0)maxscroll=0;
- if(hit(area)&&GetMouseWheelMove()!=0)ui->scope_scroll-=GetMouseWheelMove()*45;
+ if(hit(area))ui->scope_scroll-=GetMouseWheelMove()*45+TOUCH_DY;
  if(ui->scope_scroll<0)ui->scope_scroll=0;
  if(ui->scope_scroll>maxscroll)ui->scope_scroll=maxscroll;
  int x=(int)area.x+22,y=(int)(area.y+21-ui->scope_scroll);
@@ -454,7 +469,7 @@ static void graph(app *ui,Rectangle area){
   const int card_height=62,step=70;
   float content=(float)count*step+15;
   float maxscroll=fmaxf(0,content-viewport.height);
-  if(hit(viewport)&&GetMouseWheelMove()!=0)ui->scroll-=GetMouseWheelMove()*58;
+  if(hit(viewport))ui->scroll-=GetMouseWheelMove()*58+TOUCH_DY;
   if(ui->scroll<0)ui->scroll=0;
   if(ui->scroll>maxscroll)ui->scroll=maxscroll;
   for(size_t i=0;i<count;i++){
@@ -485,7 +500,7 @@ static void inspector(app *ui,Rectangle area){
  panel(area,PANEL);
  if(area.width<220||area.height<210)return;
  float maxscroll=fmaxf(0,640-area.height+25);
- if(hit(area)&&GetMouseWheelMove()!=0)ui->atlas_scroll-=GetMouseWheelMove()*45;
+ if(hit(area))ui->atlas_scroll-=GetMouseWheelMove()*45+TOUCH_DY;
  if(ui->atlas_scroll<0)ui->atlas_scroll=0;
  if(ui->atlas_scroll>maxscroll)ui->atlas_scroll=maxscroll;
  int x=(int)area.x+22,y=(int)(area.y+23-ui->atlas_scroll),inner=(int)area.width-44;
@@ -565,7 +580,14 @@ int main(int argc,char **argv){
  while(!WindowShouldClose()&&(!smoke||frames++<60)){
   poll_work(ui);
   int actualW=GetScreenWidth(),actualH=GetScreenHeight();
+#if defined(__ANDROID__) || defined(PLATFORM_ANDROID)
+  /* Android surfaces report physical pixels, not desktop-style points.
+     Preserve ~440 logical units on a portrait phone for legible controls. */
+  UI_SCALE=fmaxf(1.0f,fminf(3.5f,fminf((float)actualW/440.0f,(float)actualH/700.0f)));
+#else
   UI_SCALE=fminf(1.0f,fmaxf(.84f,(float)actualW/690.0f));
+#endif
+  sample_touch();
   int W=(int)((float)actualW/UI_SCALE),H=(int)((float)actualH/UI_SCALE);
   if(IsKeyPressed(KEY_TAB)&&ui->focus==0)ui->tab=(ui->tab+1)%3;
   BeginDrawing();
