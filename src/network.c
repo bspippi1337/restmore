@@ -306,6 +306,7 @@ int rm_verify_run(rm_verification *plan,rm_progress cb,void *ctx,char *err,size_
  if(!plan||!plan->authorized)return rm_error(err,cap,"Denied: explicit Authorize click required for this domain");
  if(!plan->count||plan->count>RM_MAX_VERIFY_CHECKS)
   return rm_error(err,cap,"No bounded, documented verification plan");
+ if(!plan->source_bound)return rm_error(err,cap,"Atlas is not bound to this domain; import its OpenAPI server contract first");
  rm_target host={0};
  if(rm_normalize(plan->target.host,&host,err,cap)||strcmp(host.host,plan->target.host))
   return rm_error(err,cap,"Verification domain no longer matches authorized plan");
