@@ -77,20 +77,27 @@ static void mutex_unlock(work *w){
 static Font FACE={0};
 static int FACE_OWNED=0;
 static float UI_SCALE=1.0f,TOUCH_DY=0;
-static Vector2 LAST_TOUCH={0};
+static Vector2 LAST_TOUCH={0},TOUCH_START={0};
 static int TOUCH_ACTIVE=0,TOUCH_PRESSED=0;
 static void sample_touch(void){
  int now=GetTouchPointCount()>0;
- TOUCH_DY=0;TOUCH_PRESSED=now&&!TOUCH_ACTIVE;
+ TOUCH_DY=0;TOUCH_PRESSED=0;
  if(now){
   Vector2 p=GetTouchPosition(0);
   if(TOUCH_ACTIVE)TOUCH_DY=(p.y-LAST_TOUCH.y)/UI_SCALE;
+  else TOUCH_START=p;
   LAST_TOUCH=p;
+ }else if(TOUCH_ACTIVE){
+  /* Commit a tap only after release, not at touch-down. Previously every
+     vertical swipe could also activate the row/button it started on. */
+  float dx=(LAST_TOUCH.x-TOUCH_START.x)/UI_SCALE;
+  float dy=(LAST_TOUCH.y-TOUCH_START.y)/UI_SCALE;
+  TOUCH_PRESSED=dx*dx+dy*dy<196.0f;
  }
  TOUCH_ACTIVE=now;
 }
 static Vector2 pointer(void){
- Vector2 p=TOUCH_ACTIVE?GetTouchPosition(0):GetMousePosition();
+ Vector2 p=(TOUCH_ACTIVE||TOUCH_PRESSED)?LAST_TOUCH:GetMousePosition();
  return (Vector2){p.x/UI_SCALE,p.y/UI_SCALE};
 }
 static int textwidth(const char *str,int px){
@@ -641,6 +648,14 @@ static void draw_scope(app *ui,Rectangle area,int busy){
      area.y+17+ui->scope_scroll/maxscroll*(track-thumb),3,thumb},.4f,6,Fade(MINT,.65f));
  }
 }
+static void select_operation(app *ui,int index){
+ ui->selected=index;
+ ui->atlas_scroll=0;
+#if defined(__ANDROID__) || defined(PLATFORM_ANDROID)
+ /* On a handset, opening a route immediately reveals its provenance. */
+ ui->tab=2;
+#endif
+}
 static void graph(app *ui,Rectangle area){
  panel(area,PANEL);
  if(area.width<220||area.height<240)return;
@@ -690,7 +705,7 @@ static void graph(app *ui,Rectangle area){
    DrawCircleLines((int)p.x,(int)p.y,selected?17:13,c);
    DrawCircleV(p,4,c);
    Rectangle target={p.x-19,p.y-19,38,38};
-   if(clicked(target))ui->selected=(int)i;
+   if(clicked(target))select_operation(ui,(int)i);
    char path[80];cut_text(op->path,path,sizeof(path),narrow?85:134,11);
    int txtw=textwidth(path,11);
    float tx=p.x+(p.x<cx?-txtw-18:18);
@@ -725,7 +740,7 @@ static void graph(app *ui,Rectangle area){
    textx(path,(int)row.x+88,(int)row.y+12,14,RM_WHITE);
    char summary_label[125];cut_text(op->summary,summary_label,sizeof(summary_label),(int)row.width-107,11);
    textx(summary_label,(int)row.x+88,(int)row.y+37,11,MUTED);
-   if(clicked(row))ui->selected=(int)i;
+   if(clicked(row))select_operation(ui,(int)i);
   }
   if(maxscroll>0){
    float track=viewport.height-12,thumb=track*viewport.height/content;
