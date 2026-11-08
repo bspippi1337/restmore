@@ -293,7 +293,7 @@ static void draw_brand(int width){
 
 static void draw_scope(app *ui,Rectangle area,int busy){
  panel(area,PANEL);
- float maxscroll=660-area.height+28;
+ float maxscroll=770-area.height+28;
  if(maxscroll<0)maxscroll=0;
  if(hit(area)&&GetMouseWheelMove()!=0)ui->scope_scroll-=GetMouseWheelMove()*45;
  if(ui->scope_scroll<0)ui->scope_scroll=0;
@@ -348,7 +348,7 @@ static void draw_scope(app *ui,Rectangle area,int busy){
  textx("Document metadata is never executed.",x,y,12,MUTED);
  EndScissorMode();
  if(maxscroll>0){
-  float track=area.height-35,thumb=track*area.height/(660+28);
+  float track=area.height-35,thumb=track*area.height/(770+28);
   DrawRectangleRounded((Rectangle){area.x+area.width-6,area.y+17,3,track},.4f,6,Fade(MUTED,.13f));
   DrawRectangleRounded((Rectangle){area.x+area.width-6,area.y+17+ui->scope_scroll/maxscroll*(track-thumb),3,thumb},.4f,6,Fade(MINT,.65f));
  }
@@ -508,57 +508,96 @@ static void inspector(app *ui,Rectangle area){
   DrawRectangleRounded((Rectangle){area.x+area.width-6,area.y+16+ui->atlas_scroll/maxscroll*(track-thumb),3,thumb},1,6,MINT);
  }
 }
+
 int main(int argc,char **argv){
  int smoke=argc>1&&!strcmp(argv[1],"--smoke");
  SetConfigFlags(FLAG_WINDOW_RESIZABLE|FLAG_MSAA_4X_HINT);
- InitWindow(1350,820,"RESTMORE / Native C11 API Atlas");
- SetWindowMinSize(360,580);SetTargetFPS(60);init_type();
- app *ui=(app *)calloc(1,sizeof(*ui));if(!ui){CloseWindow();return 1;}
+ InitWindow(1350,820,"RESTMORE  /  NATIVE API ATLAS");
+ SetWindowMinSize(360,580);
+ SetTargetFPS(60);
+ init_type();
+ app *ui=(app *)calloc(1,sizeof(*ui));
+ if(!ui){
+  if(FACE_OWNED)UnloadFont(FACE);
+  CloseWindow();
+  return 1;
+ }
  snprintf(ui->domain,sizeof(ui->domain),"docs.example.org");
  snprintf(ui->filename,sizeof(ui->filename),"examples/openapi-petstore.json");
- snprintf(ui->message,sizeof(ui->message),"Ready. Import local OpenAPI JSON or preview an authorized scope.");
+ snprintf(ui->message,sizeof(ui->message),"Atlas ready. Import OpenAPI documentation or authorize a bounded scan.");
  mutex_init(&ui->task);
  load_catalog(ui);
  int frames=0;
  while(!WindowShouldClose()&&(!smoke||frames++<60)){
   poll_work(ui);
-  int W=GetScreenWidth(),H=GetScreenHeight();
-  BeginDrawing();ClearBackground(BG);
+  int actualW=GetScreenWidth(),actualH=GetScreenHeight();
+  UI_SCALE=fminf(1.0f,fmaxf(.84f,(float)actualW/690.0f));
+  int W=(int)((float)actualW/UI_SCALE),H=(int)((float)actualH/UI_SCALE);
+  if(IsKeyPressed(KEY_TAB)&&ui->focus==0)ui->tab=(ui->tab+1)%3;
+  BeginDrawing();
+  ClearBackground(BG);
+  BeginMode2D((Camera2D){.offset={0,0},.target={0,0},.rotation=0,.zoom=UI_SCALE});
+  /* Subtle, fixed architectural point grid, not a claim of live telemetry. */
+  for(int x=0;x<W;x+=38)for(int y=101;y<H-50;y+=38)
+   DrawCircle(x,y,1,Fade(AQUA,.055f));
   draw_brand(W);
-  if(W>=1130){
-   Rectangle left={20,106,330,(float)H-178};
-   Rectangle center={370,106,(float)W-786,(float)H-178};
-   Rectangle right={(float)W-396,106,376,(float)H-178};
-   draw_scope(ui,left,ui->task.active);graph(ui,center);inspector(ui,right);
+  if(W>=1180){
+   float h=(float)H-178;
+   Rectangle left={20,108,335,h};
+   Rectangle center={375,108,(float)W-795,h};
+   Rectangle right={(float)W-400,108,380,h};
+   draw_scope(ui,left,ui->task.active);
+   graph(ui,center);
+   inspector(ui,right);
   }else{
-   const char *tabs[]={"SCOPE","ATLAS","INSPECT"};
-   for(int i=0;i<3;i++)if(button((Rectangle){22+(float)i*((W-44)/3),98,(float)(W-44)/3-8,40},tabs[i],i==ui->tab?MINT:AQUA,1))ui->tab=i;
-   Rectangle whole={20,151,(float)W-40,(float)H-221};
+   const char *tabs[]={"01  SCOPE","02  ATLAS","03  INSPECT"};
+   float tabW=((float)W-44.0f)/3.0f;
+   for(int i=0;i<3;i++){
+    Rectangle tab={22+tabW*(float)i,104,tabW-8,41};
+    if(button(tab,tabs[i],i==ui->tab?MINT:AQUA,1))ui->tab=i;
+   }
+   Rectangle whole={19,155,(float)W-38,(float)H-226};
    if(ui->tab==0)draw_scope(ui,whole,ui->task.active);
-   if(ui->tab==1)graph(ui,whole);
-   if(ui->tab==2)inspector(ui,whole);
+   else if(ui->tab==1)graph(ui,whole);
+   else inspector(ui,whole);
   }
-  DrawRectangle(0,H-55,W,55,(Color){12,20,26,255});
-  DrawLine(0,H-55,W,H-55,BORDER);
-  char notice[256];snprintf(notice,sizeof(notice),"%.210s",ui->message);
-  textx(notice,22,H-35,15,MUTED);
+  DrawRectangle(0,H-56,W,56,(Color){8,20,31,255});
+  rule(0,H-56,(float)W);
+  char notice[256];
+  int width=ui->task.active?W-220:W-46;
+  cut_text(ui->message,notice,sizeof(notice),width,13);
+  textx(notice,21,H-36,13,MUTED);
   if(ui->task.active){
-   char stage[48],detail[80];mutex_lock(&ui->task);
+   char stage[48];
+   mutex_lock(&ui->task);
    snprintf(stage,sizeof(stage),"%.47s",ui->task.stage);
-   snprintf(detail,sizeof(detail),"%.79s",ui->task.detail);
    mutex_unlock(&ui->task);
-   textx(stage,W-150,H-35,15,MINT);
-  }
+   textx(stage,W-165,H-38,14,MINT);
+   DrawCircle(W-187,H-30,5,MINT);
+  }else if(W>850)textx("R/M  42  /  C11",W-182,H-38,13,MINT);
+  EndMode2D();
   EndDrawing();
  }
- if(!ui->task.active){
+ /* Never release the app while its crawler thread still references it. */
+ if(ui->task.active){
+#ifdef _WIN32
+  WaitForSingleObject(ui->task.thread,INFINITE);
+  CloseHandle(ui->task.thread);
+#else
+  pthread_join(ui->task.thread,NULL);
+#endif
+  free(ui->task.catalog);
+  ui->task.catalog=NULL;
+  ui->task.active=0;
+ }
 #ifdef _WIN32
  DeleteCriticalSection(&ui->task.mutex);
 #else
  pthread_mutex_destroy(&ui->task.mutex);
 #endif
- }
- free(ui->catalog);free(ui);
+ free(ui->catalog);
+ free(ui);
  if(FACE_OWNED)UnloadFont(FACE);
- CloseWindow();return 0;
+ CloseWindow();
+ return 0;
 }
