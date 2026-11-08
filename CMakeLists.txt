@@ -15,6 +15,7 @@ add_library(restmore STATIC
   src/sha256.c
   src/json.c
   src/catalog.c
+  src/fusion_archive.c
   src/exports.c
   src/verification.c
 )
@@ -85,6 +86,9 @@ if(RESTMORE_TESTS AND NOT CMAKE_CROSSCOMPILING)
   add_executable(restmore-verify-tests tests/test_verification.c)
   target_link_libraries(restmore-verify-tests PRIVATE restmore)
   add_test(NAME C11_verification_human_authorization_and_contract COMMAND restmore-verify-tests)
+  add_executable(restmore-fusion-tests tests/test_fusion.c)
+  target_link_libraries(restmore-fusion-tests PRIVATE restmore)
+  add_test(NAME C11_restless_botanical_sha256_import_search_diff COMMAND restmore-fusion-tests)
 endif()
 include(GNUInstallDirs)
 install(TARGETS restmore ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
