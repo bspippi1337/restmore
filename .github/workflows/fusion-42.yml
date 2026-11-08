@@ -160,7 +160,8 @@ jobs:
             echo "RELEASE ACCEPTED TEST LOOPBACK CONFIGURATION: FAIL" >&2
             exit 1
           fi
-          grep -q 'NEVER ship' /tmp/restmore-refusal.log
+          cat /tmp/restmore-refusal.log
+          grep -q 'CI_LOOPBACK_FORBIDDEN_IN_RELEASE' /tmp/restmore-refusal.log
       - name: Record the live TLS test boundary
         shell: bash
         run: |
