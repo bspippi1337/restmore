@@ -13,5 +13,6 @@ int rm_crawl(const rm_options *options,rm_catalog *catalog,rm_progress progress,
 int rm_verify_run(rm_verification *plan,rm_progress progress,void *context,char *error,size_t cap){
  (void)progress;(void)context;
  if(!plan||!plan->authorized)return rm_error(error,cap,"Explicit Authorize required for this domain");
+ if(!plan->source_bound)return rm_error(error,cap,"Atlas is not bound to this domain; import its OpenAPI server contract first");
  return rm_error(error,cap,"Verification HTTPS disabled: build with RESTMORE_NETWORK=ON");
 }
