@@ -11,6 +11,8 @@ static void usage(FILE *f){
  "  restmore-cli [--out DIR] --import OPENAPI_3_JSON\n" "  restmore-cli --fusion-import RESTLESS_ARCHIVE [--out DIR]\n"
  "  restmore-cli --fusion-import RESTLESS_ARCHIVE --fusion-search QUERY\n"
  "  restmore-cli --fusion-import BEFORE --fusion-compare AFTER\n"
+ "  restmore-cli --fusion-import DIR --ops-brief --out DIR\n"
+ "  restmore-cli --import OPENAPI_3_JSON --ops-brief --out DIR\n"
  "Options: --max-pages 1..256 --max-depth 0..8 --delay-ms >=2000\n"
  "         --user-agent TEXT --out DIR --execute --authorized\n"
  "No network access without BOTH execution and authorization.\n"
@@ -19,7 +21,7 @@ static void usage(FILE *f){
 static void progress(const char *event,const char *detail,void *ctx){
  (void)ctx;fprintf(stderr,"[%s] %s\n",event,detail);
 }
-static int import_file(const char *path,const char *output){
+static int import_file(const char *path,const char *output,int ops_brief){
  FILE *f=fopen(path,"rb");if(!f){perror(path);return 1;}
  if(fseek(f,0,SEEK_END)){fclose(f);return 1;}
  long n=ftell(f);
@@ -42,13 +44,22 @@ static int import_file(const char *path,const char *output){
  if(rm_make_dir(output)||rm_catalog_save(cat,output,err,sizeof(err))){
   fprintf(stderr,"Write failed: %s\n",err);free(text);free(cat);return 1;
  }
+ if(ops_brief){
+  char report[4096];
+  if(snprintf(report,sizeof(report),"%s/ops-brief.json",output)>=(int)sizeof(report)||
+     rm_ops_brief_write(cat,report,err,sizeof(err))){
+   fprintf(stderr,"Offline OPS brief refused: %s\n",err[0]?err:"path too long");
+   free(text);free(cat);return 1;
+  }
+  printf("OPS 42 briefing: %s (OFFLINE, NOT AUTHORIZED)\n",report);
+ }
  printf("Imported %d documented API operations from local OpenAPI 3 JSON.\n",added);
  printf("Catalog: %s/library.json\nSHA-256: %s\n",output,digest);
  free(text);free(cat);return 0;
 }
 
 static int fusion_run(const char *archive,const char *out,
-                      const char *query,const char *after){
+                      const char *query,const char *after,int ops_brief){
  char error[256]={0};
  rm_catalog *catalog=(rm_catalog *)calloc(1,sizeof(*catalog));
  if(!catalog){fputs("Cannot allocate fusion catalog\n",stderr);return 1;}
@@ -93,16 +104,27 @@ static int fusion_run(const char *archive,const char *out,
   fprintf(stderr,"RESTMORE fusion output failed: %s\n",error[0]?error:"output directory not writable");
   free(catalog);return 1;
  }
+ if(ops_brief){
+  char report[4096];
+  if(snprintf(report,sizeof(report),"%s/ops-brief.json",out)>=(int)sizeof(report)||
+     rm_ops_brief_write(catalog,report,error,sizeof(error))){
+   fprintf(stderr,"Offline OPS brief refused: %s\n",error[0]?error:"path too long");
+   free(catalog);return 1;
+  }
+  printf("OPS 42 briefing: %s (OFFLINE, NOT AUTHORIZED)\n",report);
+ }
  printf("RESTMORE atlas: %s/library.json\n",out);
  free(catalog);return 0;
 }
 int main(int argc,char **argv){
  rm_options opt={0};opt.output_dir=".restmore";opt.max_pages=12;opt.max_depth=2;opt.delay_ms=2000;
  const char *file=NULL,*domain=NULL,*fusion_dir=NULL,*fusion_search=NULL,*fusion_compare=NULL;
+ int ops_brief=0;
  for(int i=1;i<argc;i++){
   const char *arg=argv[i];
   if(!strcmp(arg,"--help")||!strcmp(arg,"-h")){usage(stdout);return 0;}
   if(!strcmp(arg,"--version")){printf("restmore %s\n",RM_VERSION);return 0;}
+  if(!strcmp(arg,"--ops-brief")){ops_brief=1;continue;}
   if(!strcmp(arg,"--execute")){opt.execute=1;continue;}
   if(!strcmp(arg,"--authorized")){opt.authorized=1;continue;}
   if(!strcmp(arg,"--fusion-import")||!strcmp(arg,"--fusion-search")||
@@ -135,12 +157,13 @@ int main(int argc,char **argv){
    fputs("Fusion import is offline; do not combine it with target/domain, --import, --execute or --authorized\n",stderr);
    return 2;
   }
-  return fusion_run(fusion_dir,opt.output_dir,fusion_search,fusion_compare);
+  return fusion_run(fusion_dir,opt.output_dir,fusion_search,fusion_compare,ops_brief);
  }
  if(fusion_search||fusion_compare){
   fputs("--fusion-search and --fusion-compare require --fusion-import DIR\n",stderr);return 2;
  }
- if(file){if(domain||opt.execute){fputs("--import is offline and takes no domain or --execute\n",stderr);return 2;}return import_file(file,opt.output_dir);}
+ if(file){if(domain||opt.execute){fputs("--import is offline and takes no domain or --execute\n",stderr);return 2;}return import_file(file,opt.output_dir,ops_brief);}
+ if(ops_brief){fputs("--ops-brief is offline-only: provide --fusion-import DIR or --import JSON\n",stderr);return 2;}
  if(!domain){usage(stderr);return 2;}
  opt.input=domain;
  rm_catalog *cat=(rm_catalog *)calloc(1,sizeof(*cat));if(!cat)return 1;
