@@ -23,11 +23,21 @@ APIs are sprawling territories. Their documentation is a partial map, often spre
 
 **RESTMORE turns documentation you are authorized to inspect into a structured, traceable atlas.** It identifies *documented* paths and HTTP operations, maps their relationships, preserves their sources and builds exports you can actually use.
 
-It does not guess endpoints, bombard hosts, or execute the API operations it discovers. **An atlas, not a fuzzer.**
+It does not guess endpoints or bombard hosts. No API operation is executed by default. The separate **Verification Mode** checks up to five explicitly authorized, documented GET responses, never mutating methods. **An atlas, not a fuzzer.**
 
 <p align="center"><img src="docs/assets/native-console-plate.svg" width="100%" alt="Art-directed RESTMORE native interface plate: acquisition desk, operation atlas, source intelligence inspector. Illustrative petstore sample, not a live scan." /></p>
 
 *PLATE 03 / THE INSTRUMENT. Architectural concept drawn from the real C11 GUI. Routes in this plate are illustrative; the native client renders imported evidence.*
+
+## Verification Mode / GitHub first. Authorization second.
+
+Enter a single public domain and click **MAP / REVIEW GITHUB**. RESTMORE opens a **GitHub repository search** in your browser before making any verification requests. You review the candidates and independently establish permission. GitHub search is not proof of ownership.
+
+With an imported OpenAPI atlas whose **server matches the selected host**, click **AUTHORIZE & VERIFY GET**. The native C11 worker tests at most **five literal GET operations** with documented `200`/`204` contracts. It compares status, MIME, JSON syntax and a declared top-level JSON type. The inspector records **MATCH**, **STATUS ONLY**, **MISMATCH**, **SKIPPED** or **ERROR**. Full JSON Schema conformance is not claimed.
+
+**Fail closed:** with no matching atlas, Authorize stays disabled. Requests never use credentials, path guessing, redirects, POST or other mutating methods. Response bodies are not retained.
+
+[Verification manual](docs/VERIFICATION.md) · [Field guide](docs/field-guide.html)
 
 ## Four instruments. One clear picture.
 
