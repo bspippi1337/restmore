@@ -6,12 +6,12 @@
 extern "C" {
 #endif
 #define RM_VERSION "0.1.0"
-#define RM_MAX_DOCUMENTS 25
-#define RM_MAX_OPERATIONS 2048
+#define RM_MAX_DOCUMENTS 256
+#define RM_MAX_OPERATIONS 4096
 #define RM_MAX_URL 2048
 #define RM_MAX_PATH 1024
 #define RM_MAX_DOCUMENT_BYTES (2u * 1024u * 1024u)
-#define RM_MAX_VERIFY_CHECKS 5 /* explicit, fixed bounded verification budget */
+#define RM_MAX_VERIFY_CHECKS RM_MAX_OPERATIONS /* full documented atlas; user chooses coverage */
 typedef struct { char host[254]; char url[RM_MAX_URL]; } rm_target;
 typedef struct {
   char url[RM_MAX_URL];
@@ -108,6 +108,12 @@ int rm_make_dir(const char *path);
 int rm_github_lookup(const char *domain,char *url,size_t cap,char *error,size_t error_cap);
 int rm_verify_plan(const rm_catalog *catalog,const char *domain,rm_verification *plan,
                    char *error,size_t error_cap);
+int rm_verify_plan_limit(const rm_catalog *catalog,const char *domain,
+                         rm_verification *plan,size_t max_checks,
+                         char *error,size_t error_cap);
+/* max_checks=0 means all eligible documented GET operations in this catalog.
+   The caller must still display the plan and require separate approval. */
+
 int rm_verify_run(rm_verification *plan,rm_progress progress,void *context,
                   char *error,size_t error_cap);
 /* Save exact-plan results and outcomes; never exports bodies or authentication. */
