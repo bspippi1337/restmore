@@ -29,7 +29,8 @@ typedef struct {
   char source_url[RM_MAX_URL];
   char source_sha256[65];
   int expected_status; /* OpenAPI 200/204 response; 0 means no testable response contract */
-  char expected_content_type[96]; /* optional declared response MIME, not a schema guarantee */
+  char expected_content_type[96]; /* optional declared response MIME */
+  char expected_json_type[16]; /* shallow OpenAPI schema root type, if declared */
 } rm_operation;
 typedef struct {
   rm_target target;
@@ -41,6 +42,7 @@ typedef struct {
   char method[8],path[RM_MAX_PATH],source_sha256[65];
   int expected_status,actual_status;
   char expected_content_type[96],observed_content_type[96];
+  char expected_json_type[16];
   int outcome; /* 0 pending, 1 verified status+type+JSON, 2 status-only,
                   3 mismatch, 4 transport/error, 5 skipped */
 } rm_check;
@@ -83,6 +85,7 @@ int rm_verify_run(rm_verification *plan,rm_progress progress,void *context,
                   char *error,size_t error_cap);
 /* Strict syntax validation only; does not implement JSON Schema. */
 int rm_json_valid(const char *text,size_t length);
+int rm_json_root_is(const char *text,size_t length,const char *expected_type);
 #ifdef __cplusplus
 }
 #endif
