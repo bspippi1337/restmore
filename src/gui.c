@@ -446,43 +446,66 @@ static void graph(app *ui,Rectangle area){
  EndScissorMode();
  label((int)area.x+20,(int)(area.y+area.height-18),"OBSERVED / DOCUMENTED / NO REQUEST EXECUTION");
 }
+
 static void inspector(app *ui,Rectangle area){
- card(area,PANEL);
- int x=(int)area.x+22,y=(int)area.y+24;
- textx("04 / INSPECTOR",x,y,20,RM_WHITE);y+=50;
- if(!ui->catalog||!ui->catalog->operation_count){textx("Select an operation",x,y,16,MUTED);return;}
+ panel(area,PANEL);
+ if(area.width<220||area.height<210)return;
+ float maxscroll=fmaxf(0,640-area.height+25);
+ if(hit(area)&&GetMouseWheelMove()!=0)ui->atlas_scroll-=GetMouseWheelMove()*45;
+ if(ui->atlas_scroll<0)ui->atlas_scroll=0;
+ if(ui->atlas_scroll>maxscroll)ui->atlas_scroll=maxscroll;
+ int x=(int)area.x+22,y=(int)(area.y+23-ui->atlas_scroll),inner=(int)area.width-44;
+ scissor((Rectangle){area.x+1,area.y+1,area.width-2,area.height-2});
+ label(x,y,"04  /  OPERATION INSPECTOR");y+=28;
+ textx("Source intelligence",x,y,24,RM_WHITE);y+=45;
+ rule((float)x,(float)y,(float)inner);y+=25;
+ if(!ui->catalog||!ui->catalog->operation_count){
+  textx("NO OPERATION SELECTED",x,y,16,RM_WHITE);y+=31;
+  textx("Click a mapped route for its evidence.",x,y,12,MUTED);
+  EndScissorMode();return;
+ }
  if(ui->selected<0||ui->selected>=(int)ui->catalog->operation_count)ui->selected=0;
  const rm_operation *op=&ui->catalog->operations[ui->selected];
- Color mc=method_color(op->method);
- DrawRectangleRounded((Rectangle){(float)x,(float)y,82,37},0.26f,6,Fade(mc,0.17f));
- textx(op->method,x+12,y+9,19,mc);y+=61;
- textx("DECLARED PATH",x,y,14,MUTED);y+=25;
- char shown[RM_MAX_PATH];snprintf(shown,sizeof(shown),"%s",op->path);
- if(MeasureText(shown,16)>area.width-47){size_t cut=(size_t)(area.width/10);if(cut<sizeof(shown))shown[cut]=0;}
- textx(shown,x,y,16,RM_WHITE);y+=56;
- textx("DOCUMENTATION SUMMARY",x,y,14,MUTED);y+=23;
- char shortsum[256];snprintf(shortsum,sizeof(shortsum),"%.45s",op->summary[0]?op->summary:"Not documented");
- textx(shortsum,x,y,16,RM_WHITE);y+=52;
- textx("OPERATION ID",x,y,14,MUTED);y+=23;
- textx(op->operation_id[0]?op->operation_id:"Not provided",x,y,15,RM_WHITE);y+=51;
- textx("SOURCE PROVENANCE / SHA-256",x,y,14,MUTED);y+=27;
- char sha[27];snprintf(sha,sizeof(sha),"%.24s",op->source_sha256);
- textx(op->source_sha256[0]?sha:"Local JSON - unverified",x,y,15,AQUA);y+=46;
- textx("SOURCE DOCUMENT",x,y,14,MUTED);y+=22;
- char url[70];snprintf(url,sizeof(url),"%.34s",op->source_url);
- textx(url,x,y,14,RM_WHITE);y+=58;
- if(button((Rectangle){(float)x,(float)y,area.width-44,43},"COPY REQUEST PREVIEW",AQUA,1)){
-  char copy[RM_MAX_PATH+128];
+ method_pill(op->method,(float)x,(float)y,85);y+=51;
+ label(x,y,"DOCUMENTED PATH");y+=23;
+ char path[RM_MAX_PATH];cut_text(op->path,path,sizeof(path),inner,17);
+ textx(path,x,y,17,RM_WHITE);y+=47;
+ rule((float)x,(float)y,(float)inner);y+=23;
+ label(x,y,"SUMMARY");y+=24;
+ char summary[256];cut_text(op->summary[0]?op->summary:"Not declared by source",summary,sizeof(summary),inner,15);
+ textx(summary,x,y,15,RM_WHITE);y+=43;
+ label(x,y,"OPERATION IDENTIFIER");y+=24;
+ char operation[130];cut_text(op->operation_id[0]?op->operation_id:"Not declared",operation,sizeof(operation),inner,14);
+ textx(operation,x,y,14,RM_WHITE);y+=49;
+ rule((float)x,(float)y,(float)inner);y+=23;
+ label(x,y,"SOURCE / PROVENANCE");y+=28;
+ char source[RM_MAX_URL];cut_text(op->source_url[0]?op->source_url:"Local catalog, source not provided",source,sizeof(source),inner,13);
+ textx(source,x,y,13,MUTED);y+=29;
+ label(x,y,"SHA-256 DOCUMENT FINGERPRINT");y+=24;
+ char fingerprint[70];cut_text(op->source_sha256[0]?op->source_sha256:"No provenance hash available",fingerprint,sizeof(fingerprint),inner,13);
+ textx(fingerprint,x,y,13,op->source_sha256[0]?MINT:RM_ORANGE);y+=47;
+ rule((float)x,(float)y,(float)inner);y+=24;
+ if(button((Rectangle){(float)x,(float)y,(float)inner,43},"COPY REQUEST TEMPLATE",AQUA,1)){
+  char copy[RM_MAX_PATH+140];
   snprintf(copy,sizeof(copy),"curl -X %s '{{baseUrl}}%s'",op->method,op->path);
   SetClipboardText(copy);
-  snprintf(ui->message,sizeof(ui->message),"Copied example. Placeholder baseUrl; no request sent.");
+  snprintf(ui->message,sizeof(ui->message),"Copied illustrative curl template. No request was made.");
  }
- y+=62;
- if(button((Rectangle){(float)x,(float)y,area.width-44,43},"EXPORT LIBRARY.JSON",MINT,1)){
+ y+=59;
+ if(button((Rectangle){(float)x,(float)y,(float)inner,43},"EXPORT EVIDENCE ATLAS",MINT,1)){
   char error[256]={0};
   if(rm_make_dir("restmore-export")||rm_catalog_save(ui->catalog,"restmore-export",error,sizeof(error)))
-   snprintf(ui->message,sizeof(ui->message),"Export failed: %.200s",error);
-  else snprintf(ui->message,sizeof(ui->message),"Saved restmore-export/library.json");
+   snprintf(ui->message,sizeof(ui->message),"Export failed: %.200s",error[0]?error:"Cannot create directory");
+  else snprintf(ui->message,sizeof(ui->message),"Saved restmore-export/library.json and related formats");
+ }
+ y+=62;
+ textx("GET / POST / PUT / PATCH / DELETE",x,y,12,MUTED);y+=19;
+ textx("Routes are declared, never executed.",x,y,12,MUTED);
+ EndScissorMode();
+ if(maxscroll>0){
+  float track=area.height-32,thumb=track*area.height/(640+25);
+  DrawRectangleRounded((Rectangle){area.x+area.width-6,area.y+16,3,track},1,6,Fade(MUTED,.14f));
+  DrawRectangleRounded((Rectangle){area.x+area.width-6,area.y+16+ui->atlas_scroll/maxscroll*(track-thumb),3,thumb},1,6,MINT);
  }
 }
 int main(int argc,char **argv){
