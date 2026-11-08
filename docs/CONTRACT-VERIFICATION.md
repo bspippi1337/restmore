@@ -2,7 +2,7 @@
 
 ## MAP THE DOCUMENTED. VERIFY THE RESPONSE.
 
-RESTMORE's **Contract Verification** uses an already imported OpenAPI atlas to check a small, fixed set of *documented* HTTP GET responses. It is not fuzzing: no guessed endpoints, no path mutation, no request-body generation, no parameter injection, no credential replay, no POST/PUT/PATCH/DELETE execution.
+RESTMORE's **Contract Verification** uses an already imported OpenAPI atlas to check an explicitly selected set of *documented* HTTP GET responses. It is not fuzzing: no guessed endpoints, no path mutation, no request-body generation, no parameter injection, no credential replay, no POST/PUT/PATCH/DELETE execution.
 
 ![Contract inspection, schematic](assets/evidence-ledger.svg)
 
@@ -16,7 +16,7 @@ If a domain does not have a discoverable or credible GitHub repository, there is
 
 Use **OPEN LOCAL DOCUMENT** to import the API's existing OpenAPI JSON or RESTMORE `library.json`. The API must explicitly declare the requested server host in its OpenAPI `servers` field, or the saved library must retain the corresponding target host. A documentation host or a similarly named GitHub organization is **not** sufficient to bind an API's execution origin.
 
-RESTMORE prepares a **preview** of up to five eligible operations: literal, parameter-free GET paths with explicit success response status 200 or 204. It rejects unsafe-looking paths, template placeholders, query strings, authentication, admin, reset, finance, state-changing operations and any endpoint outside the fixed imported catalog. A source with no eligible responses is not tested.
+RESTMORE prepares a **preview** of a chosen number of eligible operations: literal, parameter-free GET paths with explicit success response status 200 or 204. It rejects unsafe-looking paths, template placeholders, query strings, authentication, admin, reset, finance, state-changing operations and any endpoint outside the fixed imported catalog. A source with no eligible responses is not tested. Choosing more routes never skips GitHub review or explicit authorization.
 
 ### 03 / Confirm GitHub review
 
@@ -24,9 +24,9 @@ After reviewing the repository search, return to RESTMORE and deliberately click
 
 ### 04 / Authorize
 
-Click **AUTHORIZE / N DOCUMENTED GET CHECKS**. This is a separate gesture, enabled only after the GitHub review acknowledgment and atlas-host binding. Both `github_reviewed` and `authorized` are checked again in the C11 engine before it permits traffic.
+Click **AUTHORIZE / N DOCUMENTED GET CHECKS** after choosing 5, 25 or full-atlas coverage. This is a separate gesture, enabled only after the GitHub review acknowledgment and atlas-host binding. Both `github_reviewed` and `authorized` are checked again in the C11 engine before it permits traffic.
 
-The network worker first checks `robots.txt`. It fails closed if the policy cannot be established, uses only HTTPS with certificate checks, refuses redirects, bypasses proxy settings, rejects local/private/reserved socket addresses, enforces a minimum two-second gap between GETs and stops on HTTP 429/5xx rather than retrying. Each response is limited to 128 KiB, and there are at most five documented GET checks.
+The network worker first checks `robots.txt`. It fails closed if the policy cannot be established, uses only HTTPS with certificate checks, refuses redirects, bypasses proxy settings, rejects local/private/reserved socket addresses, enforces a minimum two-second gap between GETs and stops on HTTP 429/5xx rather than retrying. Each response is limited to 128 KiB, and there are only the operator-selected documented GET checks.
 
 ### 05 / Compare and inspect
 

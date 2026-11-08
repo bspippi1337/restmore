@@ -273,8 +273,17 @@ int rm_catalog_import_json(rm_catalog *cat,const char *text,size_t len,char *err
     rm_document *d=&cat->documents[cat->document_count++];
     if(read_field_string(&j,ds,p.pos,"url",d->url,sizeof(d->url)) ||
        read_field_string(&j,ds,p.pos,"sha256",d->sha256,sizeof(d->sha256)) ||
-       read_field_string(&j,ds,p.pos,"content_type",d->content_type,sizeof(d->content_type)))
+       read_field_string(&j,ds,p.pos,"content_type",d->content_type,sizeof(d->content_type)) ||
+       read_field_string(&j,ds,p.pos,"etag",d->etag,sizeof(d->etag)) ||
+       read_field_string(&j,ds,p.pos,"last_modified",d->last_modified,sizeof(d->last_modified)))
      return rm_error(err,cap,"invalid document metadata");
+    size_t stat_a=0,stat_b=0;
+    if(field(&j,ds,p.pos,"status",&stat_a,&stat_b)==1 &&
+       stat_b-stat_a==3&&!memcmp(text+stat_a,"200",3))d->status=200;
+    if(field(&j,ds,p.pos,"response_status",&stat_a,&stat_b)==1){
+     if(stat_b-stat_a==3&&!memcmp(text+stat_a,"304",3))d->response_status=304;
+     else if(stat_b-stat_a==3&&!memcmp(text+stat_a,"200",3))d->response_status=200;
+    }
    }
    ws(&p);if(p.pos<b&&p.s[p.pos]==']')break;
    if(p.pos>=b||p.s[p.pos++]!=',')return rm_error(err,cap,"invalid documents separator");

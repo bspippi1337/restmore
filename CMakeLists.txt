@@ -7,6 +7,12 @@ option(RESTMORE_NETWORK "Build HTTPS documentation crawler with libcurl" ON)
 option(RESTMORE_GUI "Build native raylib UI (all application logic remains C)" OFF)
 option(RESTMORE_SANITIZE "Address/undefined behavior sanitizers (Clang/GCC)" OFF)
 option(RESTMORE_TESTS "Build pure C regression tests" ON)
+option(RESTMORE_TEST_ONLY_LOOPBACK "CI fixture ONLY: local TLS integration test; never release" OFF)
+if(RESTMORE_TEST_ONLY_LOOPBACK)
+  if(NOT RESTMORE_TESTS OR NOT RESTMORE_NETWORK OR NOT CMAKE_SYSTEM_NAME STREQUAL "Linux" OR NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+    message(FATAL_ERROR "CI_LOOPBACK_FORBIDDEN_IN_RELEASE: Linux Debug HTTPS tests only")
+  endif()
+endif()
 if(RESTMORE_NETWORK)
   find_package(CURL REQUIRED)
 endif()
@@ -15,6 +21,7 @@ add_library(restmore STATIC
   src/sha256.c
   src/json.c
   src/catalog.c
+  src/fusion_archive.c
   src/exports.c
   src/verification.c
 )
@@ -23,6 +30,9 @@ target_include_directories(restmore PUBLIC
   $<INSTALL_INTERFACE:include>)
 target_compile_definitions(restmore PRIVATE _POSIX_C_SOURCE=200809L)
 target_compile_definitions(restmore PUBLIC RESTMORE_NETWORK_ENABLED=$<BOOL:${RESTMORE_NETWORK}>)
+if(RESTMORE_TEST_ONLY_LOOPBACK)
+  target_compile_definitions(restmore PRIVATE RESTMORE_TEST_ONLY_LOOPBACK=1)
+endif()
 if(ANDROID)
   set_target_properties(restmore PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
@@ -85,6 +95,9 @@ if(RESTMORE_TESTS AND NOT CMAKE_CROSSCOMPILING)
   add_executable(restmore-verify-tests tests/test_verification.c)
   target_link_libraries(restmore-verify-tests PRIVATE restmore)
   add_test(NAME C11_verification_human_authorization_and_contract COMMAND restmore-verify-tests)
+  add_executable(restmore-fusion-tests tests/test_fusion.c)
+  target_link_libraries(restmore-fusion-tests PRIVATE restmore)
+  add_test(NAME C11_restless_botanical_sha256_import_search_diff COMMAND restmore-fusion-tests)
 endif()
 include(GNUInstallDirs)
 install(TARGETS restmore ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})

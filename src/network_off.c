@@ -5,6 +5,8 @@ int rm_crawl(const rm_options *options,rm_catalog *catalog,rm_progress progress,
  if(!options||!options->input||!catalog)return rm_error(error,error_cap,"configuration required");
  memset(catalog,0,sizeof(*catalog));
  if(rm_normalize(options->input,&catalog->target,error,error_cap))return -1;
+ if(options->max_pages>RM_MAX_DOCUMENTS||options->max_depth>8)
+  return rm_error(error,error_cap,"scope exceeds current C11 capacity (256 documents, depth 8)");
  if(options->execute)return rm_error(error,error_cap,"HTTPS crawler not built: configure RESTMORE_NETWORK=ON with libcurl");
  if(progress)progress("preview",catalog->target.url,context);
  return 0;

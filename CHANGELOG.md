@@ -2,6 +2,20 @@
 
 This changelog separates shipped and verified artifacts from platform support that still requires packaging and device testing.
 
+## Unreleased integration / Fusion 42
+
+- Integrated RESTLESS Botanical's content-addressed source ledger into RESTMORE C11, with source-backed archive import, offline operation search, contract diff and native GUI.
+- Added conditional ETag/Last-Modified and genuine HTTP 304 archive reuse, verifying cached SHA-256 bytes before conditional requests.
+- Increased explicitly selectable documentation scope and contract coverage, retaining separate GitHub review and human authorization.
+- Added dedicated controlled TLS end-to-end tests: missing authorization, untrusted certificate, 200 import, 304 reuse, tampered-cache refusal, changed ETags, robots denial and 429/503 stop-on-error.
+- Isolated any CI-only loopback/fixture CA trust to Debug Linux test builds; Release build configuration refuses test-only trust.
+- Original code and history: [Fusion 42 architecture](docs/FUSION-42.md) and [engineering case study](docs/fusion-42.html).
+- Experimental integration is not yet a published tagged binary or a production security certification.
+
+## [v0.1.0-alpha.7](https://github.com/bspippi1337/restmore/releases/tag/v0.1.0-alpha.7) · 2026-11-08
+
+The latest published alpha includes the earlier native contract verification work. The Fusion 42 integration described above was developed separately and is **not** part of the Alpha 7 release assets.
+
 ## [v0.1.0-alpha.6](https://github.com/bspippi1337/restmore/releases/tag/v0.1.0-alpha.6) · 2026-11-08
 
 **Verification Edition / GitHub first, human authorization next.**
