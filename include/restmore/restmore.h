@@ -20,6 +20,8 @@ typedef struct {
   size_t bytes;
   unsigned depth;
   int status;
+  int response_status; /* HTTP 200 or cache revalidation 304; zero means status */
+  char etag[256], last_modified[96]; /* bounded conditional headers */
 } rm_document;
 typedef struct {
   char method[8];
@@ -84,6 +86,11 @@ int rm_restless_import(const char *archive_directory,rm_catalog *catalog,
 /* Append interoperable JSONL record after source bytes exist on disk. */
 int rm_fusion_append_manifest(const char *directory,const rm_document *doc,
                               char *error,size_t error_cap);
+/* Load a SHA-256-verified cached source by exact URL; caller frees *body.
+ * Return 1 when cached, 0 when absent, -1 on corruption / malformed cache.
+ * Never does a network request. */
+int rm_fusion_cache_get(const char *directory,const char *url,rm_document *record,
+                        char **body,size_t *length,char *error,size_t error_cap);
 size_t rm_fusion_search(const rm_catalog *catalog,const char *query,
                         rm_fusion_hit *hits,size_t capacity);
 int rm_fusion_diff(const rm_catalog *before,const rm_catalog *after,
