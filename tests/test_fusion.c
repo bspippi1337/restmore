@@ -37,7 +37,7 @@ int main(void){
  assert(rm_make_dir(dir)==0);
  char archives[4096];snprintf(archives,sizeof(archives),"%s/sha256",dir);
  assert(rm_make_dir(archives)==0);
- char sha[65],file[4096],rel[128],err[256]={0};rm_sha256(doc,strlen(doc),sha);
+ char sha[65],file[8192],rel[128],err[256]={0};rm_sha256(doc,strlen(doc),sha);
  snprintf(file,sizeof(file),"%s/%s",archives,sha);
  snprintf(rel,sizeof(rel),"sha256/%s",sha);
  write_bytes(file,doc);manifest(dir,sha,rel);
