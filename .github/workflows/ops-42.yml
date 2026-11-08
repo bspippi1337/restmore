@@ -75,7 +75,7 @@ jobs:
           ET.parse("docs/assets/ops-42-console.svg")
           html=Path("docs/ops-42.html").read_text(encoding="utf-8")
           check=Check();check.feed(html)
-          assert "NOT A LIVE SCAN" in html
+          assert "NO LIVE SCAN" in html
           assert "REVIEW REQUIRED" in html
           assert len(check.images)>=1
           for image in check.images:
