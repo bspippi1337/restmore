@@ -255,13 +255,18 @@ static void *worker(void *data)
 #endif
 {
  work *w=(work *)data;
- rm_catalog *cat=(rm_catalog *)calloc(1,sizeof(*cat));
+ rm_catalog *cat=w->mode==2?NULL:(rm_catalog *)calloc(1,sizeof(*cat));
  char err[256]={0};
- rm_options options={0};
- options.input=w->input;options.output_dir=w->out;
- options.max_pages=12;options.max_depth=2;options.delay_ms=2000;
- options.execute=1;options.authorized=1;
- int outcome=cat?rm_crawl(&options,cat,progress,w,err,sizeof(err)):-1;
+ int outcome=-1;
+ if(w->mode==2){
+  outcome=rm_verify_run(w->verification,progress,w,err,sizeof(err));
+ }else{
+  rm_options options={0};
+  options.input=w->input;options.output_dir=w->out;
+  options.max_pages=12;options.max_depth=2;options.delay_ms=2000;
+  options.execute=1;options.authorized=1;
+  outcome=cat?rm_crawl(&options,cat,progress,w,err,sizeof(err)):-1;
+ }
  mutex_lock(w);
  w->catalog=cat;w->success=outcome==0;
  snprintf(w->error,sizeof(w->error),"%s",cat?err:"out of memory");
@@ -274,6 +279,7 @@ static void *worker(void *data)
 }
 static int start(work *w,const char *input){
  if(w->active)return -1;
+ w->mode=1;w->verification=NULL;
  snprintf(w->input,sizeof(w->input),"%s",input);
  snprintf(w->out,sizeof(w->out),".restmore");
  w->finished=0;w->active=1;w->success=0;
@@ -287,6 +293,22 @@ static int start(work *w,const char *input){
 #endif
  return 0;
 }
+/* The verification plan is detached from the UI before the worker can write to it. */
+static int start_verification(work *w,rm_verification *plan){
+ if(w->active||!plan||!plan->authorized)return -1;
+ w->mode=2;w->verification=plan;
+ snprintf(w->input,sizeof(w->input),"%s",plan->target.host);
+ w->finished=0;w->active=1;w->success=0;
+ w->catalog=NULL;w->error[0]=0;w->detail[0]=0;
+ snprintf(w->stage,sizeof(w->stage),"verifying");
+#ifdef _WIN32
+ w->thread=CreateThread(NULL,0,worker,w,0,NULL);
+ if(!w->thread){w->active=0;w->verification=NULL;return -1;}
+#else
+ if(pthread_create(&w->thread,NULL,worker,w)){w->active=0;w->verification=NULL;return -1;}
+#endif
+ return 0;
+}
 static void poll_work(app *ui){
  work *w=&ui->task;
  mutex_lock(w);int done=w->active&&w->finished;
@@ -297,8 +319,25 @@ static void poll_work(app *ui){
  pthread_join(w->thread,NULL);
 #endif
  mutex_lock(w);
- if(w->success){
+ if(w->mode==2){
+  free(ui->verification);
+  ui->verification=w->verification;w->verification=NULL;
+  ui->verify_stage=2;
+  if(w->success){
+   size_t passed=0,mismatch=0,partial=0;
+   for(size_t i=0;i<ui->verification->count;i++){
+    const rm_check *check=&ui->verification->checks[i];
+    if(check->outcome==1)passed++;
+    else if(check->outcome==2)partial++;
+    else if(check->outcome==3||check->outcome==4)mismatch++;
+   }
+   snprintf(ui->message,sizeof(ui->message),
+     "Verification: %zu matched, %zu status-only, %zu mismatched. See inspector.",
+     passed,partial,mismatch);
+  }else snprintf(ui->message,sizeof(ui->message),"Verification stopped: %.206s",w->error);
+ }else if(w->success){
   free(ui->catalog);ui->catalog=w->catalog;w->catalog=NULL;
+  free(ui->verification);ui->verification=NULL;ui->verify_stage=0;
   ui->selected=0;ui->scroll=0;
   snprintf(ui->message,sizeof(ui->message),"Archive complete. %zu sources, %zu operations.",
      ui->catalog->document_count,ui->catalog->operation_count);
@@ -359,6 +398,7 @@ static int load_catalog(app *ui){
   return -1;
  }
  free(ui->catalog);
+ free(ui->verification);ui->verification=NULL;ui->verify_stage=0;
  ui->catalog=cat;
  ui->selected=0;ui->scroll=0;ui->atlas_scroll=0;ui->view=0;
  snprintf(ui->message,sizeof(ui->message),"Loaded %d documented operations from local JSON",parsed);
@@ -690,7 +730,8 @@ int main(int argc,char **argv){
   pthread_join(ui->task.thread,NULL);
 #endif
   free(ui->task.catalog);
-  ui->task.catalog=NULL;
+  free(ui->task.verification);
+  ui->task.catalog=NULL;ui->task.verification=NULL;
   ui->task.active=0;
  }
 #ifdef _WIN32
@@ -699,6 +740,7 @@ int main(int argc,char **argv){
  pthread_mutex_destroy(&ui->task.mutex);
 #endif
  free(ui->catalog);
+ free(ui->verification);
  free(ui);
  if(FACE_OWNED)UnloadFont(FACE);
  CloseWindow();
