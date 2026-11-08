@@ -62,6 +62,7 @@ int main(void){
  assert(strstr(bytes,"\"authorized_by_this_export\":false")!=NULL);
  assert(strstr(bytes,"\"github_review_required\":true")!=NULL);
  assert(strstr(bytes,"\"hashes_reverified_by_this_export\":false")!=NULL);
+ assert(strstr(bytes,"\"target_ownership_verified\":false")!=NULL);
  assert(strstr(bytes,"\"source_sha256\":")!=NULL);
  assert(strstr(bytes,"/v1/people")!=NULL);
  assert(strstr(bytes,"\"GET\":2")!=NULL);
