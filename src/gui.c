@@ -2,6 +2,9 @@
  * Desktop, Android and iOS use the same source. No embedded browser. */
 #include "restmore/restmore.h"
 #include "raylib.h"
+#ifndef RESTMORE_NETWORK_ENABLED
+#define RESTMORE_NETWORK_ENABLED 1
+#endif
 #include <ctype.h>
 #include <math.h>
 #include <stdio.h>
@@ -247,31 +250,59 @@ static void poll_work(app *ui){
  }
  w->active=0;w->finished=0;mutex_unlock(w);
 }
+
 static int load_catalog(app *ui){
+ size_t length=0;
+ char *src=NULL;
  FILE *f=fopen(ui->filename,"rb");
- if(!f){snprintf(ui->message,sizeof(ui->message),"Cannot open local JSON file");return -1;}
- if(fseek(f,0,SEEK_END)){fclose(f);return -1;}
- long size=ftell(f);
- if(size<0||(unsigned long)size>RM_MAX_DOCUMENT_BYTES){fclose(f);snprintf(ui->message,sizeof(ui->message),"JSON file exceeds 2 MiB");return -1;}
- rewind(f);
- char *src=(char *)malloc((size_t)size+1);rm_catalog *cat=(rm_catalog *)calloc(1,sizeof(*cat));
- if(!src||!cat){free(src);free(cat);fclose(f);return -1;}
- int success=fread(src,1,(size_t)size,f)==(size_t)size;fclose(f);
- src[size]=0;
- char error[256]={0};int parsed=-1;
- if(success){
-  if(strstr(src,"\"openapi\"")){
-   char sha[65];rm_sha256(src,(size_t)size,sha);
-   parsed=rm_openapi_import(cat,ui->filename,sha,src,(size_t)size,error,sizeof(error));
-  }else parsed=rm_catalog_import_json(cat,src,(size_t)size,error,sizeof(error));
+ if(f){
+  if(fseek(f,0,SEEK_END)){fclose(f);return -1;}
+  long n=ftell(f);
+  if(n<0||(unsigned long)n>RM_MAX_DOCUMENT_BYTES){fclose(f);snprintf(ui->message,sizeof(ui->message),"JSON source exceeds 2 MiB");return -1;}
+  rewind(f);
+  length=(size_t)n;
+  src=(char *)malloc(length+1);
+  if(!src){fclose(f);return -1;}
+  if(fread(src,1,length,f)!=length){free(src);fclose(f);return -1;}
+  fclose(f);
+ }else if(!strcmp(ui->filename,"examples/openapi-petstore.json")){
+  /* The same C GUI can read this bundled, known-small example through
+     raylib's Android AssetManager, without any Java/Kotlin application code. */
+  int asset_bytes=0;
+  unsigned char *asset=LoadFileData(ui->filename,&asset_bytes);
+  if(!asset||asset_bytes<0||(unsigned)asset_bytes>RM_MAX_DOCUMENT_BYTES){
+   if(asset)UnloadFileData(asset);
+   snprintf(ui->message,sizeof(ui->message),"Bundled sample could not be read");
+   return -1;
+  }
+  length=(size_t)asset_bytes;
+  src=(char *)malloc(length+1);
+  if(src)memcpy(src,asset,length);
+  UnloadFileData(asset);
+  if(!src)return -1;
+ }else{
+  snprintf(ui->message,sizeof(ui->message),"Cannot open source JSON; choose a readable local file");
+  return -1;
  }
+ src[length]=0;
+ rm_catalog *cat=(rm_catalog *)calloc(1,sizeof(*cat));
+ if(!cat){free(src);return -1;}
+ char error[256]={0};
+ char sha[65];
+ rm_sha256(src,length,sha);
+ int parsed=rm_catalog_import_json(cat,src,length,error,sizeof(error));
  free(src);
- if(!success||parsed<0){free(cat);snprintf(ui->message,sizeof(ui->message),"Import refused: %.214s",success?error:"read error");return -1;}
- free(ui->catalog);ui->catalog=cat;ui->selected=0;ui->scroll=0;
+ if(parsed<0){
+  free(cat);
+  snprintf(ui->message,sizeof(ui->message),"Import refused: %.214s",error);
+  return -1;
+ }
+ free(ui->catalog);
+ ui->catalog=cat;
+ ui->selected=0;ui->scroll=0;ui->atlas_scroll=0;ui->view=0;
  snprintf(ui->message,sizeof(ui->message),"Loaded %d documented operations from local JSON",parsed);
  return 0;
 }
-
 static void draw_brand(int width){
  DrawRectangle(0,0,width,94,(Color){9,20,33,255});
  DrawRectangleGradientH(0,0,width,4,MINT,AQUA);
@@ -324,7 +355,7 @@ static void draw_scope(app *ui,Rectangle area,int busy){
  textx("AUTHORIZED TO INSPECT",x+44,y+17,13,RM_WHITE);
  textx("HTTPS docs only. No methods executed.",x+12,y+53,12,MUTED);
  y+=103;
- if(button((Rectangle){(float)x,(float)y,(float)inner,48},"BUILD SOURCE LIBRARY",MINT,!busy&&ui->consent)){
+ if(button((Rectangle){(float)x,(float)y,(float)inner,48},"BUILD SOURCE LIBRARY",MINT,!busy&&ui->consent&&RESTMORE_NETWORK_ENABLED)){
   rm_target target;char error[256]={0};
   if(rm_normalize(ui->domain,&target,error,sizeof(error)))
    snprintf(ui->message,sizeof(ui->message),"Scope refused: %.200s",error);
@@ -344,7 +375,7 @@ static void draw_scope(app *ui,Rectangle area,int busy){
  y+=63;
  rule((float)x,(float)y,(float)inner);y+=20;
  textx("SAFE BY DEFAULT",x,y,12,MINT);y+=23;
- textx("Capped pages / robots-aware / same host",x,y,12,MUTED);y+=21;
+ textx(RESTMORE_NETWORK_ENABLED?"Capped pages / robots-aware / same host":"Offline preview build / network disabled",x,y,12,MUTED);y+=21;
  textx("Document metadata is never executed.",x,y,12,MUTED);
  EndScissorMode();
  if(maxscroll>0){
