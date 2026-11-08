@@ -16,6 +16,7 @@ add_library(restmore STATIC
   src/json.c
   src/catalog.c
   src/exports.c
+  src/verification.c
 )
 target_include_directories(restmore PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
