@@ -2,6 +2,23 @@
 
 This changelog separates shipped and verified artifacts from platform support that still requires packaging and device testing.
 
+## [v0.1.0-alpha.5](https://github.com/bspippi1337/restmore/releases/tag/v0.1.0-alpha.5) · 2026-11-08
+
+**Architectural Edition / From concept sketch to working product.**
+
+- Rebuilt the README as an editorial product introduction, with original architectural SVG plates, native downloads and an immediately usable C11 quickstart.
+- Added [ABOUT.md](ABOUT.md) with positioning, target audiences, verified limitations and copy-ready GitHub sidebar metadata. The connected GitHub integration cannot update the repository's actual About description/homepage/topics.
+- Drew original vector plates: the RESTMORE mark, architect's pencil arch, mountain elevation, full three-panel console, orbital API operation map and provenance ledger.
+- Built a complete [illustrated field guide](docs/field-guide.html) and companion [product page](docs/product.html), accessible HTML with local styling and no outside dependencies.
+- Redesigned the GitHub Pages homepage with the architectural artwork, product narrative, native-console illustration and release links.
+- Upgraded the interactive **synthetic** web demo: clickable and keyboard-accessible nodes and routes, real map/list switching, a source inspector and a copyable illustrative request template. This is explicitly not a browser-based network crawler.
+- Added vector drafting marks and an original line-drawn architectural arch directly to the native C11/raylib GUI. Windows, Linux and macOS native GUI CI passed, along with ARM64 Android NativeActivity packaging.
+- Distributed the complete self-contained `docs/` folder in desktop release ZIPs, including the illustrated guide and original SVG plates.
+- Tightened the GitHub Pages QA workflow with JavaScript syntax validation and referenced-asset checks.
+- All five Alpha 5 release jobs passed: Windows HTTPS, Linux, macOS, Android debug APK and publishing with SHA-256 checksums. GitHub Pages deployment also succeeded.
+
+**Boundaries:** The Android APK is still an offline debug preview, not physically device-verified or store-signed. There is no installable iOS IPA. Static topology plates depict illustrative data, not live scan findings.
+
 ## [v0.1.0-alpha.4](https://github.com/bspippi1337/restmore/releases/tag/v0.1.0-alpha.4) · 2026-11-08
 
 **Native mobile ergonomics follow-up.**
