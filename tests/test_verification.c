@@ -34,6 +34,20 @@ int main(void){
  assert(cat->operations[1].expected_status==204);
  assert(rm_verify_plan(cat,"api.example.org",plan,error,sizeof(error))==0);
  assert(plan->count==2);
+ /* Structured report exports only declared routes, expectations and verdicts. */
+ assert(rm_verify_report(plan,"restmore-verification-test.json",error,sizeof(error))==0);
+ FILE *report=fopen("restmore-verification-test.json","rb");assert(report);
+ assert(fseek(report,0,SEEK_END)==0);long report_n=ftell(report);assert(report_n>120);
+ rewind(report);char *report_bytes=malloc((size_t)report_n+1);assert(report_bytes);
+ assert(fread(report_bytes,1,(size_t)report_n,report)==(size_t)report_n);
+ fclose(report);report_bytes[report_n]=0;
+ assert(rm_json_valid(report_bytes,(size_t)report_n));
+ assert(strstr(report_bytes,"\"github_review_acknowledged\":false")!=NULL);
+ assert(strstr(report_bytes,"\"explicit_authorization\":false")!=NULL);
+ assert(strstr(report_bytes,"\"expected_status\":200")!=NULL);
+ free(report_bytes);
+ assert(remove("restmore-verification-test.json")==0);
+
  assert(plan->authorized==0 && plan->github_reviewed==0);
  assert(plan->source_bound==1);
  assert(!strcmp(plan->checks[0].path,"/v1/pets"));
