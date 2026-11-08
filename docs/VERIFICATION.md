@@ -39,7 +39,7 @@ Results distinguish **MATCH** from **STATUS ONLY**, **MISMATCH**, **SKIPPED** an
 - Remote HTTP 429 or 5xx stops the run without retry. Response bodies are analyzed transiently and discarded, **not stored**.
 - On an offline Android build (`RESTMORE_NETWORK=OFF`) verification network execution is disabled. The GitHub review step and local catalog visualization can still be used.
 
-A host match is shown explicitly, but **GitHub search does not establish domain ownership or legal authorization**. Follow your organization's rules and only check targets you have permission to inspect.
+The native Authorize control stays **disabled until the atlas identifies the selected domain**. For a local OpenAPI file, a public root-origin `servers[].url` can supply that binding; a random sample spec cannot. A matching host still does not establish permission: **GitHub search does not prove domain ownership or legal authorization**. Follow your organization's rules and only check targets you have permission to inspect.
 
 ## Response contracts in the library
 
