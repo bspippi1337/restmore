@@ -3,6 +3,7 @@
 #include "restmore/restmore.h"
 #include "raylib.h"
 #include <ctype.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -30,81 +31,132 @@ typedef struct {
  work task;
  char domain[RM_MAX_URL],filename[512],message[256];
  int consent,focus,tab,selected;
- float scroll;
+ float scroll,scope_scroll,atlas_scroll;
+ int view;
 } app;
-static const Color BG={11,17,23,255},PANEL={22,31,40,255},PANEL2={27,40,49,255};
-static const Color RM_WHITE={238,245,236,255},MUTED={148,167,171,255};
-static const Color MINT={184,243,153,255},AQUA={106,214,196,255};
-static const Color BORDER={49,66,73,255},RM_ORANGE={251,185,120,255};
-static void mutex_init(work *w){
-#ifdef _WIN32
- InitializeCriticalSection(&w->mutex);
-#else
- pthread_mutex_init(&w->mutex,NULL);
-#endif
+
+/* RESTMORE / visual system v2: calm dark surfaces, mint evidence, deliberate density.
+   All drawing is vector/native raylib; no browser or embedded web assets. */
+static const Color BG={7,16,27,255},PANEL={14,27,43,255},PANEL2={24,44,62,255};
+static const Color RM_WHITE={238,249,247,255},MUTED={150,173,190,255};
+static const Color MINT={121,249,220,255},AQUA={94,190,226,255};
+static const Color BORDER={39,62,82,255},RM_ORANGE={232,190,116,255};
+static const Color CORAL={255,146,135,255},PURPLE={177,163,255,255};
+static Font FACE={0};
+static int FACE_OWNED=0;
+static float UI_SCALE=1.0f;
+static Vector2 pointer(void){Vector2 p=GetMousePosition();return (Vector2){p.x/UI_SCALE,p.y/UI_SCALE};}
+static int textwidth(const char *str,int px){
+ return (int)MeasureTextEx(FACE,str?str:"",(float)px,1.0f).x;
 }
-static void mutex_lock(work *w){
-#ifdef _WIN32
- EnterCriticalSection(&w->mutex);
-#else
- pthread_mutex_lock(&w->mutex);
-#endif
+static void textx(const char *str,int x,int y,int px,Color color){
+ DrawTextEx(FACE,str?str:"",(Vector2){(float)x,(float)y},(float)px,1.0f,color);
 }
-static void mutex_unlock(work *w){
-#ifdef _WIN32
- LeaveCriticalSection(&w->mutex);
-#else
- pthread_mutex_unlock(&w->mutex);
-#endif
-}
-static void textx(const char *text,int x,int y,int font,Color color){
- DrawText(text?text:"",x,y,font,color);
-}
-static void card(Rectangle r,Color background){
- DrawRectangleRounded(r,0.14f,10,background);
- DrawRectangleRoundedLinesEx(r,0.14f,10,1,BORDER);
-}
-static int hit(Rectangle r){return CheckCollisionPointRec(GetMousePosition(),r);}
-static int button(Rectangle r,const char *caption,Color color,int enabled){
- Color fill=enabled?(hit(r)?Fade(color,0.29f):Fade(color,0.17f)):Fade(PANEL2,0.65f);
- DrawRectangleRounded(r,0.20f,8,fill);
- DrawRectangleRoundedLinesEx(r,0.20f,8,1,enabled?color:BORDER);
- int tw=MeasureText(caption,17);
- textx(caption,(int)(r.x+(r.width-tw)/2),(int)(r.y+(r.height-17)/2),17,enabled?RM_WHITE:MUTED);
- return enabled&&hit(r)&&IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
-}
-static void line(int x,int y,int width,const char *caption){
- textx(caption,x,y,width,MUTED);
-}
-static void inputbox(Rectangle r,char *dest,size_t cap,int *focused,int id,int enabled){
- DrawRectangleRounded(r,0.14f,8,hit(r)?PANEL2:PANEL);
- DrawRectangleRoundedLinesEx(r,0.14f,8,1,*focused==id?AQUA:BORDER);
- BeginScissorMode((int)r.x+8,(int)r.y+3,(int)r.width-16,(int)r.height-6);
- const char *shown=dest;
- int n=(int)strlen(dest);
- while(n>0&&MeasureText(shown,17)>r.width-26){shown++;n--;}
- textx(shown,(int)r.x+12,(int)r.y+12,17,RM_WHITE);
- EndScissorMode();
- if(enabled&&hit(r)&&IsMouseButtonPressed(MOUSE_BUTTON_LEFT))*focused=id;
- if(!enabled||*focused!=id)return;
- int ch=GetCharPressed();
- while(ch>0){
-  size_t len=strlen(dest);
-  if(ch>=32&&ch<127&&len+1<cap){dest[len]=(char)ch;dest[len+1]=0;}
-  ch=GetCharPressed();
+static void cut_text(const char *s,char *out,size_t cap,int pixels,int font){
+ if(!cap)return;
+ snprintf(out,cap,"%s",s?s:"");
+ while(out[0]&&textwidth(out,font)>pixels){
+  size_t n=strlen(out);
+  if(n<=3){out[0]=0;break;}
+  out[n-1]=0;
  }
- if(IsKeyPressed(KEY_BACKSPACE)){size_t len=strlen(dest);if(len)dest[len-1]=0;}
- if(IsKeyPressed(KEY_ENTER))*focused=0;
- if(IsKeyDown(KEY_LEFT_CONTROL)&&IsKeyPressed(KEY_V)){
-  const char *clip=GetClipboardText();if(clip&&strlen(clip)<cap)snprintf(dest,cap,"%s",clip);
+ if(s&&strcmp(out,s)&&strlen(out)+3<cap)strcat(out,"...");
+}
+static void init_type(void){
+ const char *fonts[]={
+#ifdef _WIN32
+ "C:/Windows/Fonts/segoeui.ttf","C:/Windows/Fonts/arial.ttf",
+#elif defined(__APPLE__)
+ "/System/Library/Fonts/Supplemental/Arial.ttf",
+ "/System/Library/Fonts/Supplemental/Helvetica.ttf",
+#else
+ "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+ "/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf",
+#endif
+ NULL};
+ FACE=GetFontDefault();
+ for(int i=0;fonts[i];i++){
+  if(!FileExists(fonts[i]))continue;
+  Font candidate=LoadFontEx(fonts[i],48,NULL,0);
+  if(candidate.texture.id!=0){
+   FACE=candidate;FACE_OWNED=1;
+   SetTextureFilter(FACE.texture,TEXTURE_FILTER_BILINEAR);
+   break;
+  }
+ }
+}
+static void panel(Rectangle r,Color fill){
+ DrawRectangleRounded((Rectangle){r.x+4,r.y+6,r.width,r.height},.045f,8,Fade(BLACK,.17f));
+ DrawRectangleRounded(r,.045f,8,fill);
+ DrawRectangleRoundedLinesEx(r,.045f,8,1,BORDER);
+}
+static void card(Rectangle r,Color fill){panel(r,fill);}
+static void glyph_line(float x1,float y1,float x2,float y2,float weight,Color color){
+ DrawLineEx((Vector2){x1,y1},(Vector2){x2,y2},weight,color);
+}
+static void rule(float x,float y,float width){glyph_line(x,y,x+width,y,1,BORDER);}
+static int hit(Rectangle r){return CheckCollisionPointRec(pointer(),r);}
+static int clicked(Rectangle r){return hit(r)&&IsMouseButtonPressed(MOUSE_BUTTON_LEFT);}
+static void label(int x,int y,const char *s){textx(s,x,y,11,MUTED);}
+static void method_pill(const char *verb,float x,float y,int width);
+static int button(Rectangle r,const char *caption,Color color,int enabled){
+ int over=enabled&&hit(r),press=over&&IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+ Color fill=enabled?(over?Fade(color,.25f):Fade(color,.12f)):Fade(PANEL2,.5f);
+ DrawRectangleRounded(r,.12f,8,fill);
+ DrawRectangleRoundedLinesEx(r,.12f,8,1,enabled?Fade(color,.8f):BORDER);
+ int px=r.width<85?11:r.width<132?13:15;
+ int tw=textwidth(caption,px);
+ textx(caption,(int)(r.x+(r.width-tw)*.5f),(int)(r.y+(r.height-px)*.5f)-2,px,enabled?RM_WHITE:MUTED);
+ return press;
+}
+static void scissor(Rectangle r){
+ BeginScissorMode((int)(r.x*UI_SCALE),(int)(r.y*UI_SCALE),
+  (int)(r.width*UI_SCALE),(int)(r.height*UI_SCALE));
+}
+static void inputbox(Rectangle r,char *dest,size_t cap,int *focus,int id,int enabled){
+ int active=*focus==id;
+ DrawRectangleRounded(r,.1f,8,hit(r)?PANEL2:PANEL);
+ DrawRectangleRoundedLinesEx(r,.1f,8,active?2:1,active?MINT:BORDER);
+ scissor((Rectangle){r.x+8,r.y+3,r.width-16,r.height-6});
+ const char *visible=dest;while(*visible&&textwidth(visible,15)>r.width-28)visible++;
+ textx(visible,(int)r.x+13,(int)r.y+13,15,RM_WHITE);
+ EndScissorMode();
+ if(enabled&&clicked(r))*focus=id;
+ if(!enabled||*focus!=id)return;
+ for(int c=GetCharPressed();c>0;c=GetCharPressed()){
+  size_t n=strlen(dest);
+  if(c>=32&&c<127&&n+1<cap){dest[n]=(char)c;dest[n+1]=0;}
+ }
+ if(IsKeyPressed(KEY_BACKSPACE)){size_t n=strlen(dest);if(n)dest[n-1]=0;}
+ if(IsKeyPressed(KEY_ENTER)||IsKeyPressed(KEY_ESCAPE))*focus=0;
+ if((IsKeyDown(KEY_LEFT_CONTROL)||IsKeyDown(KEY_RIGHT_CONTROL)||IsKeyDown(KEY_LEFT_SUPER)||IsKeyDown(KEY_RIGHT_SUPER))&&IsKeyPressed(KEY_V)){
+  const char *clip=GetClipboardText();
+  if(clip&&strlen(clip)<cap)snprintf(dest,cap,"%s",clip);
  }
 }
 static Color method_color(const char *verb){
  if(!strcmp(verb,"GET"))return MINT;
- if(!strcmp(verb,"POST"))return AQUA;
- if(!strcmp(verb,"DELETE"))return RM_ORANGE;
- if(!strcmp(verb,"PUT")||!strcmp(verb,"PATCH"))return (Color){219,175,255,255};
- return MUTED;
+ if(!strcmp(verb,"POST"))return RM_ORANGE;
+ if(!strcmp(verb,"DELETE"))return CORAL;
+ if(!strcmp(verb,"PUT")||!strcmp(verb,"PATCH"))return PURPLE;
+ return AQUA;
+}
+static void method_pill(const char *verb,float x,float y,int width){
+ Color c=method_color(verb);
+ DrawRectangleRounded((Rectangle){x,y,(float)width,27},.19f,6,Fade(c,.12f));
+ DrawRectangleRoundedLinesEx((Rectangle){x,y,(float)width,27},.19f,6,Fade(c,.6f));
+ textx(verb,(int)x+9,(int)y+7,12,c);
+}
+static void orbital(float cx,float cy,float radius,float time){
+ DrawCircleLines((int)cx,(int)cy,(int)radius,Fade(MINT,.2f));
+ DrawCircleLines((int)cx,(int)cy,(int)(radius*.70f),Fade(AQUA,.14f));
+ DrawCircleLines((int)cx,(int)cy,(int)(radius*.40f),Fade(MINT,.17f));
+ glyph_line(cx-radius-16,cy,cx+radius+16,cy,1,Fade(AQUA,.13f));
+ glyph_line(cx,cy-radius-16,cx,cy+radius+16,1,Fade(AQUA,.13f));
+ float a=time*.20f;
+ Vector2 s={cx+cosf(a)*radius,cy+sinf(a)*radius};
+ DrawCircleV(s,4,MINT);
+ DrawCircleV(s,10,Fade(MINT,.13f));
 }
 static void progress(const char *event,const char *detail,void *context){
  work *w=(work *)context;mutex_lock(w);
