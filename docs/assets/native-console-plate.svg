@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1380 780" role="img" aria-labelledby="title desc"><title id="title">RESTMORE / native atlas console</title><desc id="desc">Illustrative three-panel RESTMORE desktop GUI with acquisition desk, four demo petstore operations mapped on an orbital atlas, and an inspector displaying a declared GET route. Schematic, not a live scan or actual screenshot.</desc>
+<defs>
+  <linearGradient id="panel"><stop stop-color="#11283a"/><stop offset="1" stop-color="#0a1725"/></linearGradient>
+  <linearGradient id="top" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#79f9dc"/><stop offset="1" stop-color="#5ebee2"/></linearGradient>
+  <radialGradient id="aura"><stop stop-color="#255f61" stop-opacity=".42"/><stop offset="1" stop-color="#07101b" stop-opacity="0"/></radialGradient>
+  <pattern id="grid" width="36" height="36" patternUnits="userSpaceOnUse"><path d="M36 0H0V36" stroke="#406476" stroke-width=".5" opacity=".26" fill="none"/></pattern>
+  <pattern id="hatch" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(32)"><path d="M0 0V9" stroke="#79f9dc" stroke-width=".8" opacity=".26"/></pattern>
+  <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="5"/></filter>
+</defs>
+<rect width="1380" height="780" rx="18" fill="#07101b"/><rect width="1380" height="780" rx="18" fill="url(#grid)"/>
+<rect x="3" y="3" width="1374" height="774" rx="18" fill="none" stroke="#79f9dc" stroke-width="1.5" opacity=".7"/>
+<path d="M0 5H1380" stroke="url(#top)" stroke-width="5"/>
+<rect x="25" y="23" width="60" height="58" rx="10" fill="#0b2631" stroke="#79f9dc"/>
+<path d="M38 65 51 40 63 63 75 35" fill="none" stroke="#79f9dc" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="75" cy="35" r="4" fill="#79f9dc"/>
+<text x="101" y="52" fill="#eef9f7" font-size="32" letter-spacing="5" font-weight="650" font-family="Arial,sans-serif">RESTMORE</text>
+<text x="102" y="76" fill="#9eb8c3" font-size="11.5" letter-spacing="1.5" font-family="monospace">NATIVE API CARTOGRAPHY  /  ISO C11  /  EVIDENCE BEFORE ASSUMPTIONS</text>
+<rect x="1091" y="30" width="261" height="40" rx="6" fill="#122d35" stroke="#79f9dc" stroke-opacity=".7"/>
+<text x="1110" y="54" fill="#79f9dc" font-family="monospace" font-size="14" letter-spacing="1.3">C11 / RESTLESS EDITION</text>
+<path d="M24 96H1355" stroke="#426271"/>
+<g><rect x="19" y="116" width="337" height="594" rx="12" fill="url(#panel)" stroke="#446478"/><rect x="374" y="116" width="632" height="594" rx="12" fill="url(#panel)" stroke="#446478"/><rect x="1024" y="116" width="336" height="594" rx="12" fill="url(#panel)" stroke="#446478"/></g>
+<rect x="350" y="142" width="3" height="530" fill="#79f9dc" opacity=".68"/><rect x="1355" y="141" width="3" height="530" fill="#79f9dc" opacity=".55"/>
+<g font-family="monospace" fill="#96acbf" font-size="12" letter-spacing="1">
+<text x="42" y="150">01 / ACQUISITION DESK</text><text x="398" y="150">03 / OPERATION ATLAS</text><text x="1047" y="150">04 / SOURCE INTELLIGENCE</text></g>
+<g fill="url(#hatch)"><rect x="260" y="141" width="71" height="10"/><rect x="609" y="141" width="76" height="10"/><rect x="1251" y="141" width="82" height="10"/></g>
+<g font-family="Arial,sans-serif" font-weight="600" font-size="28" fill="#eff9f6"><text x="42" y="191">Map a service.</text><text x="398" y="191">Operation Atlas</text><text x="1047" y="191">Source Intelligence</text></g>
+<text x="42" y="219" font-family="monospace" font-size="14" fill="#afc7d0">Start with an authorized source.</text>
+<text x="398" y="219" font-family="monospace" font-size="12" fill="#afc7d0">4 documented operations / demo specification</text>
+<path d="M40 238H332M395 238H981M1046 238H1336" stroke="#31546a"/>
+<text x="42" y="269" font-family="monospace" font-size="12" fill="#a4bfcc">HTTPS ORIGIN / DOCUMENTATION URL</text>
+<rect x="42" y="283" width="289" height="47" rx="4" fill="#071522" stroke="#416779"/>
+<text x="55" y="311" fill="#eef9f7" font-family="monospace" font-size="15">docs.example.org</text>
+<rect x="42" y="348" width="289" height="44" rx="5" fill="#14363a" stroke="#79f9dc"/>
+<text x="186" y="375" text-anchor="middle" fill="#d1ffef" font-family="monospace" font-size="14" letter-spacing="1.5">PREVIEW SCOPE</text>
+<rect x="42" y="409" width="289" height="79" rx="5" fill="#102c35" stroke="#426b72"/>
+<rect x="56" y="423" width="22" height="22" rx="3" fill="none" stroke="#79f9dc"/><path d="m61 432 5 6 9-12" stroke="#79f9dc" stroke-width="2.5" fill="none"/>
+<text x="90" y="437" fill="#eff9f6" font-family="monospace" font-size="13">AUTHORIZED TO INSPECT</text>
+<text x="56" y="464" fill="#a5bac4" font-family="monospace" font-size="11.3">Docs only. No method execution.</text>
+<rect x="42" y="501" width="289" height="43" rx="5" fill="#102a38" stroke="#4d7a89"/>
+<text x="186" y="529" text-anchor="middle" fill="#e5f3f1" font-family="monospace" font-size="13" letter-spacing=".7">BUILD SOURCE LIBRARY</text>
+<path d="M42 563H331" stroke="#355667"/>
+<text x="42" y="591" font-family="monospace" fill="#96acbf" font-size="11.8">02 / OFFLINE INGEST</text>
+<text x="42" y="625" font-family="Arial,sans-serif" fill="#eef9f7" font-size="23" font-weight="600">Import an atlas.</text>
+<text x="42" y="652" font-family="monospace" fill="#a5bac4" font-size="12">OPENAPI JSON / LOCAL SOURCE</text>
+<rect x="42" y="663" width="289" height="29" rx="3" fill="#081827" stroke="#416779"/>
+<text x="52" y="683" font-family="monospace" font-size="11.8" fill="#d1e9e4">examples/openapi-petstore.json</text>
+<!-- CENTER / ORBITAL MAP -->
+<rect x="804" y="157" width="85" height="32" rx="4" fill="#163b40" stroke="#79f9dc"/><rect x="898" y="157" width="86" height="32" rx="4" fill="#0a2230" stroke="#50788a"/>
+<text x="846" y="178" text-anchor="middle" font-family="monospace" fill="#d5fdef" font-size="12">MAP</text><text x="941" y="178" text-anchor="middle" font-family="monospace" fill="#a4c0cb" font-size="12">ROUTES</text>
+<rect x="391" y="257" width="598" height="430" fill="url(#grid)" opacity=".7"/>
+<circle cx="696" cy="440" r="255" fill="url(#aura)"/>
+<g fill="none" stroke="#5a8797" stroke-width="1"><circle cx="696" cy="440" r="205" stroke-dasharray="3 7" opacity=".4"/><circle cx="696" cy="440" r="167" opacity=".45"/><circle cx="696" cy="440" r="120" stroke-dasharray="4 7" opacity=".6"/><circle cx="696" cy="440" r="78" opacity=".6"/><path d="M422 440H970M696 250V641" opacity=".38"/></g>
+<path d="M696 250C806 251 885 336 891 440" stroke="#79f9dc" opacity=".68" fill="none" stroke-width="2"/>
+<circle cx="696" cy="440" r="46" fill="#0e3037" stroke="#79f9dc" stroke-width="2.5"/><text x="696" y="449" text-anchor="middle" font-size="24" font-family="monospace" fill="#e0fcf3">API</text>
+<path d="M696 440L696 250" stroke="#426372" stroke-width="1.5" opacity=".65"/><circle cx="696" cy="250" r="13" fill="#0a2531" stroke="#79f9dc" stroke-width="2"/><circle cx="696" cy="250" r="5" fill="#79f9dc"/><text x="719" y="240" font-family="monospace" font-size="14" fill="#e1f1ed">GET /v1/pets</text><path d="M696 440L891 440" stroke="#426372" stroke-width="1.5" opacity=".65"/><circle cx="891" cy="440" r="13" fill="#0a2531" stroke="#e9c078" stroke-width="2"/><circle cx="891" cy="440" r="5" fill="#e9c078"/><text x="911" y="427" font-family="monospace" font-size="14" fill="#e1f1ed">POST /v1/pets</text><path d="M696 440L499 440" stroke="#426372" stroke-width="1.5" opacity=".65"/><circle cx="499" cy="440" r="13" fill="#0a2531" stroke="#5ebee2" stroke-width="2"/><circle cx="499" cy="440" r="5" fill="#5ebee2"/><text x="344" y="422" font-family="monospace" font-size="14" fill="#e1f1ed">GET /v1/pets/{petId}</text><path d="M696 440L696 610" stroke="#426372" stroke-width="1.5" opacity=".65"/><circle cx="696" cy="610" r="13" fill="#0a2531" stroke="#ff9387" stroke-width="2"/><circle cx="696" cy="610" r="5" fill="#ff9387"/><text x="717" y="620" font-family="monospace" font-size="14" fill="#e1f1ed">DELETE /v1/pets/{petId}</text>
+<g font-family="monospace" font-size="10.5" fill="#91acb9"><text x="401" y="685">● OBSERVED / DOCUMENTED / NO REQUEST EXECUTION</text><text x="860" y="682">PLATE 03 / DEMO</text></g>
+<!-- RIGHT INSPECTOR -->
+<rect x="1047" y="262" width="71" height="34" rx="5" fill="#133c3b" stroke="#79f9dc"/><text x="1082" y="283" text-anchor="middle" fill="#79f9dc" font-family="monospace" font-size="15">GET</text>
+<text x="1133" y="284" fill="#eef9f7" font-family="monospace" font-size="17">/v1/pets</text>
+<path d="M1046 315H1337M1046 388H1337M1046 462H1337M1046 536H1337" stroke="#3d6070"/>
+<g font-family="monospace" font-size="11.2" fill="#9fb7c2"><text x="1048" y="340">DOCUMENTED PATH</text><text x="1048" y="412">SUMMARY</text><text x="1048" y="488">OPERATION IDENTIFIER</text><text x="1048" y="562">SOURCE / PROVENANCE</text></g>
+<g font-family="monospace" font-size="15" fill="#eff8f4"><text x="1048" y="366">/v1/pets</text><text x="1048" y="438">List documented pets</text><text x="1048" y="515">listPets</text><text x="1048" y="586">local OpenAPI JSON</text></g>
+<text x="1048" y="613" font-family="monospace" font-size="11" fill="#a3bdc7">SHA-256 / SOURCE FINGERPRINT</text>
+<text x="1048" y="635" font-family="monospace" font-size="12" fill="#79f9dc">CALCULATED ON IMPORT</text>
+<rect x="1047" y="647" width="290" height="40" rx="5" fill="#133638" stroke="#79f9dc"/>
+<text x="1192" y="672" text-anchor="middle" fill="#f0faf7" font-size="12.5" font-family="monospace">COPY REQUEST TEMPLATE</text>
+<path d="M22 723H1357" stroke="#3f6675"/>
+<text x="35" y="753" fill="#aabfc7" font-family="monospace" font-size="12">4 DOCUMENTED SAMPLE OPERATIONS / NO NETWORK ACTIVITY</text>
+<text x="1161" y="753" fill="#79f9dc" font-family="monospace" font-size="12.5">RESTMORE / 0042</text>
+<path d="M12 24H29M20 15V32M1350 24H1367M1358 15V32M12 754H29M20 746V763M1350 754H1367M1358 746V763" stroke="#aad1cd" stroke-width="1" opacity=".7"/>
+</svg>
