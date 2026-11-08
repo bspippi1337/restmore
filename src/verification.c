@@ -54,6 +54,7 @@ int rm_verify_plan(const rm_catalog *catalog,const char *domain,rm_verification 
   snprintf(item->path,sizeof(item->path),"%s",op->path);
   snprintf(item->source_sha256,sizeof(item->source_sha256),"%s",op->source_sha256);
   snprintf(item->expected_content_type,sizeof(item->expected_content_type),"%s",op->expected_content_type);
+  snprintf(item->expected_json_type,sizeof(item->expected_json_type),"%s",op->expected_json_type);
   item->expected_status=op->expected_status;
   if(!plan->source_bound && op->source_url[0]){
    rm_target src={0};
