@@ -737,8 +737,17 @@ static void graph(app *ui,Rectangle area){
 static void inspector(app *ui,Rectangle area){
  panel(area,PANEL);
  if(area.width<220||area.height<210)return;
- float maxscroll=fmaxf(0,1020-area.height+25);
- if(hit(area))ui->atlas_scroll-=GetMouseWheelMove()*45+TOUCH_DY;
+ size_t check_rows=ui->verification&&ui->verify_stage==2?
+                   ui->verification->count:0;
+ float content_height=fmaxf(1020.0f,670.0f+47.0f*(float)check_rows);
+ float maxscroll=fmaxf(0,content_height-area.height+25);
+ if(hit(area)){
+  ui->atlas_scroll-=GetMouseWheelMove()*45+TOUCH_DY;
+  if(IsKeyPressed(KEY_PAGE_DOWN))ui->atlas_scroll+=area.height*.8f;
+  if(IsKeyPressed(KEY_PAGE_UP))ui->atlas_scroll-=area.height*.8f;
+  if(IsKeyPressed(KEY_HOME))ui->atlas_scroll=0;
+  if(IsKeyPressed(KEY_END))ui->atlas_scroll=maxscroll;
+ }
  if(ui->atlas_scroll<0)ui->atlas_scroll=0;
  if(ui->atlas_scroll>maxscroll)ui->atlas_scroll=maxscroll;
  int x=(int)area.x+22,y=(int)(area.y+23-ui->atlas_scroll),inner=(int)area.width-44;
@@ -796,6 +805,10 @@ static void inspector(app *ui,Rectangle area){
   textx(shortheading,x,y,12,MINT);y+=25;
   for(size_t i=0;i<ui->verification->count;i++){
    const rm_check *check=&ui->verification->checks[i];
+   /* Large authorized plans remain responsive: only paint visible rows. */
+   if(y+47<(int)area.y||y>(int)(area.y+area.height)){
+    y+=47;continue;
+   }
    char route[RM_MAX_PATH],status[96];
    cut_text(check->path,route,sizeof(route),inner-8,13);
    textx(route,x,y,13,RM_WHITE);y+=19;
@@ -827,7 +840,8 @@ static void inspector(app *ui,Rectangle area){
  textx("No fuzzing, mutation, or credential replay.",x,y,11,MUTED);
  EndScissorMode();
  if(maxscroll>0){
-  float track=area.height-32,thumb=track*area.height/(1020+25);
+  float track=area.height-32;
+  float thumb=fmaxf(14.0f,track*area.height/(content_height+25));
   DrawRectangleRounded((Rectangle){area.x+area.width-6,area.y+16,3,track},1,6,Fade(MUTED,.14f));
   DrawRectangleRounded((Rectangle){area.x+area.width-6,area.y+16+ui->atlas_scroll/maxscroll*(track-thumb),3,thumb},1,6,MINT);
  }
