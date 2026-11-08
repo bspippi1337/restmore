@@ -9,7 +9,7 @@
 
 *Native API cartography. ISO C11. Evidence before assumptions.*
 
-[**EXPLORE THE WEBSITE**](https://bspippi1337.github.io/restmore/) &nbsp; / &nbsp; [**DOWNLOAD ALPHA 4**](https://github.com/bspippi1337/restmore/releases/tag/v0.1.0-alpha.4) &nbsp; / &nbsp; [**ILLUSTRATED FIELD GUIDE**](docs/field-guide.html)
+[**EXPLORE THE WEBSITE**](https://bspippi1337.github.io/restmore/) &nbsp; / &nbsp; [**DOWNLOAD ALPHA 4**](https://github.com/bspippi1337/restmore/releases/tag/v0.1.0-alpha.5) &nbsp; / &nbsp; [**ILLUSTRATED FIELD GUIDE**](docs/field-guide.html)
 
 ![Native build](https://github.com/bspippi1337/restmore/actions/workflows/native-gui.yml/badge.svg) &nbsp; ![C11](https://img.shields.io/badge/engine-ISO%20C11-79f9dc?labelColor=07101b) &nbsp; ![License: MIT](https://img.shields.io/badge/license-MIT-96acbf?labelColor=07101b)
 
@@ -74,13 +74,13 @@ The two flags deliberately belong together. RESTMORE fetches **documentation**, 
 
 | Platform | Alpha 4 artifact | Present limitations |
 | --- | --- | --- |
-| **Windows x64** | [Native GUI + CLI · HTTPS](https://github.com/bspippi1337/restmore/releases/download/v0.1.0-alpha.4/restmore-v0.1.0-alpha.4-windows-x64-https.zip) | Unsigned experimental desktop preview |
-| **Linux x86-64** | [Native GUI + CLI · HTTPS](https://github.com/bspippi1337/restmore/releases/download/v0.1.0-alpha.4/restmore-v0.1.0-alpha.4-linux-x86_64.zip) | Requires supported local runtime libraries |
-| **macOS** | [Native GUI + CLI · HTTPS](https://github.com/bspippi1337/restmore/releases/download/v0.1.0-alpha.4/restmore-v0.1.0-alpha.4-macos-native.zip) | No notarization or broad device verification |
-| **Android ARM64** | [NativeActivity test APK](https://github.com/bspippi1337/restmore/releases/download/v0.1.0-alpha.4/restmore-v0.1.0-alpha.4-android-arm64-debug.apk) | **Offline**, debug-signed, physical-device UI tests pending |
+| **Windows x64** | [Native GUI + CLI · HTTPS](https://github.com/bspippi1337/restmore/releases/download/v0.1.0-alpha.5/restmore-v0.1.0-alpha.5-windows-x64-https.zip) | Unsigned experimental desktop preview |
+| **Linux x86-64** | [Native GUI + CLI · HTTPS](https://github.com/bspippi1337/restmore/releases/download/v0.1.0-alpha.5/restmore-v0.1.0-alpha.5-linux-x86_64.zip) | Requires supported local runtime libraries |
+| **macOS** | [Native GUI + CLI · HTTPS](https://github.com/bspippi1337/restmore/releases/download/v0.1.0-alpha.5/restmore-v0.1.0-alpha.5-macos-native.zip) | No notarization or broad device verification |
+| **Android ARM64** | [NativeActivity test APK](https://github.com/bspippi1337/restmore/releases/download/v0.1.0-alpha.5/restmore-v0.1.0-alpha.5-android-arm64-debug.apk) | **Offline**, debug-signed, physical-device UI tests pending |
 | **iOS** | C11 core builds in CI | No installable IPA yet |
 
-The [Alpha 4 release](https://github.com/bspippi1337/restmore/releases/tag/v0.1.0-alpha.4) includes SHA-256 checksums for all published archives. The repo's website is a product showroom with a **synthetic** interactive demonstration, not a web crawler.
+The [Alpha 4 release](https://github.com/bspippi1337/restmore/releases/tag/v0.1.0-alpha.5) includes SHA-256 checksums for all published archives. The repo's website is a product showroom with a **synthetic** interactive demonstration, not a web crawler.
 
 ## The evidence chain.
 
