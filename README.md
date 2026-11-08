@@ -25,9 +25,9 @@ APIs are sprawling territories. Their documentation is a partial map, often spre
 
 It does not guess endpoints, bombard hosts, or execute the API operations it discovers. **An atlas, not a fuzzer.**
 
-<p align="center"><img src="docs/assets/atlas-plate.svg" width="100%" alt="Illustrative RESTMORE orbital route atlas with four documented operations. This plate is schematic, not a live scan result." /></p>
+<p align="center"><img src="docs/assets/native-console-plate.svg" width="100%" alt="Art-directed RESTMORE native interface plate: acquisition desk, operation atlas, source intelligence inspector. Illustrative petstore sample, not a live scan." /></p>
 
-*PLATE 03. An illustrative operation atlas. The actual native application renders its own evidence from imported documentation.*
+*PLATE 03 / THE INSTRUMENT. Architectural concept drawn from the real C11 GUI. Routes in this plate are illustrative; the native client renders imported evidence.*
 
 ## Four instruments. One clear picture.
 
