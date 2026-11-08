@@ -42,4 +42,4 @@ Inspect only sources you are authorized to access. RESTMORE does not execute the
 
 **Know what is documented. Know where it came from.**
 
-[Illustrated guide](field-guide.html) · [Release](https://github.com/bspippi1337/restmore/releases/tag/v0.1.0-alpha.5) · [Source](https://github.com/bspippi1337/restmore)
+[Illustrated guide](field-guide.html) · [Release](https://github.com/bspippi1337/restmore/releases/tag/v0.1.0-alpha.6) · [Source](https://github.com/bspippi1337/restmore)
