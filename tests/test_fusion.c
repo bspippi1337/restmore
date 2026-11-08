@@ -140,7 +140,7 @@ int main(void){
   "\"content_type\":\"application/json\"}\n",sha,sha)>0);
  assert(!fclose(duplicates));
  assert(rm_restless_import(dir,other,NULL,err,sizeof(err))!=0);
- assert(strstr(err,"metadata")!=NULL);
+ assert(strstr(err,"record lacks")!=NULL);
 
  free(other);free(cat);
  assert(remove(index)==0);
