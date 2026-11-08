@@ -290,42 +290,68 @@ static void draw_brand(int width){
   textx("DISCOVER THE DOCUMENTED",width-270,56,11,MUTED);
  }
 }
+
 static void draw_scope(app *ui,Rectangle area,int busy){
- card(area,PANEL);
- int x=(int)area.x+22,y=(int)area.y+24;
- textx("01 / SCOPE",x,y,20,RM_WHITE);y+=45;
- line(x,y,16,"ONE HTTPS HOST");y+=24;
- inputbox((Rectangle){(float)x,(float)y,area.width-44,45},ui->domain,sizeof(ui->domain),&ui->focus,1,!busy);y+=67;
- textx("Bounded. Robots-aware. No guessed paths.",x,y,15,MUTED);y+=36;
- if(button((Rectangle){(float)x,(float)y,(area.width-55)*0.43f,42},"PREVIEW",AQUA,!busy)){
+ panel(area,PANEL);
+ float maxscroll=660-area.height+28;
+ if(maxscroll<0)maxscroll=0;
+ if(hit(area)&&GetMouseWheelMove()!=0)ui->scope_scroll-=GetMouseWheelMove()*45;
+ if(ui->scope_scroll<0)ui->scope_scroll=0;
+ if(ui->scope_scroll>maxscroll)ui->scope_scroll=maxscroll;
+ int x=(int)area.x+22,y=(int)(area.y+21-ui->scope_scroll);
+ int inner=(int)area.width-44;
+ scissor((Rectangle){area.x+1,area.y+1,area.width-2,area.height-2});
+ label(x,y,"01  /  ACQUISITION DESK");y+=26;
+ textx("Map a service.",x,y,28,RM_WHITE);y+=43;
+ textx("Start with an authorized source.",x,y,13,MUTED);y+=35;
+ label(x,y,"HTTPS ORIGIN  /  DOCUMENTATION URL");y+=22;
+ inputbox((Rectangle){(float)x,(float)y,(float)inner,48},ui->domain,sizeof(ui->domain),&ui->focus,1,!busy);y+=62;
+ if(button((Rectangle){(float)x,(float)y,inner,42},"PREVIEW SCOPE",AQUA,!busy)){
   rm_target target;char error[256]={0};
   if(!rm_normalize(ui->domain,&target,error,sizeof(error)))
-   snprintf(ui->message,sizeof(ui->message),"Dry run: %.190s (0 requests)",target.url);
-  else snprintf(ui->message,sizeof(ui->message),"Scope refused: %.206s",error);
+   snprintf(ui->message,sizeof(ui->message),"Scope preview: %.185s  /  zero requests",target.url);
+  else snprintf(ui->message,sizeof(ui->message),"Scope refused: %.200s",error);
   ui->focus=0;
  }
  y+=59;
- Rectangle check={(float)x,(float)y,19,19};
- DrawRectangleRounded(check,0.25f,4,ui->consent?MINT:PANEL2);
- DrawRectangleLinesEx(check,1,MINT);
- if(ui->consent)DrawText("X",x+4,y+2,15,BG);
- if(!busy&&hit((Rectangle){(float)x,(float)y,area.width-44,38})&&IsMouseButtonPressed(MOUSE_BUTTON_LEFT))ui->consent=!ui->consent;
- textx("I AM AUTHORIZED",x+30,y+2,15,RM_WHITE);y+=45;
- if(button((Rectangle){(float)x,(float)y,area.width-44,47},"BUILD SOURCE LIBRARY",MINT,ui->consent&&!busy)){
-  if(start(&ui->task,ui->domain))snprintf(ui->message,sizeof(ui->message),"Cannot start crawler thread");
+ DrawRectangleRounded((Rectangle){(float)x,(float)y,(float)inner,85},.08f,8,Fade(AQUA,.06f));
+ DrawRectangleRoundedLinesEx((Rectangle){(float)x,(float)y,(float)inner,85},.08f,8,1,Fade(AQUA,.20f));
+ Rectangle check={(float)x+12,(float)y+14,20,20};
+ DrawRectangleRounded(check,.22f,6,ui->consent?MINT:PANEL2);
+ DrawRectangleRoundedLinesEx(check,.22f,6,1,MINT);
+ if(ui->consent)textx("X",(int)check.x+4,(int)check.y+3,14,BG);
+ if(!busy&&clicked((Rectangle){(float)x,(float)y,(float)inner,61}))ui->consent=!ui->consent;
+ textx("AUTHORIZED TO INSPECT",x+44,y+17,13,RM_WHITE);
+ textx("HTTPS docs only. No methods executed.",x+12,y+53,12,MUTED);
+ y+=103;
+ if(button((Rectangle){(float)x,(float)y,(float)inner,48},"BUILD SOURCE LIBRARY",MINT,!busy&&ui->consent)){
+  rm_target target;char error[256]={0};
+  if(rm_normalize(ui->domain,&target,error,sizeof(error)))
+   snprintf(ui->message,sizeof(ui->message),"Scope refused: %.200s",error);
+  else if(start(&ui->task,ui->domain))
+   snprintf(ui->message,sizeof(ui->message),"Could not start HTTPS worker");
   ui->focus=0;
  }
- y+=69;
- DrawLine(x,y,(int)area.x+(int)area.width-22,y,BORDER);y+=21;
- textx("02 / IMPORT",x,y,20,RM_WHITE);y+=43;
- line(x,y,15,"LOCAL OPENAPI 3 / LIBRARY.JSON");y+=21;
- inputbox((Rectangle){(float)x,(float)y,area.width-44,43},ui->filename,sizeof(ui->filename),&ui->focus,2,!busy);y+=56;
- if(button((Rectangle){(float)x,(float)y,area.width-44,42},"OPEN LOCAL FILE",AQUA,!busy)){
+ y+=66;
+ rule((float)x,(float)y,(float)inner);y+=26;
+ label(x,y,"02  /  OFFLINE INGEST");y+=28;
+ textx("Import an atlas.",x,y,23,RM_WHITE);y+=35;
+ label(x,y,"OPENAPI 3 / RESTMORE LIBRARY.JSON");y+=22;
+ inputbox((Rectangle){(float)x,(float)y,(float)inner,46},ui->filename,sizeof(ui->filename),&ui->focus,2,!busy);y+=61;
+ if(button((Rectangle){(float)x,(float)y,(float)inner,44},"OPEN LOCAL DOCUMENT",AQUA,!busy)){
   load_catalog(ui);ui->focus=0;
  }
- y+=65;
- textx("METHODS ARE DOCUMENTATION,",x,y,13,MUTED);y+=20;
- textx("NEVER EXECUTED REQUESTS.",x,y,13,MUTED);
+ y+=63;
+ rule((float)x,(float)y,(float)inner);y+=20;
+ textx("SAFE BY DEFAULT",x,y,12,MINT);y+=23;
+ textx("Capped pages / robots-aware / same host",x,y,12,MUTED);y+=21;
+ textx("Document metadata is never executed.",x,y,12,MUTED);
+ EndScissorMode();
+ if(maxscroll>0){
+  float track=area.height-35,thumb=track*area.height/(660+28);
+  DrawRectangleRounded((Rectangle){area.x+area.width-6,area.y+17,3,track},.4f,6,Fade(MUTED,.13f));
+  DrawRectangleRounded((Rectangle){area.x+area.width-6,area.y+17+ui->scope_scroll/maxscroll*(track-thumb),3,thumb},.4f,6,Fade(MINT,.65f));
+ }
 }
 static void graph(app *ui,Rectangle area){
  card(area,PANEL);
