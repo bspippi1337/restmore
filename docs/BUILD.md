@@ -33,13 +33,21 @@ cmake --build build --config Release
 ctest --test-dir build -C Release --output-on-failure
 ```
 
-## Android / iOS
+## Android ARM64 test APK
 
-The core is written in C11, but **building an executable is not the same as shipping a native app**.
+The repository now has a reproducible **C-only NativeActivity application build**, using raylib's Android backend, the Android NDK and the platform-provided NativeActivity. CI packages an ARM64 APK with a bundled sample OpenAPI document and a generated debug signature. No Java/Kotlin application business logic is required.
 
-- Android requires the Android NDK, an appropriate libcurl build, raylib integration for Android, a Java/Kotlin or fully native app bootstrap, APK/AAB packaging, manifest, permissions and signing.
-- iOS requires a platform-specific CMake/Xcode toolchain, libcurl/raylib integration, an app entrypoint, signing and installation/distribution provisioning.
-- Platform runtime smoke tests and a signed installable release must pass before claiming support.
+Download the [v0.1.0-alpha.3 APK](https://github.com/bspippi1337/restmore/releases/tag/v0.1.0-alpha.3). Install with `adb install restmore-v0.1.0-alpha.3-android-arm64-debug.apk` or with the device's own package installer. Debug signing keys are ephemeral per CI run: uninstall a previous incompatible debug build before installing another one.
+
+The APK is currently **offline**, with HTTPS crawling deliberately disabled. CI verifies NDK compilation, APK packaging, Android manifest and signature validity; runtime launch on a physical phone, external file access and soft-keyboard interaction are **not yet validated**. It is a technical preview, not an app-store release.
+
+### Native Android build source
+
+See `.github/workflows/android-gui.yml` for the NDK/CMake/native-packaging commands and `android/AndroidManifest.xml` for the NativeActivity integration. The core is built with `RESTMORE_NETWORK=OFF` and `RESTMORE_GUI=ON` for the current APK.
+
+## iOS
+
+The iOS ARM64 C11 **core library** is cross-compiled in CI, but a complete iOS raylib application target, packaged and signed IPA, runtime testing, and distribution profile have not been verified. An iOS application should not be claimed as shipped.
 
 ## Local-only parser tests
 
