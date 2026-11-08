@@ -269,7 +269,7 @@ static void *worker(void *data)
  }
  mutex_lock(w);
  w->catalog=cat;w->success=outcome==0;
- snprintf(w->error,sizeof(w->error),"%s",cat?err:"out of memory");
+ snprintf(w->error,sizeof(w->error),"%s",err[0]?err:(w->mode==2?"Verification failed":cat?"Documentation crawl failed":"out of memory"));
  w->finished=1;mutex_unlock(w);
 #ifdef _WIN32
  return 0;
