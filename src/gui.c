@@ -607,6 +607,7 @@ int main(int argc,char **argv){
    DrawCircle(W-187,H-30,5,MINT);
   }else if(W>850)textx("R/M  42  /  C11",W-182,H-38,13,MINT);
   EndMode2D();
+  if(smoke && frames==30)TakeScreenshot("restmore-native-preview.png");
   EndDrawing();
  }
  /* Never release the app while its crawler thread still references it. */
