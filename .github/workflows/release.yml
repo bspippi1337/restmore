@@ -1,4 +1,4 @@
-name: RESTMORE v0.1.0-alpha.7 release
+name: RESTMORE v0.1.0-alpha.8 release
 on:
   push:
     branches: [main]
@@ -10,11 +10,11 @@ permissions:
   contents: read
 
 concurrency:
-  group: restmore-release-0.1.0-alpha.7
+  group: restmore-release-0.1.0-alpha.8
   cancel-in-progress: false
 
 env:
-  RESTMORE_TAG: v0.1.0-alpha.7
+  RESTMORE_TAG: v0.1.0-alpha.8
 
 jobs:
   package:
@@ -91,7 +91,7 @@ jobs:
           cp -R docs dist/docs
           if [ -f restmore-native-preview.png ]; then cp restmore-native-preview.png dist/; fi
           cat > dist/RELEASE-NOTES.txt <<'EOF'
-          RESTMORE v0.1.0-alpha.7 / Verification Edition / native preview
+          RESTMORE v0.1.0-alpha.8 / Verification Edition / native preview
 
           Native application and CLI source: ISO C11. Optional raylib GUI.
           Linux and macOS binaries: libcurl HTTPS documentation discovery.
@@ -147,14 +147,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cp android-preview/restmore-android-arm64-debug.apk             release-assets/restmore-v0.1.0-alpha.7-android-arm64-debug.apk
+          cp android-preview/restmore-android-arm64-debug.apk             release-assets/restmore-v0.1.0-alpha.8-android-arm64-debug.apk
       - name: Verify packages and generate checksums
         shell: bash
         run: |
           set -euo pipefail
           cd release-assets
           test "$(find . -maxdepth 1 -name '*.zip' | wc -l)" -eq 3
-          test -s restmore-v0.1.0-alpha.7-android-arm64-debug.apk
+          test -s restmore-v0.1.0-alpha.8-android-arm64-debug.apk
           sha256sum *.zip *.apk > SHA256SUMS.txt
           cat SHA256SUMS.txt
       - name: Publish alpha release
@@ -169,7 +169,29 @@ jobs:
             exit 0
           fi
           cat > notes.md <<'EOF'
-          ## RESTMORE / v0.1.0-alpha.7
+          ## RESTMORE / v0.1.0-alpha.8
+          **OPS 42 / Operational Mission Control Edition**
+
+          - Native raylib GUI reimagined as an olive/signal-green evidence desk,
+            with amber approval gates and an original vector console plate.
+          - Fully offline mission briefing in C11: exact documented routes,
+            method inventory, source SHA-256 metadata and reproducible atlas
+            fingerprint. Every brief explicitly states REVIEW_REQUIRED and
+            never grants authority or executes network requests.
+          - The inspector exports ops-brief.json, and the CLI supports
+            --ops-brief for local OpenAPI or SHA-verified RESTLESS archives.
+          - RESTLESS Botanical integration: SHA-256-addressed provenance,
+            offline source search/contract diff, conditional ETag/304 reuse.
+          - Human GitHub attribution review and a distinct AUTHORIZE action
+            remain mandatory; operators choose 5, 25 or full eligible GET
+            coverage, subject to normal scope/robots/TLS constraints.
+          - A private TLS integration test passed eight scenarios including
+            certificate refusal, valid 200, conditional 304, tampered-cache
+            rejection before GET, robots denial and rate-limit/server errors.
+          - Dedicated OPS 42 CI verifies C11, native GUI on Windows/macOS/Linux,
+            Android ARM64 debug packaging and the illustrated product site.
+          - Demonstrations are synthetic and marked NOT A LIVE SCAN.
+          - No exploit automation, credential replay or permission bypass.
 
           Contract Verification Edition extends the GitHub-first review to
           require **two separate C-enforced approvals**: confirming manual
@@ -182,7 +204,7 @@ jobs:
           origin fingerprint and outcomes. Response bodies are not persisted.
           The existing atlas now retains documented OpenAPI 200/204 response
           contracts and optional JSON root types. Bounded verification compares
-          response status, MIME and JSON shape for up to five literal GETs,
+          response status, MIME and JSON shape for chosen eligible literal GETs,
           without mutating methods, credentials or guessed endpoints.
 
           Updated C11 **native technical preview** with architectural drafting details,
@@ -219,7 +241,7 @@ jobs:
           EOF
           gh release create "$RESTMORE_TAG" \
             --target "$GITHUB_SHA" \
-            --title "RESTMORE 0.1.0 alpha 7 | Contract Verification" \
+            --title "RESTMORE 0.1.0 alpha 8 | OPS 42 Mission Control" \
             --notes-file notes.md \
             --prerelease \
             release-assets/*.zip release-assets/*.apk release-assets/SHA256SUMS.txt
