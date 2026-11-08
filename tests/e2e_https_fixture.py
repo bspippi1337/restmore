@@ -108,9 +108,11 @@ def run(cli: str, output: Path, *, authorized: bool = True,
     env["RESTMORE_CI_LOOPBACK_FIXTURE"] = HOST
     if trust:
         env["CURL_CA_BUNDLE"] = str(run.certfile)
+        env["RESTMORE_CI_CA_FILE"] = str(run.certfile)
         env["SSL_CERT_FILE"] = str(run.certfile)
     else:
         env.pop("CURL_CA_BUNDLE", None)
+        env.pop("RESTMORE_CI_CA_FILE", None)
         env.pop("SSL_CERT_FILE", None)
     args = [cli, "--out", str(output), "--max-pages", "1", "--max-depth", "0",
             "--delay-ms", "2000", BASE_URL]
