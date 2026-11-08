@@ -8,6 +8,8 @@ Not a fuzzer. Not an endpoint-guessing engine. A cartographer for evidence.
 
 ![RESTMORE native GUI architectural concept](docs/assets/native-console-plate.svg)
 
+*PLATE 03 / An architectural illustration of the C11 GUI, using illustrative sample operations rather than live scan results.*
+
 ### The pitch
 
 > **Know what is documented. Know where it came from.**
@@ -28,7 +30,7 @@ Native implementation: **ISO C11 + CMake + optional raylib GUI + libcurl for aut
 
 The website is a design showcase with **synthetic sample routes**, not a hosted scanner.
 
-**Read:** [illustrated field guide](docs/field-guide.html) · [product description](docs/PRODUCT.md) · [website](https://bspippi1337.github.io/restmore/) · [releases](https://github.com/bspippi1337/restmore/releases/tag/v0.1.0-alpha.4)
+**Read:** [illustrated field guide](docs/field-guide.html) · [product description](docs/PRODUCT.md) · [website](https://bspippi1337.github.io/restmore/) · [releases](https://github.com/bspippi1337/restmore/releases/tag/v0.1.0-alpha.5)
 
 ---
 
