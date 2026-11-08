@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1380 740" role="img" aria-labelledby="title desc">
+<title id="title">RESTMORE OPS 42 / operational evidence command console</title>
+<desc id="desc">An illustrative military-inspired but unclassified workstation dashboard. Offline documentation atlas, evidence integrity and mandatory human authorization gate are shown. No live traffic.</desc>
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#102520"/><stop offset="1" stop-color="#070f10"/></linearGradient>
+<radialGradient id="radar"><stop stop-color="#214436"/><stop offset="1" stop-color="#091914"/></radialGradient>
+<pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" stroke="#52725b" opacity=".33" stroke-width=".6" fill="none"/></pattern>
+<pattern id="hash" width="8" height="8" patternTransform="rotate(45)" patternUnits="userSpaceOnUse"><path d="M0 0V8" stroke="#a5e0ac" opacity=".24" stroke-width="1"/></pattern>
+<filter id="soft"><feGaussianBlur stdDeviation="8"/></filter>
+</defs>
+<rect width="1380" height="740" rx="13" fill="url(#bg)"/>
+<rect width="1380" height="740" rx="13" fill="url(#grid)"/>
+<rect x="3" y="3" width="1374" height="734" rx="13" stroke="#66836c" fill="none" stroke-width="1.4"/>
+<path d="M16 16H1364" stroke="#a6f2ae" stroke-width="3"/>
+<path d="M24 45H1356" stroke="#3c664e"/>
+<g font-family="monospace" font-size="12" fill="#97be9e" letter-spacing="1.2">
+<text x="31" y="35">RESTMORE / FUSION 42 / OPS DESK</text>
+<text x="1078" y="35">LOCAL VIEW / 00042</text>
+</g>
+<g>
+<rect x="23" y="65" width="337" height="603" rx="5" fill="#0c201c" stroke="#476752"/>
+<rect x="375" y="65" width="622" height="603" rx="5" fill="#0b1c1b" stroke="#476752"/>
+<rect x="1012" y="65" width="344" height="603" rx="5" fill="#10231e" stroke="#476752"/>
+</g>
+<g font-family="monospace" font-size="12" fill="#9ebda4" letter-spacing="1.2">
+<text x="45" y="91">01 / MISSION PROFILE</text>
+<text x="395" y="91">02 / DOCUMENTED SURFACE</text>
+<text x="1033" y="91">03 / TRUST &amp; APPROVAL</text>
+</g>
+<path d="M40 106H343M394 106H977M1032 106H1336" stroke="#4a7259"/>
+<g font-family="Arial,sans-serif" fill="#e5f1e5" font-weight="700">
+<text x="45" y="143" font-size="29">Scope briefing.</text>
+<text x="395" y="143" font-size="29">Source atlas.</text>
+<text x="1033" y="143" font-size="25">Execution lock.</text>
+</g>
+<text x="45" y="172" fill="#a4b9a7" font-size="12" font-family="monospace">AUTHORITATIVE SOURCE REQUIRED</text>
+<text x="395" y="173" fill="#a4b9a7" font-size="12" font-family="monospace">ILLUSTRATIVE OPENAPI OPERATIONS</text>
+<text x="1033" y="173" fill="#a4b9a7" font-size="12" font-family="monospace">NETWORK WORKER / IDLE</text>
+<!-- scope panel -->
+<text x="45" y="215" font-family="monospace" font-size="11" fill="#87ac92">TARGET HOST / EXAMPLE</text>
+<rect x="45" y="230" width="294" height="49" rx="4" fill="#07130f" stroke="#426a52"/>
+<text x="57" y="260" font-size="15" fill="#e6f2e7" font-family="monospace">api.example.org</text>
+<g>
+<rect x="45" y="297" width="294" height="78" rx="4" fill="#173025" stroke="#a5de99"/>
+<path d="M62 318v38M53 327h18M53 347h18" stroke="#a5e8ae" stroke-width="1.2"/>
+<text x="85" y="327" font-size="13" font-family="monospace" fill="#a8f2b0">OFFLINE SOURCE BRIEF</text>
+<text x="85" y="349" font-size="12" font-family="monospace" fill="#d7edda">0 HTTP REQUESTS ISSUED</text>
+</g>
+<text x="45" y="416" font-family="monospace" font-size="11" fill="#87ac92">DOCUMENTED ROUTES</text>
+<text x="45" y="456" font-size="36" fill="#d5f1d9" font-family="monospace">004</text>
+<text x="170" y="456" font-size="13" fill="#a4b9a7" font-family="monospace">FROM SAMPLE SOURCE</text>
+<path d="M45 476H339" stroke="#466c54"/>
+<text x="45" y="502" font-family="monospace" font-size="11" fill="#87ac92">FINGERPRINT / SAMPLE ONLY</text>
+<rect x="45" y="519" width="294" height="82" rx="4" fill="#091914" stroke="#476752"/>
+<text x="59" y="546" font-family="monospace" font-size="13" fill="#c4e3c8">SHA-256</text>
+<text x="59" y="571" font-family="monospace" font-size="11" fill="#a7d5ad">CALCULATED AT EXPORT</text>
+<text x="45" y="638" font-size="11" fill="#8fac97" font-family="monospace">NEVER A PROOF OF OWNERSHIP</text>
+<!-- central radar -->
+<rect x="390" y="189" width="591" height="451" fill="url(#radar)" opacity=".92"/>
+<rect x="390" y="189" width="591" height="451" fill="url(#grid)" opacity=".85"/>
+<g stroke="#416b50" stroke-width="1.1" fill="none">
+<circle cx="695" cy="413" r="200" stroke-dasharray="2 8"/>
+<circle cx="695" cy="413" r="156"/>
+<circle cx="695" cy="413" r="109" stroke-dasharray="4 8"/>
+<circle cx="695" cy="413" r="63"/>
+<path d="M414 413H964M695 213V612" stroke-dasharray="3 7"/>
+</g>
+<path d="M695 413L695 241M695 413L887 413M695 413L695 583M695 413L500 413" stroke="#a4e2ac" stroke-width="2" opacity=".65"/>
+<path d="M695 413L770 239A200 200 0 0 1 878 325Z" fill="#9cdea7" opacity=".065"/>
+<path d="M695 413L770 239" stroke="#b5f0b0" stroke-width="1.3" opacity=".6"/>
+<g>
+<circle cx="695" cy="413" r="36" fill="#1d3e2e" stroke="#a6eab0" stroke-width="2.6"/>
+<text x="695" y="420" text-anchor="middle" font-family="monospace" font-size="18" fill="#e8fae5">API</text>
+</g>
+<g font-family="monospace" font-size="12">
+<circle cx="695" cy="241" r="10" fill="#15291d" stroke="#a6f0ad" stroke-width="2"/><circle cx="695" cy="241" r="4" fill="#a6f0ad"/><text x="707" y="222" fill="#d2f2d0">GET /v1/pets</text>
+<circle cx="887" cy="413" r="10" fill="#15291d" stroke="#f0c276" stroke-width="2"/><circle cx="887" cy="413" r="4" fill="#f0c276"/><text x="808" y="394" fill="#e2d3b6">POST /v1/pets</text>
+<circle cx="695" cy="583" r="10" fill="#15291d" stroke="#9ddbd0" stroke-width="2"/><circle cx="695" cy="583" r="4" fill="#9ddbd0"/><text x="711" y="606" fill="#ccebe0">GET /v1/pets/id</text>
+<circle cx="500" cy="413" r="10" fill="#15291d" stroke="#e6a399" stroke-width="2"/><circle cx="500" cy="413" r="4" fill="#e6a399"/><text x="414" y="394" fill="#f2c0b8">DELETE /v1/pets/id</text>
+</g>
+<g font-family="monospace" font-size="12" fill="#8caa94"><text x="402" y="628">FIG. 42 / GRAPH REPRESENTATION, NOT A NETWORK MAP</text></g>
+<!-- trust panel -->
+<rect x="1033" y="206" width="302" height="69" rx="4" fill="#1e301f" stroke="#d8b575"/>
+<circle cx="1054" cy="240" r="6" fill="#eabb67"/>
+<text x="1068" y="233" font-family="monospace" font-size="13" fill="#f0cb85">REVIEW REQUIRED</text>
+<text x="1068" y="253" font-family="monospace" font-size="11" fill="#cdbd95">NO AUTOMATIC AUTHORITY</text>
+<path d="M1033 308H1335" stroke="#456f54"/>
+<g font-family="monospace" font-size="12" fill="#cfebcf">
+<text x="1035" y="333">1 / MANUAL GITHUB REVIEW</text>
+<text x="1035" y="382">2 / VERIFY SCOPE OWNERSHIP</text>
+<text x="1035" y="431">3 / SEPARATE AUTHORIZE</text>
+<text x="1035" y="480">4 / DOCUMENTED GET ONLY</text>
+</g>
+<g stroke="#618567" fill="none"><rect x="1308" y="319" width="17" height="17" rx="2"/><rect x="1308" y="367" width="17" height="17" rx="2"/><rect x="1308" y="415" width="17" height="17" rx="2"/><rect x="1308" y="464" width="17" height="17" rx="2"/></g>
+<path d="M1033 504H1335" stroke="#456f54"/>
+<rect x="1033" y="526" width="302" height="73" rx="4" fill="#0b1c16" stroke="#4e6e50"/>
+<g font-family="monospace" fill="#b3c8b6"><text x="1051" y="551" font-size="12">CONTRACT EXECUTION</text><text x="1051" y="577" font-size="20" fill="#f2c77b">LOCKED</text></g>
+<text x="1035" y="636" font-family="monospace" font-size="11" fill="#8fac97">GATES ENFORCED IN NATIVE C11</text>
+<path d="M24 688H1356" stroke="#426853"/>
+<text x="31" y="718" font-family="monospace" font-size="12" fill="#b1dab7">OPS 42 / UNCLASSIFIED LOCAL DEMONSTRATION / NOT AFFILIATED WITH ANY DEFENSE AGENCY</text>
+<text x="1205" y="718" font-family="monospace" font-size="13" fill="#a6eeaf">NO LIVE SCAN</text>
+</svg>
