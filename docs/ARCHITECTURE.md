@@ -82,7 +82,7 @@ The design tokens are specified in `docs/DESIGN.md`; the static site implements 
 | Linux | CMake target | raylib target | Validate binaries in CI |
 | Windows | CMake target | raylib target | Validate toolchain and runtime |
 | macOS | CMake target | raylib target | Validate signing and SDK assumptions |
-| Android | NDK target intended | raylib Android target | APK integration still required |
-| iOS | CMake/iOS toolchain intended | raylib iOS target | Xcode packaging/signing still required |
+| Android ARM64 | Native C11 compiled in CI | raylib NativeActivity compiled in CI | Debug APK packaged and signature verified; device runtime pending |
+| iOS ARM64 | Native C11 core builds in CI | No verified iOS GUI app target yet | IPA and device testing outstanding |
 
-**Not a claim of five verified native releases.** Development support and release verification are separate milestones.
+**Desktop GUI builds and an Android debug APK are now available.** Android runtime verification and iOS app packaging are separate milestones; source portability is not a guarantee of installable, fully tested apps.
