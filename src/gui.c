@@ -41,7 +41,7 @@ static const Color BG={7,16,27,255},PANEL={14,27,43,255},PANEL2={24,44,62,255};
 static const Color RM_WHITE={238,249,247,255},MUTED={150,173,190,255};
 static const Color MINT={121,249,220,255},AQUA={94,190,226,255};
 static const Color BORDER={39,62,82,255},RM_ORANGE={232,190,116,255};
-static const Color CORAL={255,146,135,255},PURPLE={177,163,255,255};
+static const Color CORAL={255,146,135,255},RM_VIOLET={177,163,255,255};
 
 static void mutex_init(work *w){
 #ifdef _WIN32
@@ -161,13 +161,13 @@ static Color method_color(const char *verb){
  if(!strcmp(verb,"GET"))return MINT;
  if(!strcmp(verb,"POST"))return RM_ORANGE;
  if(!strcmp(verb,"DELETE"))return CORAL;
- if(!strcmp(verb,"PUT")||!strcmp(verb,"PATCH"))return PURPLE;
+ if(!strcmp(verb,"PUT")||!strcmp(verb,"PATCH"))return RM_VIOLET;
  return AQUA;
 }
 static void method_pill(const char *verb,float x,float y,int width){
  Color c=method_color(verb);
  DrawRectangleRounded((Rectangle){x,y,(float)width,27},.19f,6,Fade(c,.12f));
- DrawRectangleRoundedLinesEx((Rectangle){x,y,(float)width,27},.19f,6,Fade(c,.6f));
+ DrawRectangleRoundedLinesEx((Rectangle){x,y,(float)width,27},.19f,6,1,Fade(c,.6f));
  textx(verb,(int)x+9,(int)y+7,12,c);
 }
 static void orbital(float cx,float cy,float radius,float time){
