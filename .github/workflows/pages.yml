@@ -1,4 +1,4 @@
-name: RESTMORE Pages
+name: RESTMORE website / validate and deploy
 on:
   push:
     branches: [main]
@@ -14,18 +14,73 @@ concurrency:
   group: github-pages
   cancel-in-progress: true
 jobs:
-  deploy:
+  site:
+    name: Validate website, prepare preview, deploy when Pages is enabled
+    runs-on: ubuntu-24.04
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/configure-pages@v5
+      - name: Verify static site files and references
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s docs/index.html
+          test -s docs/style.css
+          test -s docs/app.js
+          test -s docs/assets/evidence-pipeline.svg
+          grep -q 'style.css' docs/index.html
+          grep -q 'app.js' docs/index.html
+          grep -q 'assets/evidence-pipeline.svg' docs/index.html
+          test -z "$(find docs -type l -print -quit)"
+      - name: Publish inspectable website preview
+        uses: actions/upload-artifact@v4
         with:
-          enablement: true
-      - uses: actions/upload-pages-artifact@v3
+          name: restmore-website-preview
+          path: docs/
+          if-no-files-found: error
+          retention-days: 30
+      - name: Detect Pages source without attempting admin-only enablement
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "deploy=false" >> "$GITHUB_OUTPUT"
+          if ! gh api "repos/$GH_REPO/pages" > pages.json 2>/dev/null; then
+            {
+              echo "### GitHub Pages activation needed"
+              echo "The website was validated and archived in **restmore-website-preview**."
+              echo "GitHub does not grant this workflow permission to create the Pages site."
+              echo "Open **Settings → Pages → Build and deployment → GitHub Actions**,"
+              echo "then rerun this workflow. No source changes are required."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          build_type=$(jq -r '.build_type // "legacy"' pages.json)
+          if [ "$build_type" != "workflow" ]; then
+            {
+              echo "### GitHub Pages uses branch deployment"
+              echo "Source is currently **$build_type**. RESTMORE's deploy-pages"
+              echo "action will not override that configuration. Select"
+              echo "**Settings → Pages → GitHub Actions** and rerun to use this workflow."
+              echo "The validated website remains downloadable as an Actions artifact."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          echo "deploy=true" >> "$GITHUB_OUTPUT"
+      - name: Configure Pages
+        if: steps.check.outputs.deploy == 'true'
+        uses: actions/configure-pages@v5
+      - name: Upload Pages artifact
+        if: steps.check.outputs.deploy == 'true'
+        uses: actions/upload-pages-artifact@v3
         with:
           path: docs
-      - id: deployment
+      - name: Deploy static website
+        if: steps.check.outputs.deploy == 'true'
+        id: deployment
         uses: actions/deploy-pages@v4
