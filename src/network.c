@@ -17,7 +17,7 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #endif
-#define RM_QUEUE_LIMIT 256u
+#define RM_QUEUE_LIMIT 1024u
 #define RM_ROBOTS_LIMIT (512u * 1024u)
 typedef struct {char *data;size_t length,limit;int overflow;} response;
 typedef struct {char url[RM_MAX_URL];unsigned depth;} queued;
@@ -275,7 +275,8 @@ int rm_crawl(const rm_options *options,rm_catalog *cat,rm_progress cb,void *ctx,
  memset(cat,0,sizeof(*cat));
  if(rm_normalize(options->input,&cat->target,err,cap))return -1;
  unsigned budget=options->max_pages?options->max_pages:12;
- if(budget>RM_MAX_DOCUMENTS||options->max_depth>3)return rm_error(err,cap,"scope exceeds 25 pages or depth 3");
+ if(budget>RM_MAX_DOCUMENTS||options->max_depth>8)
+  return rm_error(err,cap,"scope exceeds current C11 capacity (256 documents, depth 8)");
  if(!options->execute){if(cb)cb("preview",cat->target.url,ctx);return 0;}
  if(!options->authorized)return rm_error(err,cap,"network denied: --execute AND --authorized required");
  const char *agent=options->user_agent?options->user_agent:"RESTMORE/0.1 (+https://github.com/bspippi1337/restmore)";
