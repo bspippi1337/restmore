@@ -125,10 +125,48 @@ static void init_type(void){
   }
  }
 }
+/* Blueprint registration lines are intentionally decorative.
+   They do not describe a fetched operation, host or verified network state. */
+static void registration_mark(float x,float y,Color ink){
+ glyph_line(x-5,y,x+5,y,.8f,ink);
+ glyph_line(x,y-5,x,y+5,.8f,ink);
+ DrawCircleLines((int)x,(int)y,3,ink);
+}
 static void panel(Rectangle r,Color fill){
  DrawRectangleRounded((Rectangle){r.x+4,r.y+6,r.width,r.height},.045f,8,Fade(BLACK,.17f));
  DrawRectangleRounded(r,.045f,8,fill);
  DrawRectangleRoundedLinesEx(r,.045f,8,1,BORDER);
+ Color guide=Fade(AQUA,.26f);
+ registration_mark(r.x+9,r.y+9,guide);
+ registration_mark(r.x+r.width-9,r.y+9,guide);
+ registration_mark(r.x+9,r.y+r.height-9,guide);
+ registration_mark(r.x+r.width-9,r.y+r.height-9,guide);
+}
+/* Native C11 architectural pencil plate, matching docs/assets/engraved-arch.svg.
+   Drawn in raylib primitives; SVG parsing and external image assets are unnecessary. */
+static void draw_arch_study(float x,float bottom,float scale){
+ const float pi=3.14159265358979323846f;
+ const float cx=x+65*scale,cy=bottom-79*scale;
+ const float outer=62*scale,inner=43*scale;
+ Color stone=Fade(MUTED,.27f),chalk=Fade(RM_WHITE,.18f);
+ for(int i=0;i<32;i++){
+  float a=pi+pi*(float)i/32.0f,b=pi+pi*(float)(i+1)/32.0f;
+  glyph_line(cx+cosf(a)*outer,cy+sinf(a)*outer,
+             cx+cosf(b)*outer,cy+sinf(b)*outer,.85f,stone);
+  glyph_line(cx+cosf(a)*inner,cy+sinf(a)*inner,
+             cx+cosf(b)*inner,cy+sinf(b)*inner,.9f,chalk);
+ }
+ glyph_line(cx-outer,cy,cx-outer,bottom,1,stone);
+ glyph_line(cx+outer,cy,cx+outer,bottom,1,stone);
+ glyph_line(cx-inner,cy,cx-inner,bottom,1,chalk);
+ glyph_line(cx+inner,cy,cx+inner,bottom,1,chalk);
+ glyph_line(cx-outer-7*scale,bottom,cx+outer+7*scale,bottom,1.2f,stone);
+ for(int i=1;i<=3;i++){
+  float yy=cy+((float)i*22)*scale;
+  glyph_line(cx-outer,yy,cx-inner,yy,.8f,stone);
+  glyph_line(cx+inner,yy,cx+outer,yy,.8f,stone);
+ }
+ glyph_line(cx-outer-8*scale,cy,cx+outer+8*scale,cy,.7f,Fade(AQUA,.17f));
 }
 static void card(Rectangle r,Color fill){panel(r,fill);}
 static void glyph_line(float x1,float y1,float x2,float y2,float weight,Color color){
@@ -336,7 +374,7 @@ static void draw_brand(int width){
  textx(width<650?"NATIVE API ATLAS":"API CARTOGRAPHY / EVIDENCE-FIRST ENGINE",92,59,11,MUTED);
  if(width>980){
   textx("C11 / RESTLESS EDITION",width-274,29,14,MINT);
-  textx("DISCOVER THE DOCUMENTED",width-270,56,11,MUTED);
+  textx("MAP THE UNSEEN. / FIELD NOTES 0042",width-270,56,11,MUTED);
  }
 }
 
@@ -461,6 +499,9 @@ static void graph(app *ui,Rectangle area){
    float ty=p.y+((i%2)?14:-24);
    textx(path,(int)tx,(int)ty,11,selected?RM_WHITE:MUTED);
   }
+  /* A subtle forensic-draughtsman's arch, not part of the API topology. */
+  if(viewport.width>=360 && viewport.height>=300)
+   draw_arch_study(viewport.x+14,viewport.y+viewport.height-31,.55f);
   if(count>shown){
    char rest[80];snprintf(rest,sizeof(rest),"+%zu ROUTES  /  SWITCH TO ROUTES VIEW",count-shown);
    textx(rest,(int)viewport.x+16,(int)(viewport.y+viewport.height-22),12,MINT);
