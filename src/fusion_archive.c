@@ -88,7 +88,8 @@ static int field_string(const char *line,const char *name,char *out,size_t cap){
      if(c=='"')in_string=1;
      else if(c=='{'||c=='[')depth++;
      else if(c=='}'||c==']'){
-      if(depth==0)break;depth--;
+      if(depth==0)break;
+      depth--;
      }else if(c==','&&depth==0)break;
     }
     p++;
@@ -224,7 +225,8 @@ int rm_restless_import(const char *directory,rm_catalog *catalog,
   }
  }
  if(!failed){info.documents=temp->document_count;memcpy(catalog,temp,sizeof(*temp));
-  if(stats)*stats=info;if(error&&cap)error[0]=0;}
+  if(stats)*stats=info;
+  if(error&&cap)error[0]=0;}
  free(temp);free(entries);
  return failed?-1:0;
 }
