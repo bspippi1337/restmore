@@ -55,3 +55,36 @@
 @media(max-width:780px){.showcase{padding:72px 22px 86px}.showcase-heading{display:block}.showcase-heading h2{margin:18px 0 24px}.showcase-heading p{margin-bottom:20px}.showcase-link{display:inline-block;margin:0 0 24px}.showcase-frame{padding:5px}.showcase-frame-footer{font-size:9px}.field-note{grid-template-columns:35% 65%}.field-note-body{padding:22px}.hero-engraving{opacity:.095;left:-24%;width:70%}.hero-terrain{opacity:.16;width:100%;right:-48%}}
 @media(max-width:530px){.field-note{display:flex;flex-direction:column}.field-note-art{height:200px;border-right:0;border-bottom:1px solid #365965}.field-note-art img{max-height:200px}.field-note-body{min-height:240px}.field-note h3{font-size:29px}.showcase-frame-footer{display:block}.showcase-frame-footer span{display:block;margin-bottom:7px}}
 @media(prefers-reduced-motion:reduce){.field-note,.field-note img{transition:none!important}.field-note:hover,.field-note:focus-visible{transform:none}.field-note:hover img{transform:none}}
+
+/* Native-aligned three-column interactive atlas with an honest synthetic inspector */
+.app-inner{grid-template-columns:175px minmax(0,1fr) minmax(240px,280px)}
+.app aside{padding:26px 10px}
+.app aside>div:not(.sidebar-label):not(.sidebar-status){font-size:11px}
+.app .canvas{padding:22px;min-width:0}
+.web-inspector{padding:26px 21px 20px;border-left:1px solid #2c4d5e;background:linear-gradient(165deg,#0f2637,#0a1623);min-width:0}
+.web-inspector h3{font-size:22px;line-height:1.1;letter-spacing:-.035em;margin:22px 0 11px}
+.web-inspector .inspector-intro{font:11px/1.7 var(--mono);color:#9cb5bf;margin-bottom:23px}
+.inspector-method-row{display:flex;flex-wrap:wrap;gap:11px;align-items:center;border-top:1px solid #3b5967;border-bottom:1px solid #3b5967;padding:18px 0}
+.inspector-method{color:#79f9dc;background:#143b39;border:1px solid #79f9dc;padding:6px 8px;font:12px var(--mono)}
+.inspector-method[data-method=POST]{color:#e9c078;border-color:#e9c078;background:#43372035}
+.inspector-method[data-method=DELETE]{color:#ff9387;border-color:#ff9387;background:#43282235}
+.inspector-method[data-method=PATCH]{color:#b1a4ff;border-color:#b1a4ff;background:#2d294835}
+.inspector-method-row code{font:12px/1.5 var(--mono);color:#edf7f3;overflow-wrap:anywhere}
+.web-inspector dl{margin:0}
+.web-inspector dt{font:10px var(--mono);letter-spacing:.09em;color:#9cb5bf;margin:17px 0 8px}
+.web-inspector dd{font:12px/1.6 var(--mono);color:#edf6f3;margin:0;padding:0 0 15px;border-bottom:1px solid #2d4857;overflow-wrap:anywhere}
+.web-inspector dd.inspector-caution{color:#e9c078}
+.web-inspector .inspector-note{font:10px/1.75 var(--mono);color:#93adb9;margin:16px 0}
+.copy-template{background:#133839;border:1px solid #79f9dc;padding:12px 10px;color:#d5fbec;cursor:pointer;font:10px var(--mono);width:100%}
+.copy-template:hover,.copy-template:focus-visible{background:#1b5350;outline:2px solid #79f9dc;outline-offset:2px}
+.inspector-template{display:block;overflow-wrap:anywhere;color:#7babb1;font:10px/1.6 var(--mono);margin:11px 0}
+.copy-status{display:block;min-height:18px;font:10px var(--mono);color:#79f9dc}
+.list .route-item{width:100%;display:flex;gap:15px;text-align:left;align-items:center;background:#102232;color:#d9efe9;border:1px solid #325468;margin:0 0 8px;padding:13px;cursor:pointer;font:12px var(--mono)}
+.list .route-item:hover,.list .route-item:focus-visible,.list .route-item[aria-pressed=true]{border-color:#79f9dc;background:#143c3b;outline:none}
+.list .route-item .method{min-width:58px}
+#vertices g[role=button]{cursor:pointer;outline:none}
+#vertices g[role=button]:focus-visible circle.route-node,#vertices g[role=button][data-selected=true] circle.route-node{stroke:#eef9f7;stroke-width:3}
+#vertices g[role=button]:focus-visible{filter:drop-shadow(0 0 7px #79f9dc88)}
+@media(max-width:1280px){.app-inner{grid-template-columns:145px minmax(0,1fr) 245px}.app .canvas{padding:17px}.web-inspector{padding:22px 14px}}
+@media(max-width:1120px){.app-inner{grid-template-columns:minmax(0,1fr) minmax(225px,.45fr)}.app aside{display:none}}
+@media(max-width:720px){.app-inner{display:flex;flex-direction:column}.web-inspector{border-left:0;border-top:1px solid #35576a}.web-inspector h3{margin-top:13px}.web-inspector dl{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}.web-inspector .inspector-note{margin-bottom:15px}}
