@@ -34,6 +34,15 @@ int main(void){
  assert(cat->operations[1].expected_status==204);
  assert(rm_verify_plan(cat,"api.example.org",plan,error,sizeof(error))==0);
  assert(plan->count==2);
+ /* Operators can verify a sample, a chosen batch, or every eligible GET. */
+ assert(rm_verify_plan_limit(cat,"api.example.org",plan,1,error,sizeof(error))==0);
+ assert(plan->count==1 && plan->authorized==0);
+ assert(rm_verify_plan_limit(cat,"api.example.org",plan,0,error,sizeof(error))==0);
+ assert(plan->count==2 && plan->github_reviewed==0);
+ assert(rm_verify_plan_limit(cat,"api.example.org",plan,
+                             RM_MAX_VERIFY_CHECKS+1,error,sizeof(error))!=0);
+ assert(strstr(error,"capacity")!=NULL);
+ assert(rm_verify_plan(cat,"api.example.org",plan,error,sizeof(error))==0);
  /* Structured report exports only declared routes, expectations and verdicts. */
  assert(rm_verify_report(plan,"restmore-verification-test.json",error,sizeof(error))==0);
  FILE *report=fopen("restmore-verification-test.json","rb");assert(report);
