@@ -36,7 +36,7 @@ typedef struct {
  int verify_stage; /* 0 idle, 1 github review done/await consent, 2 results */
  char review_domain[RM_MAX_URL];
  work task;
- char domain[RM_MAX_URL],filename[512],message[256];
+ char domain[RM_MAX_URL],filename[512],archive_dir[512],message[256];
  int consent,focus,tab,selected;
  float scroll,scope_scroll,atlas_scroll;
  int view;
@@ -404,6 +404,26 @@ static int load_catalog(app *ui){
  snprintf(ui->message,sizeof(ui->message),"Loaded %d documented operations from local JSON",parsed);
  return 0;
 }
+
+/* A genuinely offline, evidence-checked interchange between RESTLESS 42 and
+ * RESTMORE. No domain or network access in this action. */
+static int load_restless_archive(app *ui){
+ rm_catalog *next=(rm_catalog *)calloc(1,sizeof(*next));
+ if(!next){snprintf(ui->message,sizeof(ui->message),"Cannot allocate fusion catalog");return -1;}
+ rm_fusion_stats stats={0};char error[256]={0};
+ if(rm_restless_import(ui->archive_dir,next,&stats,error,sizeof(error))){
+  free(next);
+  snprintf(ui->message,sizeof(ui->message),"RESTLESS evidence refused: %.202s",error);
+  return -1;
+ }
+ free(ui->catalog);ui->catalog=next;
+ free(ui->verification);ui->verification=NULL;ui->verify_stage=0;
+ ui->selected=0;ui->scroll=0;ui->atlas_scroll=0;ui->view=0;
+ snprintf(ui->message,sizeof(ui->message),
+   "RESTLESS fusion: %zu SHA-256 verified documents / %zu OpenAPI operations / no network",
+   stats.documents,stats.operations);
+ return 0;
+}
 static void draw_brand(int width){
  DrawRectangle(0,0,width,94,(Color){9,20,33,255});
  DrawRectangleGradientH(0,0,width,4,MINT,AQUA);
@@ -425,7 +445,7 @@ static void draw_brand(int width){
 
 static void draw_scope(app *ui,Rectangle area,int busy){
  panel(area,PANEL);
- float maxscroll=fmaxf(0.0f,1040.0f-area.height);
+ float maxscroll=fmaxf(0.0f,1235.0f-area.height);
  if(hit(area))ui->scope_scroll-=GetMouseWheelMove()*45+TOUCH_DY;
  if(ui->scope_scroll<0)ui->scope_scroll=0;
  if(ui->scope_scroll>maxscroll)ui->scope_scroll=maxscroll;
@@ -560,11 +580,23 @@ static void draw_scope(app *ui,Rectangle area,int busy){
            AQUA,!busy)){
   load_catalog(ui);ui->focus=0;
  }
- y+=58;
+ y+=60;
+ rule((float)x,(float)y,(float)inner);y+=22;
+ label(x,y,"05  /  RESTLESS BOTANICAL FUSION");y+=26;
+ textx("Import verified history.",x,y,20,RM_WHITE);y+=37;
+ label(x,y,"RESTLESS INDEX.JSONL + SHA256 DIRECTORY");y+=21;
+ inputbox((Rectangle){(float)x,(float)y,(float)inner,44},ui->archive_dir,
+          sizeof(ui->archive_dir),&ui->focus,3,!busy);y+=58;
+ if(button((Rectangle){(float)x,(float)y,(float)inner,45},
+            "IMPORT VERIFIED ARCHIVE",MINT,!busy)){
+   load_restless_archive(ui);ui->focus=0;
+ }
+ y+=54;
+ textx("Hashes checked before any atlas operation.",x,y,11,MUTED);y+=20;
  textx("No speculative paths. No unsafe methods.",x,y,11,MUTED);
  EndScissorMode();
  if(maxscroll>0){
-  float track=area.height-35,thumb=track*area.height/1040.0f;
+  float track=area.height-35,thumb=track*area.height/1235.0f;
   DrawRectangleRounded((Rectangle){area.x+area.width-6,area.y+17,3,track},
                        .4f,6,Fade(MUTED,.13f));
   DrawRectangleRounded((Rectangle){area.x+area.width-6,
@@ -784,6 +816,7 @@ int main(int argc,char **argv){
  }
  snprintf(ui->domain,sizeof(ui->domain),"docs.example.org");
  snprintf(ui->filename,sizeof(ui->filename),"examples/openapi-petstore.json");
+ snprintf(ui->archive_dir,sizeof(ui->archive_dir),".restless/botanical");
  snprintf(ui->message,sizeof(ui->message),"Atlas ready. Map a domain, review GitHub, then explicitly authorize GET checks.");
  mutex_init(&ui->task);
  load_catalog(ui);
