@@ -1,0 +1,80 @@
+name: RESTMORE Android NativeActivity C11 GUI
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'include/**'
+      - 'CMakeLists.txt'
+      - 'android/**'
+      - '.github/workflows/android-gui.yml'
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  android-gui:
+    name: Native C11 raylib on Android arm64
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Locate Android NDK and SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          NDK="${ANDROID_NDK_LATEST_HOME:-}"
+          if [ ! -f "$NDK/build/cmake/android.toolchain.cmake" ]; then
+            NDK="$(find "$ANDROID_HOME/ndk" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          fi
+          test -f "$NDK/build/cmake/android.toolchain.cmake"
+          echo "NDK_ROOT=$NDK" >> "$GITHUB_ENV"
+          SDK_TOOLS="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          test -x "$SDK_TOOLS/aapt2"
+          echo "SDK_BUILD_TOOLS=$SDK_TOOLS" >> "$GITHUB_ENV"
+          ANDROID_JAR="$(find "$ANDROID_HOME/platforms" -maxdepth 2 -name android.jar | sort -V | tail -1)"
+          test -f "$ANDROID_JAR"
+          echo "ANDROID_JAR=$ANDROID_JAR" >> "$GITHUB_ENV"
+      - name: Configure Android raylib native GUI and offline C11 core
+        run: |
+          cmake -S . -B build-android-gui -G Ninja \
+            -DCMAKE_TOOLCHAIN_FILE="$NDK_ROOT/build/cmake/android.toolchain.cmake" \
+            -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=26 \
+            -DRESTMORE_NETWORK=OFF -DRESTMORE_GUI=ON -DRESTMORE_TESTS=OFF \
+            -DPLATFORM=Android -DCMAKE_BUILD_TYPE=Release
+      - name: Compile shared native activity
+        run: |
+          cmake --build build-android-gui --target restmore-gui --parallel 2
+          find build-android-gui -type f -name 'librestmore-gui.so' -print
+          test -s build-android-gui/librestmore-gui.so
+      - name: Package standalone NativeActivity APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build-android-gui/res-compiled build-android-gui/package/lib/arm64-v8a build-android-gui/package/assets/examples dist
+          "$SDK_BUILD_TOOLS/aapt2" compile --dir android/res -o build-android-gui/res-compiled
+          "$SDK_BUILD_TOOLS/aapt2" link -o build-android-gui/package-unsigned.apk \
+            -I "$ANDROID_JAR" --manifest android/AndroidManifest.xml \
+            --min-sdk-version 26 --target-sdk-version 35 \
+            build-android-gui/res-compiled/*.flat
+          cp build-android-gui/librestmore-gui.so build-android-gui/package/lib/arm64-v8a/
+          cp examples/openapi-petstore.json build-android-gui/package/assets/examples/
+          (cd build-android-gui/package && zip -q -r ../package-unsigned.apk lib assets)
+          "$SDK_BUILD_TOOLS/zipalign" -f 4 build-android-gui/package-unsigned.apk build-android-gui/package-aligned.apk
+          keytool -genkeypair -noprompt -keystore build-android-gui/debug.keystore \
+            -storepass android -keypass android -alias androiddebugkey \
+            -keyalg RSA -keysize 2048 -validity 30 \
+            -dname "CN=RESTMORE CI test APK,O=RESTMORE,C=NO"
+          "$SDK_BUILD_TOOLS/apksigner" sign \
+            --ks build-android-gui/debug.keystore \
+            --ks-key-alias androiddebugkey --ks-pass pass:android --key-pass pass:android \
+            --out dist/restmore-android-arm64-debug.apk build-android-gui/package-aligned.apk
+          "$SDK_BUILD_TOOLS/apksigner" verify --verbose dist/restmore-android-arm64-debug.apk
+          "$SDK_BUILD_TOOLS/aapt2" dump badging dist/restmore-android-arm64-debug.apk | head -20
+          sha256sum dist/restmore-android-arm64-debug.apk > dist/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: restmore-android-arm64-nativeactivity-debug
+          path: dist/
+          if-no-files-found: error
+          retention-days: 30
