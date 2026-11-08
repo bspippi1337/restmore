@@ -25,12 +25,16 @@ typedef struct {
  pthread_mutex_t mutex;
  pthread_t thread;
 #endif
- int active,finished,success;
+ int active,finished,success,mode; /* 1 documentation, 2 verification */
+ rm_verification *verification;
  char input[RM_MAX_URL],out[512],error[256],stage[48],detail[RM_MAX_URL];
  rm_catalog *catalog;
 } work;
 typedef struct {
  rm_catalog *catalog;
+ rm_verification *verification;
+ int verify_stage; /* 0 idle, 1 github review done/await consent, 2 results */
+ char review_domain[RM_MAX_URL];
  work task;
  char domain[RM_MAX_URL],filename[512],message[256];
  int consent,focus,tab,selected;
