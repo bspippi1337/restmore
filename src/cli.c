@@ -8,11 +8,13 @@ static void usage(FILE *f){
  "Usage:\n"
  "  restmore-cli [--out DIR] DOMAIN_OR_HTTPS_DOC_URL\n"
  "  restmore-cli [--out DIR] DOMAIN_OR_URL --execute --authorized\n"
- "  restmore-cli [--out DIR] --import OPENAPI_3_JSON\n"
+ "  restmore-cli [--out DIR] --import OPENAPI_3_JSON\n" "  restmore-cli --fusion-import RESTLESS_ARCHIVE [--out DIR]\n"
+ "  restmore-cli --fusion-import RESTLESS_ARCHIVE --fusion-search QUERY\n"
+ "  restmore-cli --fusion-import BEFORE --fusion-compare AFTER\n"
  "Options: --max-pages 1..25 --max-depth 0..3 --delay-ms >=2000\n"
  "         --user-agent TEXT --out DIR --execute --authorized\n"
  "No network access without BOTH execution and authorization.\n"
- "Only linked documentation is fetched; documented API calls are NEVER executed.\n",RM_VERSION);
+ "Only linked documentation is fetched; documented API calls are NEVER executed.\n" "All fusion-import/search/diff commands are OFFLINE and verify SHA-256 evidence.\n",RM_VERSION);
 }
 static void progress(const char *event,const char *detail,void *ctx){
  (void)ctx;fprintf(stderr,"[%s] %s\n",event,detail);
@@ -44,20 +46,75 @@ static int import_file(const char *path,const char *output){
  printf("Catalog: %s/library.json\nSHA-256: %s\n",output,digest);
  free(text);free(cat);return 0;
 }
+
+static int fusion_run(const char *archive,const char *out,
+                      const char *query,const char *after){
+ char error[256]={0};
+ rm_catalog *catalog=(rm_catalog *)calloc(1,sizeof(*catalog));
+ if(!catalog){fputs("Cannot allocate fusion catalog\n",stderr);return 1;}
+ rm_fusion_stats stats={0};
+ if(rm_restless_import(archive,catalog,&stats,error,sizeof(error))){
+  fprintf(stderr,"RESTMORE refused RESTLESS archive: %s\n",error);
+  free(catalog);return 1;
+ }
+ fprintf(stdout,"RESTLESS Botanical evidence verified: %zu records (%zu revalidations),"
+         " %zu unique documents, %zu OpenAPI sources, %zu operations.\n",
+         stats.manifest_records,stats.revalidated,stats.documents,
+         stats.openapi_sources,stats.operations);
+ fprintf(stdout,"Catalog API host: %s\n",catalog->target.host);
+ if(after){
+  rm_catalog *second=(rm_catalog *)calloc(1,sizeof(*second));
+  if(!second){free(catalog);return 1;}
+  if(rm_restless_import(after,second,NULL,error,sizeof(error))){
+   fprintf(stderr,"RESTMORE refused comparison archive: %s\n",error);
+   free(second);free(catalog);return 1;
+  }
+  rm_fusion_diff_report d={0};
+  if(rm_fusion_diff(catalog,second,&d)){
+   fputs("Cannot compute catalog diff\n",stderr);
+   free(second);free(catalog);return 1;
+  }
+  printf("Contract delta: +%zu added / -%zu removed / %zu changed /"
+         " %zu unchanged operations.\n",d.added,d.removed,d.modified,d.unchanged);
+  free(second);
+ }
+ if(query){
+  rm_fusion_hit hits[20]={0};
+  size_t found=rm_fusion_search(catalog,query,hits,20);
+  printf("Source-backed search \"%s\": %zu matches shown\n",query,found);
+  for(size_t i=0;i<found;i++){
+   const rm_operation *op=&catalog->operations[hits[i].operation_index];
+   printf("  [%u] %s %s  %s\n       SOURCE: %s\n       SHA256: %s\n",
+          hits[i].score,op->method,op->path,op->summary,
+          op->source_url,op->source_sha256);
+  }
+ }
+ if(!out||!*out||rm_make_dir(out)||rm_catalog_save(catalog,out,error,sizeof(error))){
+  fprintf(stderr,"RESTMORE fusion output failed: %s\n",error[0]?error:"output directory not writable");
+  free(catalog);return 1;
+ }
+ printf("RESTMORE atlas: %s/library.json\n",out);
+ free(catalog);return 0;
+}
 int main(int argc,char **argv){
  rm_options opt={0};opt.output_dir=".restmore";opt.max_pages=12;opt.max_depth=2;opt.delay_ms=2000;
- const char *file=NULL,*domain=NULL;
+ const char *file=NULL,*domain=NULL,*fusion_dir=NULL,*fusion_search=NULL,*fusion_compare=NULL;
  for(int i=1;i<argc;i++){
   const char *arg=argv[i];
   if(!strcmp(arg,"--help")||!strcmp(arg,"-h")){usage(stdout);return 0;}
   if(!strcmp(arg,"--version")){printf("restmore %s\n",RM_VERSION);return 0;}
   if(!strcmp(arg,"--execute")){opt.execute=1;continue;}
   if(!strcmp(arg,"--authorized")){opt.authorized=1;continue;}
-  if(!strcmp(arg,"--import")||!strcmp(arg,"--out")||!strcmp(arg,"--user-agent")||
+  if(!strcmp(arg,"--fusion-import")||!strcmp(arg,"--fusion-search")||
+     !strcmp(arg,"--fusion-compare")||!strcmp(arg,"--import")||
+     !strcmp(arg,"--out")||!strcmp(arg,"--user-agent")||
      !strcmp(arg,"--max-pages")||!strcmp(arg,"--max-depth")||!strcmp(arg,"--delay-ms")){
    if(++i>=argc){fprintf(stderr,"Missing value for %s\n",arg);return 2;}
    const char *val=argv[i];
    if(!strcmp(arg,"--import"))file=val;
+   else if(!strcmp(arg,"--fusion-import"))fusion_dir=val;
+   else if(!strcmp(arg,"--fusion-search"))fusion_search=val;
+   else if(!strcmp(arg,"--fusion-compare"))fusion_compare=val;
    else if(!strcmp(arg,"--out"))opt.output_dir=val;
    else if(!strcmp(arg,"--user-agent"))opt.user_agent=val;
    else {
@@ -72,6 +129,16 @@ int main(int argc,char **argv){
   if(arg[0]=='-'){fprintf(stderr,"Unknown argument: %s\n",arg);return 2;}
   if(domain){fputs("Only one target permitted\n",stderr);return 2;}
   domain=arg;
+ }
+ if(fusion_dir){
+  if(file||domain||opt.execute||opt.authorized){
+   fputs("Fusion import is offline; do not combine it with target/domain, --import, --execute or --authorized\n",stderr);
+   return 2;
+  }
+  return fusion_run(fusion_dir,opt.output_dir,fusion_search,fusion_compare);
+ }
+ if(fusion_search||fusion_compare){
+  fputs("--fusion-search and --fusion-compare require --fusion-import DIR\n",stderr);return 2;
  }
  if(file){if(domain||opt.execute){fputs("--import is offline and takes no domain or --execute\n",stderr);return 2;}return import_file(file,opt.output_dir);}
  if(!domain){usage(stderr);return 2;}
