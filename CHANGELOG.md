@@ -2,6 +2,22 @@
 
 This changelog separates shipped and verified artifacts from platform support that still requires packaging and device testing.
 
+## [v0.1.0-alpha.6](https://github.com/bspippi1337/restmore/releases/tag/v0.1.0-alpha.6) · 2026-11-08
+
+**Verification Edition / GitHub first, human authorization next.**
+
+- Native GUI's single-domain **MAP / REVIEW GITHUB** action opens a GitHub repository **search** before API verification; search results are not proof of ownership.
+- Separate **AUTHORIZE & VERIFY GET** requires a manual click for the reviewed domain. Editing the domain invalidates authorization.
+- Offline C11 planner uses only existing atlas operations with literal, non-parameterized GET paths and a declared OpenAPI 200/204 response, capped at five checks.
+- The authorization button stays disabled until the catalog can be bound to the selected host, including a public root origin in OpenAPI `servers[].url`.
+- HTTPS verifier checks robots rules first and enforces public-only socket validation, no redirects/proxies, per-request timeout, 128 KiB response limit, at least 2 seconds between GETs and stop-on-429/5xx.
+- Compare expected versus actual HTTP status and declared content type, check JSON syntax and shallow declared root type; preserve a clear distinction between match, status-only and mismatch. Full JSON Schema conformity is **not** claimed.
+- No guessed endpoints, unsafe HTTP methods, tokens, credentials, arbitrary redirects, response-body storage or speculative path mutation.
+- Native inspector renders per-route verification status; current Android preview remains offline.
+- Additional no-network regression tests cover GitHub lookup, domain normalization, atlas binding, explicit authorization, eligible path planning, response metadata and local library roundtrip. The feature is documented in [VERIFICATION.md](docs/VERIFICATION.md).
+
+**Status:** Automated desktop and Android build/test pipelines provide package-level validation. Domain-to-GitHub ownership and authorization cannot be inferred automatically; users must verify their permission. Real production endpoint conformance and Android physical-device interaction are not certified.
+
 ## [v0.1.0-alpha.5](https://github.com/bspippi1337/restmore/releases/tag/v0.1.0-alpha.5) · 2026-11-08
 
 **Architectural Edition / From concept sketch to working product.**
