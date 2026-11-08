@@ -126,3 +126,43 @@ jobs:
             docs/assets/restmore-mark.svg
           if-no-files-found: error
           retention-days: 30
+
+  tls-e2e:
+    name: Real HTTPS / 200 → 304 → tampered cache → fail-closed
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install fixture TLS and real libcurl
+        run: sudo apt-get update -qq && sudo apt-get install -y libcurl4-openssl-dev openssl python3
+      - name: Configure isolated DEBUG fixture, not a release build
+        run: >-
+          cmake -S . -B build-tls-fixture
+          -DRESTMORE_NETWORK=ON
+          -DRESTMORE_GUI=OFF
+          -DRESTMORE_TESTS=ON
+          -DRESTMORE_TEST_ONLY_LOOPBACK=ON
+          -DCMAKE_BUILD_TYPE=Debug
+      - name: Compile actual native C11 crawler and tests
+        run: cmake --build build-tls-fixture --parallel 2
+      - name: Run core and fusion regressions in test-specific library
+        run: ctest --test-dir build-tls-fixture --output-on-failure
+      - name: Execute real isolated TLS fixture and negative cases
+        run: sudo python3 tests/e2e_https_fixture.py "$PWD/build-tls-fixture/restmore-cli"
+      - name: Assert release build cannot enable test-only loopback switch
+        shell: bash
+        run: |
+          set -euo pipefail
+          if cmake -S . -B build-do-not-ship -DRESTMORE_NETWORK=ON \
+              -DRESTMORE_TESTS=ON -DRESTMORE_TEST_ONLY_LOOPBACK=ON \
+              -DCMAKE_BUILD_TYPE=Release > /tmp/restmore-refusal.log 2>&1; then
+            cat /tmp/restmore-refusal.log
+            echo "RELEASE ACCEPTED TEST LOOPBACK CONFIGURATION: FAIL" >&2
+            exit 1
+          fi
+          grep -q 'NEVER ship' /tmp/restmore-refusal.log
+      - name: Record the live TLS test boundary
+        shell: bash
+        run: |
+          echo 'Local TLS fixture only; public/private IP restrictions in standard builds are unchanged.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Tests: no-consent, invalid TLS chain, 200, 304, cache tamper, new ETag, robots denial, 429, 503.' >> "$GITHUB_STEP_SUMMARY"
