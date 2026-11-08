@@ -16,11 +16,11 @@ Legacy enginewow/discoverwow experiments went further into automatic probing of 
 
 ## Implemented on this branch
 
-**Bidirectional archive compatibility, entirely in C11:**
+**Bidirectional archive compatibility and conditional source revalidation, entirely in C11:**
 
-1. The authorized RESTMORE documentation crawler now emits a RESTLESS-compatible index.jsonl alongside sha256/<digest> source files.
-2. The Fusion importer reads a RESTLESS Botanical archive offline, re-verifies every source SHA-256, rejects malformed JSON, missing archives, path traversal and mixed-host inputs, then imports **only verified OpenAPI 3 JSON** operations.
-3. Revalidated records for the same URL keep the latest entry. Sources and their hashes remain attached to each operation.
+1. The authorized RESTMORE documentation crawler now emits a RESTLESS-compatible index.jsonl alongside sha256/<digest> source files, including ETag, Last-Modified, source timestamps and HTTP 200/304 audit metadata.
+2. The Fusion importer reads a RESTLESS Botanical archive offline, re-verifies every source SHA-256, rejects malformed JSON, duplicate source keys, nested URL spoofing, missing archives, path traversal and mixed-host inputs, then imports **only verified OpenAPI 3 JSON** operations.
+3. Revalidated records for the same URL keep the latest entry. The crawler sends conditional ETag/Last-Modified GET requests only after the existing archived bytes have been SHA-256-verified. HTTP 304 reuses the validated bytes, does not overwrite the archive and appends a new provenance record. Unexpected 304 and corrupt cache fail closed.
 4. Offline relevance search ranks actual operation IDs, paths, summaries, methods and source URLs without making requests.
 5. Offline contract diff reports added, removed, modified and unchanged documented operations.
 6. The native raylib GUI has a new **IMPORT VERIFIED ARCHIVE** action that reuses the existing operation atlas, inspector and export workflow.
@@ -84,12 +84,12 @@ All archive import, search and diff operations are offline. GitHub search is a l
 - **No silent truncation:** The current static RESTMORE catalog has finite document and operation capacities; exceeding them fails explicitly. Scaling larger datasets will require dynamic indexing or sharding, rather than pretending memory is unlimited.
 - **No hidden execution:** No auth bypass, credential replay, speculative endpoint calls or mutating HTTP methods. Robots, TLS certificate checks, public-address restrictions, pacing and explicit scope remain mandatory.
 - **SHA-256 is content integrity**, not publisher authentication or proof that an API operation is deployed.
-- **Already integrated:** RESTLESS-style append-only evidence manifests, SHA validation, offline indexing, offline route search and response-contract diff.
-- **Not yet ported:** RESTLESS Go's ETag/Last-Modified 304 cache reuse, full RFC 9309 precedence, YAML and local spec reference resolution, and text-reference search. These remain independent modules until there is real tested C11 parity.
+- **Already integrated:** RESTLESS-style append-only evidence manifests, SHA validation, ETag/Last-Modified conditional GET and verified HTTP 304 reuse, offline indexing, offline route search and response-contract diff.
+- **Not yet ported:** RESTLESS Go's full RFC 9309 robots precedence, YAML and local spec reference resolution, and text-reference search. These remain independent modules until there is real tested C11 parity. The 304 feature has compile and offline cache-integrity tests, but its remote conditional-response behavior has not yet been tested against a controlled HTTPS integration server.
 
 ## Test evidence
 
-The dedicated [Fusion 42 CI](../.github/workflows/fusion-42.yml) runs C11 SHA/source/authorization tests across Linux, Windows and macOS and verifies that a network-enabled Linux core compiles. Tests cover corrupted archives, source host binding, latest-manifest-entry behavior, offline query, contract diff and malformed JSONL.
+The dedicated [Fusion 42 CI](../.github/workflows/fusion-42.yml) runs C11 SHA/source/authorization tests across Linux, Windows and macOS and verifies that a network-enabled Linux core compiles. Tests cover corrupted archives, source host binding, ETag/Last-Modified metadata and cache recovery, latest-manifest-entry behavior, offline query, contract diff and adversarial JSONL.
 
 This branch is intentionally separate from main, and suitable for technical code review. No production security certification or real-target authorization is claimed.
 
