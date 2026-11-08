@@ -121,7 +121,26 @@ int main(void){
  write_bytes(index,"{\"url\":\"https://docs.example.org/openapi.json\",\"oops\":}\n");
  assert(rm_restless_import(dir,other,NULL,err,sizeof(err))!=0);
  assert(strstr(err,"invalid JSON")!=NULL);
+
+ /* Adversarial metadata: nested fake URLs cannot override the top-level URL. */
+ FILE *nested=fopen(index,"wb");assert(nested);
+ assert(fprintf(nested,"{\"metadata\":{\"url\":\"https://adversary.example.org\"},"
+  "\"url\":\"https://docs.example.org/openapi.json\","
+  "\"sha256\":\"%s\",\"archive_path\":\"sha256/%s\","
+  "\"content_type\":\"application/json\"}\n",sha,sha)>0);
+ assert(!fclose(nested));
+ assert(rm_restless_import(dir,other,NULL,err,sizeof(err))==0);
  assert(other->operation_count==1);
+ /* Duplicate JSON keys are valid in some parsers but ambiguous as evidence.
+    RESTMORE rejects a manifest that supplies two source URLs. */
+ FILE *duplicates=fopen(index,"wb");assert(duplicates);
+ assert(fprintf(duplicates,"{\"url\":\"https://docs.example.org/openapi.json\","
+  "\"url\":\"https://adversary.example.org/openapi.json\","
+  "\"sha256\":\"%s\",\"archive_path\":\"sha256/%s\","
+  "\"content_type\":\"application/json\"}\n",sha,sha)>0);
+ assert(!fclose(duplicates));
+ assert(rm_restless_import(dir,other,NULL,err,sizeof(err))!=0);
+ assert(strstr(err,"metadata")!=NULL);
 
  free(other);free(cat);
  assert(remove(index)==0);
