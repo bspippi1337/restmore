@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1320 620" role="img" aria-labelledby="title desc">
+<title id="title">Fusion 42 / evidence first crawler and atlas convergence</title>
+<desc id="desc">Architectural system diagram. RESTLESS Botanical Go harvest and RESTMORE native C11 archive meet at a verified SHA-256 evidence store, then feed offline operation search, contract diff, the native atlas, and separately authorized GET verification.</desc>
+<defs><pattern id="draft" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#4d798b" stroke-width=".6" opacity=".22"/></pattern><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#0d2634"/><stop offset="1" stop-color="#07101b"/></linearGradient></defs>
+<rect width="1320" height="620" rx="14" fill="url(#bg)"/><rect width="1320" height="620" rx="14" fill="url(#draft)"/><rect x="2" y="2" width="1316" height="616" rx="14" stroke="#456777" fill="none"/>
+<path d="M27 25h38m-19-19v38M1255 25h38m-19-19v38M27 594h38m-19-19v38M1255 594h38m-19-19v38" stroke="#79f9dc" stroke-width="1" opacity=".5"/>
+<g font-family="monospace" fill="#94b4c2" font-size="13" letter-spacing="1.2"><text x="44" y="42">FIG. 0042 / CROSS-ENGINE PROVENANCE</text><text x="1083" y="42" fill="#79f9dc">RESTLESS × RESTMORE</text></g>
+<!-- sources -->
+<rect x="55" y="89" width="352" height="124" rx="7" fill="#112e3f" stroke="#5f96aa"/>
+<rect x="913" y="89" width="352" height="124" rx="7" fill="#112e3f" stroke="#79f9dc"/>
+<g font-family="monospace" font-size="13" fill="#87c9dc"><text x="79" y="118">SOURCE / GO / 2026-02-08</text><text x="937" y="118" fill="#79f9dc">NATIVE / ISO C11 / FUSION 42</text></g>
+<g font-family="Arial,sans-serif" font-size="29" fill="#ecfaf6" font-weight="600"><text x="79" y="157">RESTLESS Botanical</text><text x="937" y="157">RESTMORE Harvester</text></g>
+<g font-family="monospace" fill="#a5bfca" font-size="14"><text x="79" y="185">Robots · HTTPS · conditional GET</text><text x="937" y="185">Scoped docs · TLS · ETag / 304</text></g>
+<!-- strokes -->
+<path d="M230 214V251H660M1089 214V251H660M660 251V302" stroke="#79f9dc" stroke-width="2" fill="none"/>
+<path d="m652 292 8 10 8-10" stroke="#79f9dc" fill="none" stroke-width="2"/>
+<circle cx="660" cy="251" r="6" fill="#79f9dc"/>
+<!-- ledger -->
+<rect x="425" y="310" width="470" height="116" rx="10" fill="#14393e" stroke="#79f9dc" stroke-width="2"/>
+<g font-family="monospace"><text x="450" y="338" font-size="14" fill="#79f9dc">PROVENANCE GATE / NEVER TRUST A FILENAME</text><text x="450" y="375" font-size="28" fill="#f0fbf6" font-family="Arial" font-weight="600">SHA-256-verified byte store</text><text x="450" y="403" font-size="14" fill="#b8d3d4">index.jsonl  +  sha256/&lt;digest&gt;  +  source URL</text></g>
+<!-- outputs -->
+<path d="M660 426V463H224M660 463H1096M224 463V491M660 463V491M1096 463V491" stroke="#5ebee2" stroke-width="1.8" fill="none"/>
+<path d="m217 485 7 8 7-8m422 0 7 8 7-8m422 0 7 8 7-8" stroke="#5ebee2" fill="none" stroke-width="1.8"/>
+<g>
+<rect x="55" y="497" width="340" height="78" rx="6" fill="#0d2738" stroke="#416c81"/>
+<rect x="490" y="497" width="340" height="78" rx="6" fill="#0d2738" stroke="#416c81"/>
+<rect x="925" y="497" width="340" height="78" rx="6" fill="#123438" stroke="#79f9dc"/>
+</g>
+<g font-family="monospace"><text x="77" y="521" font-size="12" fill="#87b5c8">01 / OFFLINE</text><text x="512" y="521" font-size="12" fill="#87b5c8">02 / OFFLINE</text><text x="947" y="521" font-size="12" fill="#79f9dc">03 / HUMAN APPROVAL REQUIRED</text></g>
+<g font-family="Arial,sans-serif" font-size="23" fill="#ecfaf6" font-weight="600"><text x="77" y="553">Source-backed search</text><text x="512" y="553">Contract / version diff</text><text x="947" y="553">Native Atlas + verify</text></g>
+<g font-family="monospace" fill="#92b3bf" font-size="10"><text x="57" y="603">NO AUTOMATIC AUTHORITY FROM GITHUB SEARCH</text><text x="925" y="603">REVIEW GITHUB  →  AUTHORIZE  →  DOCUMENTED GET</text></g>
+</svg>
