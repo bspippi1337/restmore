@@ -68,6 +68,12 @@ static int skip(json *j,unsigned depth){
     (n==4&&!strncmp(j->s+start,"null",4)))return 0;
  return json_number(j->s+start,n)?0:-1;
 }
+int rm_json_valid(const char *text,size_t length){
+ if(!text||length>RM_MAX_DOCUMENT_BYTES)return 0;
+ json j={text,length,0,0};ws(&j);
+ if(skip(&j,0))return 0;
+ ws(&j);return j.pos==length;
+}
 static int same(const json *j,size_t a,size_t b,const char *s){
  return (b-a)==strlen(s)&&!memcmp(j->s+a,s,b-a);
 }
@@ -155,6 +161,22 @@ int rm_openapi_import(rm_catalog *cat,const char *source,const char *sha,const c
       return rm_error(err,cap,"operation metadata exceeds limit");
     if(source)snprintf(op->source_url,sizeof(op->source_url),"%s",source);
     if(sha)snprintf(op->source_sha256,sizeof(op->source_sha256),"%s",sha);
+    /* Only concrete 200/204 response codes can become safe, verifiable checks.
+       Never infer a success code from an undocumented/default response. */
+    size_t ra,rb,sa,sb,ca,cb,ma,mb;
+    if(field(&j,oa,ob,"responses",&ra,&rb)==1&&j.s[ra]=='{'){
+      if(field(&j,ra,rb,"200",&sa,&sb)==1&&j.s[sa]=='{'){
+        op->expected_status=200;
+        if(field(&j,sa,sb,"content",&ca,&cb)==1&&j.s[ca]=='{'){
+          if(field(&j,ca,cb,"application/json",&ma,&mb)==1)
+            snprintf(op->expected_content_type,sizeof(op->expected_content_type),"application/json");
+          else if(field(&j,ca,cb,"text/plain",&ma,&mb)==1)
+            snprintf(op->expected_content_type,sizeof(op->expected_content_type),"text/plain");
+        }
+      }else if(field(&j,ra,rb,"204",&sa,&sb)==1&&j.s[sa]=='{'){
+        op->expected_status=204;
+      }
+    }
    }
   }
   ws(&p);if(p.pos>=paths_end)return rm_error(err,cap,"invalid paths separator");
@@ -221,6 +243,14 @@ int rm_catalog_import_json(rm_catalog *cat,const char *text,size_t len,char *err
       read_field_string(&j,os,p.pos,"source_url",op->source_url,sizeof(op->source_url)) ||
       read_field_string(&j,os,p.pos,"source_sha256",op->source_sha256,sizeof(op->source_sha256)))
      return rm_error(err,cap,"invalid operation metadata");
+   size_t xa,xb;
+   if(field(&j,os,p.pos,"expected_status",&xa,&xb)==1){
+     if(xb-xa==3&&!memcmp(j.s+xa,"200",3))op->expected_status=200;
+     else if(xb-xa==3&&!memcmp(j.s+xa,"204",3))op->expected_status=204;
+   }
+   if(read_field_string(&j,os,p.pos,"expected_content_type",op->expected_content_type,
+                        sizeof(op->expected_content_type)))
+      return rm_error(err,cap,"invalid documented response type");
    /* RESTLESS's library.json may use operationId rather than operation_id. */
    if(!op->operation_id[0]&&read_field_string(&j,os,p.pos,"operationId",op->operation_id,sizeof(op->operation_id)))
     return rm_error(err,cap,"invalid operationId");
