@@ -1,4 +1,4 @@
-name: RESTMORE v0.1.0-alpha.5 release
+name: RESTMORE v0.1.0-alpha.6 release
 on:
   push:
     branches: [main]
@@ -10,11 +10,11 @@ permissions:
   contents: read
 
 concurrency:
-  group: restmore-release-0.1.0-alpha.5
+  group: restmore-release-0.1.0-alpha.6
   cancel-in-progress: false
 
 env:
-  RESTMORE_TAG: v0.1.0-alpha.5
+  RESTMORE_TAG: v0.1.0-alpha.6
 
 jobs:
   package:
@@ -91,13 +91,19 @@ jobs:
           cp -R docs dist/docs
           if [ -f restmore-native-preview.png ]; then cp restmore-native-preview.png dist/; fi
           cat > dist/RELEASE-NOTES.txt <<'EOF'
-          RESTMORE v0.1.0-alpha.5 / Native technical preview
+          RESTMORE v0.1.0-alpha.6 / Verification Edition / native preview
 
           Native application and CLI source: ISO C11. Optional raylib GUI.
           Linux and macOS binaries: libcurl HTTPS documentation discovery.
           Windows binary: libcurl HTTPS documentation discovery with Schannel TLS.
           All desktop binaries support documented HTTPS discovery and local import.
           Android ARM64 offline NativeActivity debug APK is a separate release asset.
+          Verification Mode: Map opens a GitHub repository search first;
+          after a manual Authorize click with a host-bound OpenAPI catalog,
+          validate at most five documented literal GET response contracts.
+          Checks: expected HTTP status, MIME, JSON syntax and shallow root type.
+          No fuzzing, mutations, authentication replay or stored response bodies.
+          Android preview is offline: no remote verification requests.
           Desktop ZIP includes original SVG plates, product description,
           field-guide HTML and the offline website demonstration.
           No iOS IPA is currently shipped.
@@ -141,14 +147,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cp android-preview/restmore-android-arm64-debug.apk             release-assets/restmore-v0.1.0-alpha.5-android-arm64-debug.apk
+          cp android-preview/restmore-android-arm64-debug.apk             release-assets/restmore-v0.1.0-alpha.6-android-arm64-debug.apk
       - name: Verify packages and generate checksums
         shell: bash
         run: |
           set -euo pipefail
           cd release-assets
           test "$(find . -maxdepth 1 -name '*.zip' | wc -l)" -eq 3
-          test -s restmore-v0.1.0-alpha.5-android-arm64-debug.apk
+          test -s restmore-v0.1.0-alpha.6-android-arm64-debug.apk
           sha256sum *.zip *.apk > SHA256SUMS.txt
           cat SHA256SUMS.txt
       - name: Publish alpha release
@@ -163,18 +169,30 @@ jobs:
             exit 0
           fi
           cat > notes.md <<'EOF'
-          ## RESTMORE / v0.1.0-alpha.5
+          ## RESTMORE / v0.1.0-alpha.6
+
+          Verification Edition adds a human-reviewed GitHub source search and
+          a distinct per-domain **AUTHORIZE** control in the C11 raylib GUI.
+          The existing atlas now retains documented OpenAPI 200/204 response
+          contracts and optional JSON root types. Bounded verification compares
+          response status, MIME and JSON shape for up to five literal GETs,
+          without mutating methods, credentials or guessed endpoints.
 
           Updated C11 **native technical preview** with architectural drafting details,
           art-directed GUI, complete illustrated field guide and interactive demo,
           Android density-aware scaling and touch-aware panel navigation,
           OpenAPI JSON import, local atlas exports and auditable C regression tests, including strict JSON number validation.
 
-          - Linux x86_64 and macOS: libcurl HTTPS documentation crawler is compiled in.
+          - Linux x86_64 and macOS: libcurl HTTPS documentation crawler and
+            authorized GET contract verifier are compiled in.
           - Windows x64: native GUI and CLI now include the validated
-            libcurl/Schannel HTTPS documentation crawler.
+            libcurl/Schannel HTTPS documentation crawler and verifier.
           - GitHub Pages now presents the native-console plate, product story,
             five-step guide and interactive **synthetic** route inspector.
+          - Documentation of the GitHub-first manual approval gate is in
+            [Verification Field Manual](https://github.com/bspippi1337/restmore/blob/main/docs/VERIFICATION.md).
+          - Status+content-type+JSON root checks are *not* full schema validation.
+          - GitHub search is *not* proof of domain ownership.
           - Android arm64: experimental **offline native C11 APK** using Android
             NativeActivity; CI verified compilation, packaging and debug signing.
             Physical-device runtime and soft-keyboard integration are not yet verified.
@@ -194,7 +212,7 @@ jobs:
           EOF
           gh release create "$RESTMORE_TAG" \
             --target "$GITHUB_SHA" \
-            --title "RESTMORE 0.1.0 alpha 5 | Architectural Edition" \
+            --title "RESTMORE 0.1.0 alpha 6 | Verification Edition" \
             --notes-file notes.md \
             --prerelease \
             release-assets/*.zip release-assets/*.apk release-assets/SHA256SUMS.txt
