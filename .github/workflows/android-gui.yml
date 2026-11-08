@@ -72,7 +72,9 @@ jobs:
             --out dist/restmore-android-arm64-debug.apk build-android-gui/package-aligned.apk
           "$SDK_BUILD_TOOLS/apksigner" verify --verbose dist/restmore-android-arm64-debug.apk
           "$SDK_BUILD_TOOLS/aapt2" dump badging dist/restmore-android-arm64-debug.apk | head -20
-          sha256sum dist/restmore-android-arm64-debug.apk > dist/SHA256SUMS.txt
+          # The artifact unpacks at its own root; write a relative checksum so
+          # users can verify it directly with sha256sum -c SHA256SUMS.txt.
+          (cd dist && sha256sum restmore-android-arm64-debug.apk > SHA256SUMS.txt)
       - uses: actions/upload-artifact@v4
         with:
           name: restmore-android-arm64-nativeactivity-debug
