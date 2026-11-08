@@ -433,8 +433,8 @@ static void graph(app *ui,Rectangle area){
    method_pill(op->method,row.x+10,row.y+16,65);
    char path[RM_MAX_PATH];cut_text(op->path,path,sizeof(path),(int)row.width-107,14);
    textx(path,(int)row.x+88,(int)row.y+12,14,RM_WHITE);
-   char small[125];cut_text(op->summary,small,sizeof(small),(int)row.width-107,11);
-   textx(small,(int)row.x+88,(int)row.y+37,11,MUTED);
+   char summary_label[125];cut_text(op->summary,summary_label,sizeof(summary_label),(int)row.width-107,11);
+   textx(summary_label,(int)row.x+88,(int)row.y+37,11,MUTED);
    if(clicked(row))ui->selected=(int)i;
   }
   if(maxscroll>0){
