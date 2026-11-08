@@ -49,3 +49,5 @@ Look for the method, operation ID, summary, source URL and SHA-256. A fingerprin
 **Important:** Android ARM64 alpha APK is offline and not yet physically device-tested; there is no distributable iOS IPA.
 
 [Read the illustrated HTML guide](field-guide.html) · [Build manual](BUILD.md) · [Product story](PRODUCT.md)
+
+**Current illustrated distribution:** [RESTMORE Alpha 5 / Architectural Edition](https://github.com/bspippi1337/restmore/releases/tag/v0.1.0-alpha.5).
