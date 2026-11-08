@@ -55,6 +55,12 @@ int main(void){
  assert(rm_restless_import(dir,other,&refresh,err,sizeof(err))==0);
  assert(refresh.manifest_records==2);
  assert(refresh.revalidated==1 && refresh.documents==1);
+ rm_document good_cache={0};char *good_bytes=NULL;size_t good_n=0;
+ assert(rm_fusion_cache_get(dir,"https://docs.example.org/openapi.json",
+                            &good_cache,&good_bytes,&good_n,err,sizeof(err))==1);
+ assert(good_n==strlen(doc) && !memcmp(good_bytes,doc,good_n));
+ assert(!strcmp(good_cache.sha256,sha));
+ free(good_bytes);
  assert(other->operation_count==1);
  assert(!strcmp(cat->target.host,"api.example.org"));
  assert(!strcmp(cat->operations[0].method,"GET"));
@@ -81,6 +87,11 @@ int main(void){
  assert(rm_restless_import(dir,other,NULL,err,sizeof(err))!=0);
  assert(strstr(err,"SHA-256 mismatch")!=NULL);
  assert(other->operation_count==1); /* transactional: no partial mutation */
+ rm_document cached={0};char *cached_bytes=NULL;size_t cached_size=0;
+ assert(rm_fusion_cache_get(dir,"https://docs.example.org/openapi.json",
+                           &cached,&cached_bytes,&cached_size,err,sizeof(err))==-1);
+ assert(cached_bytes==NULL);
+ assert(strstr(err,"SHA-256")!=NULL);
  write_bytes(file,doc);
 
  /* Archive path traversal and cross-host references must be rejected. */
