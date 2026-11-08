@@ -6,7 +6,7 @@
 
 Not a fuzzer. Not an endpoint-guessing engine. A cartographer for evidence.
 
-![Illustrative operation map](docs/assets/atlas-plate.svg)
+![RESTMORE native GUI architectural concept](docs/assets/native-console-plate.svg)
 
 ### The pitch
 
