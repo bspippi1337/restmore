@@ -8,6 +8,8 @@ on:
       - 'tests/**'
       - 'CMakeLists.txt'
       - '.github/workflows/fusion-42.yml'
+      - 'docs/**'
+      - 'README.md'
   workflow_dispatch:
 permissions:
   contents: read
@@ -53,3 +55,74 @@ jobs:
             echo "Fusion importer incorrectly enabled live execution" >&2
             exit 1
           fi
+
+  gui:
+    name: Native C11 raylib GUI / Linux visual regression
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install desktop OpenGL, X11 and HTTPS dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libcurl4-openssl-dev libasound2-dev libgl1-mesa-dev libx11-dev libxcursor-dev libxi-dev libxinerama-dev libxrandr-dev libwayland-dev libxkbcommon-dev xvfb
+      - name: Configure native GUI
+        run: cmake -S . -B build-fusion-gui -DRESTMORE_NETWORK=ON -DRESTMORE_GUI=ON -DRESTMORE_TESTS=ON -DCMAKE_BUILD_TYPE=Release
+      - name: Build C11 raylib interface
+        run: cmake --build build-fusion-gui --parallel 2
+      - name: Run tests with GUI-linked library
+        run: ctest --test-dir build-fusion-gui --output-on-failure
+      - name: Render real native smoke screenshot under Xvfb
+        run: xvfb-run -a ./build-fusion-gui/restmore-gui --smoke
+      - name: Attach native GUI screenshot for architectural design review
+        uses: actions/upload-artifact@v4
+        with:
+          name: fusion42-native-gui-render
+          path: restmore-native-preview.png
+          if-no-files-found: error
+          retention-days: 30
+  field-guide:
+    name: Validate self-contained Fusion 42 portfolio plate
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate HTML references, SVG parser and JavaScript
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check docs/app.js
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          from xml.etree import ElementTree as ET
+          for filename in ['docs/assets/fusion-42-pipeline.svg',
+                           'docs/assets/restmore-mark.svg',
+                           'docs/assets/engraved-arch.svg']:
+              ET.parse(filename)
+          class Images(HTMLParser):
+              def __init__(self):
+                  super().__init__(); self.src=[]
+              def handle_starttag(self,tag,attrs):
+                  if tag=='img':
+                      self.src.extend(v for k,v in attrs if k=='src')
+          h=Path('docs/fusion-42.html').read_text(encoding='utf-8')
+          images=Images(); images.feed(h)
+          assert len(images.src)>=2
+          for url in images.src:
+              assert not url.startswith(('http:','https:','/')),url
+              assert (Path('docs')/url).is_file(),url
+          assert 'FEATURE BRANCH' in h or 'feature branch' in h
+          print('Fusion 42 portfolio HTML/SVG: PASS')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fusion42-offline-portfolio
+          path: |
+            docs/fusion-42.html
+            docs/editorial.css
+            docs/style.css
+            docs/assets/fusion-42-pipeline.svg
+            docs/assets/engraved-arch.svg
+            docs/assets/restmore-mark.svg
+          if-no-files-found: error
+          retention-days: 30
