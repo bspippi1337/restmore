@@ -48,6 +48,14 @@ int main(void){
  assert(stats.manifest_records==1&&stats.documents==1);
  assert(stats.openapi_sources==1&&stats.operations==1);
  assert(cat->document_count==1&&cat->operation_count==1);
+ /* C crawler provenance is compatible with RESTLESS Botanical manifests.
+    Repeated records are revalidations and latest URL entry wins. */
+ assert(rm_fusion_append_manifest(dir,&cat->documents[0],err,sizeof(err))==0);
+ rm_fusion_stats refresh={0};
+ assert(rm_restless_import(dir,other,&refresh,err,sizeof(err))==0);
+ assert(refresh.manifest_records==2);
+ assert(refresh.revalidated==1 && refresh.documents==1);
+ assert(other->operation_count==1);
  assert(!strcmp(cat->target.host,"api.example.org"));
  assert(!strcmp(cat->operations[0].method,"GET"));
  assert(!strcmp(cat->operations[0].path,"/v1/pets"));
