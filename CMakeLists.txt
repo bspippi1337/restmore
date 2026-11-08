@@ -24,6 +24,7 @@ add_library(restmore STATIC
   src/fusion_archive.c
   src/exports.c
   src/verification.c
+  src/ops_brief.c
 )
 target_include_directories(restmore PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -98,6 +99,9 @@ if(RESTMORE_TESTS AND NOT CMAKE_CROSSCOMPILING)
   add_executable(restmore-fusion-tests tests/test_fusion.c)
   target_link_libraries(restmore-fusion-tests PRIVATE restmore)
   add_test(NAME C11_restless_botanical_sha256_import_search_diff COMMAND restmore-fusion-tests)
+  add_executable(restmore-ops-tests tests/test_ops.c)
+  target_link_libraries(restmore-ops-tests PRIVATE restmore)
+  add_test(NAME C11_ops_offline_brief_provenance_and_authorization_gates COMMAND restmore-ops-tests)
 endif()
 include(GNUInstallDirs)
 install(TARGETS restmore ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
