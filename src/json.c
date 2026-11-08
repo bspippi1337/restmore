@@ -146,6 +146,30 @@ int rm_openapi_import(rm_catalog *cat,const char *source,const char *sha,const c
  char version[64]={0};
  if(read_field_string(&j,root,len,"openapi",version,sizeof(version))||strncmp(version,"3.",2))
    return rm_error(err,cap,"expected OpenAPI version 3.x JSON");
+ /* An imported OpenAPI document may explicitly name a public API server.
+    Only root-origin URLs are bound: base paths require explicit prefix support.
+    A scraped documentation host is never overwritten by this optional hint. */
+ if(!cat->target.host[0]){
+  size_t servers_a,servers_b;
+  if(field(&j,root,len,"servers",&servers_a,&servers_b)==1&&
+     j.s[servers_a]=='['){
+   json server=j;server.pos=servers_a+1;ws(&server);
+   if(server.pos<servers_b&&j.s[server.pos]=='{'){
+    size_t object_a=server.pos,object_b=0;
+    if(!skip(&server,0)){
+     object_b=server.pos;
+     char declared_url[RM_MAX_URL]={0};
+     if(!read_field_string(&j,object_a,object_b,"url",declared_url,sizeof(declared_url))){
+      rm_target bound={0};
+      if(!rm_normalize(declared_url,&bound,NULL,0)&&
+         !strcmp(bound.url+8+strlen(bound.host),"/")){
+        cat->target=bound;
+      }
+     }
+    }
+   }
+  }
+ }
  size_t paths_start,paths_end;
  if(field(&j,root,len,"paths",&paths_start,&paths_end)!=1||j.s[paths_start]!='{')
    return rm_error(err,cap,"OpenAPI paths object required");
