@@ -34,6 +34,17 @@ jobs:
           grep -q 'app.js' docs/index.html
           grep -q 'assets/evidence-pipeline.svg' docs/index.html
           test -z "$(find docs -type l -print -quit)"
+      - name: Validate three-panel demo and editorial pages
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check docs/app.js
+          for file in docs/field-guide.html docs/product.html docs/editorial.css docs/CREATIVE-DIRECTION.md docs/PRODUCT.md docs/QUICKSTART.md docs/assets/restmore-mark.svg docs/assets/engraved-arch.svg docs/assets/mountain-section.svg docs/assets/evidence-ledger.svg docs/assets/atlas-plate.svg docs/assets/native-console-plate.svg; do
+            test -s "$file" || { echo "::error::Missing product asset: $file"; exit 1; }
+          done
+          grep -q 'id="inspector-summary"' docs/index.html
+          grep -q 'href="field-guide.html"' docs/index.html
+          grep -q 'href="product.html"' docs/index.html
       - name: Publish inspectable website preview
         uses: actions/upload-artifact@v4
         with:
