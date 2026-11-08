@@ -50,6 +50,9 @@ int main(void){
  assert(cat->document_count==1&&cat->operation_count==1);
  /* C crawler provenance is compatible with RESTLESS Botanical manifests.
     Repeated records are revalidations and latest URL entry wins. */
+ snprintf(cat->documents[0].etag,sizeof(cat->documents[0].etag),"\"rev1\"");
+ snprintf(cat->documents[0].last_modified,sizeof(cat->documents[0].last_modified),
+          "Wed, 21 Oct 2015 07:28:00 GMT");
  assert(rm_fusion_append_manifest(dir,&cat->documents[0],err,sizeof(err))==0);
  rm_fusion_stats refresh={0};
  assert(rm_restless_import(dir,other,&refresh,err,sizeof(err))==0);
@@ -60,8 +63,11 @@ int main(void){
                             &good_cache,&good_bytes,&good_n,err,sizeof(err))==1);
  assert(good_n==strlen(doc) && !memcmp(good_bytes,doc,good_n));
  assert(!strcmp(good_cache.sha256,sha));
+ assert(!strcmp(good_cache.etag,"\"rev1\""));
+ assert(!strcmp(good_cache.last_modified,"Wed, 21 Oct 2015 07:28:00 GMT"));
  free(good_bytes);
  assert(other->operation_count==1);
+ assert(!strcmp(other->documents[0].etag,"\"rev1\""));
  assert(!strcmp(cat->target.host,"api.example.org"));
  assert(!strcmp(cat->operations[0].method,"GET"));
  assert(!strcmp(cat->operations[0].path,"/v1/pets"));
