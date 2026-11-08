@@ -8,6 +8,10 @@ An API is a territory. Its documentation is the map we have, not necessarily the
 
 **RESTMORE is a native documentation atlas**, implemented in C11. Give it an authorized documentation source or local OpenAPI 3 JSON, and it creates an inspectable catalog of **declared paths, HTTP methods and operations**, connected to their source documents and SHA-256 fingerprints.
 
+![RESTMORE native three-panel instrument](assets/native-console-plate.svg)
+
+*Illustrative UI plate. It uses demo operations, not a live scan.*
+
 ![RESTMORE provenance ledger](assets/evidence-ledger.svg)
 
 ### 01 / WHAT IT IS
