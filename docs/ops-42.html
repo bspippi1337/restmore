@@ -1,0 +1,97 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0b1714"><meta name="description" content="RESTMORE OPS 42. A native C11 evidence command desk for authorized API cartography."><title>RESTMORE / OPS 42 / Mission Control</title><link rel="icon" type="image/svg+xml" href="assets/restmore-mark.svg">
+<style>
+:root{color-scheme:dark;--bg:#091510;--panel:#10241b;--line:#3a5c45;--green:#a9f0b4;--amber:#eac480;--white:#edf6e9;--muted:#a4baa5;--mono:ui-monospace,Consolas,monospace}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--white);font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+a{color:inherit;text-decoration:none}a:hover{color:var(--green)}a:focus-visible,button:focus-visible{outline:2px solid var(--green);outline-offset:4px}
+.wrap{max-width:1500px;margin:auto;padding:0 clamp(19px,5vw,76px)}
+header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:18px;padding:22px 0;border-bottom:1px solid var(--line);font:11px var(--mono);letter-spacing:.12em}
+.brand{display:flex;align-items:center;gap:13px;color:var(--green);font-weight:800;font-size:15px}.brand img{width:40px;height:40px}
+header nav{display:flex;gap:20px;flex-wrap:wrap;color:var(--muted)}.lock{color:var(--amber)}
+.hero{padding:95px 0 55px;position:relative;overflow:hidden}
+.hero:before{content:"";position:absolute;inset:0;background:linear-gradient(#466f551b 1px,transparent 1px),linear-gradient(90deg,#466f551b 1px,transparent 1px);background-size:42px 42px;mask-image:linear-gradient(to right,transparent,black);pointer-events:none}
+.hero-content{position:relative;display:grid;grid-template-columns:1.1fr .7fr;gap:55px;align-items:end}
+.eyebrow{font:12px var(--mono);letter-spacing:.17em;color:var(--green);text-transform:uppercase}
+h1{font-size:clamp(80px,11vw,178px);line-height:.84;letter-spacing:-.11em;margin:24px 0 30px}h1 em,h2 em{font-style:normal;color:var(--green)}
+h2{font-size:clamp(37px,5vw,68px);line-height:1.05;letter-spacing:-.075em;margin:15px 0 24px}
+.hero p,.section-header p{color:#bfd0c2;line-height:1.9;max-width:630px;font-size:16px}
+.telemetry{background:#0b2018;border:1px solid var(--line);padding:25px;box-shadow:14px 14px 0 #1a342226;font:12px/2.1 var(--mono);color:var(--muted)}.telemetry b{color:var(--green)}.telemetry .critical{color:var(--amber)}
+.button{display:inline-block;border:1px solid var(--green);background:#1c3625;color:var(--green);padding:15px 20px;font:12px var(--mono);margin:20px 13px 0 0}.button:hover{background:#315540;color:#fff}.button.alt{background:transparent;border-color:var(--line)}
+.plate{margin:55px 0 0;border:1px solid var(--line);padding:10px;background:#071210;box-shadow:0 30px 80px #0009}.plate img{display:block;width:100%;height:auto}
+.plate figcaption{font:10px var(--mono);color:var(--muted);padding:13px 9px 5px;letter-spacing:.1em}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin:0 0 73px}
+.metrics div{padding:25px;background:#10221a}.metrics span{font:11px/1.5 var(--mono);color:var(--muted)}.metrics strong{display:block;margin-top:12px;font:clamp(22px,3vw,38px) var(--mono);color:var(--green)}
+.section{padding:75px 0;border-top:1px solid var(--line)}.section-header{display:grid;grid-template-columns:1fr .7fr;align-items:end;gap:50px;margin-bottom:36px}
+.gates{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.gates article{border:1px solid var(--line);background:var(--panel);padding:25px;min-height:234px}
+.gates article:nth-child(3){border-color:var(--amber)}.gates small{font:11px var(--mono);color:var(--green)}.gates h3{font-size:24px;letter-spacing:-.05em;margin:40px 0 15px}.gates p{font:12px/1.8 var(--mono);color:var(--muted)}
+.deck{display:grid;grid-template-columns:210px 1fr minmax(230px,.6fr);border:1px solid var(--line);background:#0c1d15}
+.deck>*{padding:23px}.deck nav{border-right:1px solid var(--line)}.deck nav button{width:100%;background:transparent;border:1px solid transparent;border-bottom-color:#315039;color:#c2d4c2;text-align:left;padding:15px 9px;cursor:pointer;font:12px/1.6 var(--mono)}
+.deck nav button:hover,.deck nav button[aria-pressed=true]{background:#21402b;border-color:var(--green);color:var(--green)}
+.mono{font:11px var(--mono);letter-spacing:.12em;color:var(--muted)}
+.route{font:clamp(20px,2.4vw,32px)/1.4 var(--mono);margin:32px 0;overflow-wrap:anywhere}
+.method{font:12px var(--mono);color:var(--green);border:1px solid var(--green);padding:8px 13px;display:inline-block}.method[data-method=POST]{color:var(--amber);border-color:var(--amber)}.method[data-method=DELETE]{color:#eaa5a0;border-color:#eaa5a0}
+.source{border-left:1px solid var(--line);background:#13271d}.source dt{font:11px var(--mono);color:var(--muted);margin:20px 0 7px}.source dd{font:13px/1.7 var(--mono);margin:0}
+.notice{border:1px solid #a18a5b;background:#33291730;color:var(--amber);padding:16px;font:12px/1.8 var(--mono)}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid var(--line);background:#07120d;padding:26px;color:#c9eed1;font:13px/1.95 var(--mono)}
+.links{display:flex;flex-wrap:wrap;gap:12px;margin-top:24px}.links a{border:1px solid var(--line);padding:13px 16px;color:var(--green);font:12px var(--mono)}
+footer{border-top:1px solid var(--line);padding:42px 0 60px;color:var(--muted);font:11px/1.9 var(--mono);display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+@media(max-width:1050px){.deck{grid-template-columns:180px 1fr}.source{grid-column:1/-1;border-left:0;border-top:1px solid var(--line)}.gates{grid-template-columns:1fr 1fr}}
+@media(max-width:780px){.hero-content,.section-header{grid-template-columns:1fr}.metrics{grid-template-columns:1fr 1fr}.deck{display:block}.deck nav{border-right:0;border-bottom:1px solid var(--line)}.gates article{min-height:180px}}
+@media(max-width:490px){h1{font-size:76px}.gates,.metrics{grid-template-columns:1fr}.plate{padding:3px}.deck nav{display:grid;grid-template-columns:1fr 1fr}.deck nav button{font-size:10px}.section{padding:53px 0}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style></head><body><div class="wrap">
+<header><a class="brand" href="./"><img src="assets/restmore-mark.svg" alt="">RESTMORE / OPS 42</a><nav aria-label="Navigation"><a href="./">HOME</a><a href="#doctrine">PROTOCOL</a><a href="#desk">CONSOLE</a><a href="#evidence">PROOF</a><a href="https://github.com/bspippi1337/restmore">SOURCE</a></nav><span class="lock">● REVIEW REQUIRED</span></header>
+<main>
+<section class="hero"><div class="hero-content"><div><div class="eyebrow">Unclassified local software demonstration / Not a government system</div><h1>OPS<br><em>42.</em></h1><p>Mission control for documented API territory. Native C11 evidence intelligence, source fingerprints and a human authorization boundary that cannot be skipped by importing an atlas.</p><a class="button" href="#desk">EXPLORE THE EVIDENCE DESK ↘</a><a class="button alt" href="https://github.com/bspippi1337/restmore/blob/main/docs/OPS-42.md">READ THE FIELD MANUAL ↗</a></div>
+<aside class="telemetry"><div><b>OPERATION:</b> RESTMORE/FUSION-42</div><div><b>ENGINE:</b> ISO C11 / NATIVE</div><div><b>MODE:</b> OFFLINE SOURCE BRIEF</div><div><b>PROVENANCE:</b> SHA-256</div><div><b>CONTRACTS:</b> OPENAPI-DECLARED</div><div class="critical"><b>AUTHORIZATION:</b> REVIEW REQUIRED</div><div class="critical"><b>HTTP REQUESTS IN DEMO:</b> ZERO</div></aside></div>
+<figure class="plate"><img src="assets/ops-42-console.svg" alt="Original tactical-style architectural diagram showing a synthetic API atlas, offline scope intelligence and a locked authorization gate."><figcaption>OPS 42 / ORIGINAL CONSOLE PLATE / ILLUSTRATIVE API DATA / NO LIVE SCAN</figcaption></figure></section>
+<div class="metrics"><div><span>DEMO NETWORK REQUESTS</span><strong>000</strong></div><div><span>ILLUSTRATIVE OPERATIONS</span><strong>004</strong></div><div><span>ENGINE / PORTABILITY</span><strong>C11</strong></div><div><span>EXECUTION STATE</span><strong style="color:var(--amber);font-size:24px">LOCKED</strong></div></div>
+<section class="section" id="doctrine"><div class="section-header"><div><div class="eyebrow">01 / Operational discipline</div><h2>Evidence first.<br><em>Authority second.</em></h2></div><p>Every result must identify its source, scope and limits. An OpenAPI contract describes behavior; it never grants permission to request that behavior.</p></div><div class="gates">
+<article><small>01 / SCOPE</small><h3>Declare.</h3><p>One normalized HTTPS host. Strict operator-selected coverage, not uncontrolled expansion.</p></article>
+<article><small>02 / ATTRIBUTION</small><h3>Inspect.</h3><p>GitHub search suggests leads. Humans verify ownership, boundaries and real permissions.</p></article>
+<article><small style="color:var(--amber)">03 / AUTHORITY</small><h3>Authorize.</h3><p>A separate deliberate action enables only documented, bounded GET contracts.</p></article>
+<article><small>04 / EVIDENCE</small><h3>Brief.</h3><p>Export exact routes, response expectations and a deterministic source-derived fingerprint.</p></article>
+</div></section>
+<section class="section" id="desk"><div class="section-header"><div><div class="eyebrow">02 / Interactive synthetic source atlas</div><h2>Mission desk.<br><em>No live scan.</em></h2></div><p>Select an example OpenAPI operation to inspect its declared response. This website makes no requests to a target service.</p></div>
+<div class="deck"><nav aria-label="Sample documented operations"><div class="mono">DOCUMENTED DEMO ROUTES</div><button type="button" data-index="0" aria-pressed="true">GET /v1/pets</button><button type="button" data-index="1" aria-pressed="false">POST /v1/pets</button><button type="button" data-index="2" aria-pressed="false">GET /v1/pets/{id}</button><button type="button" data-index="3" aria-pressed="false">DELETE /v1/pets/{id}</button></nav>
+<div><div class="mono">SOURCE RECORD / OFFLINE</div><div class="route"><span class="method" id="method" data-method="GET">GET</span><p id="path">/v1/pets</p></div><p style="font:14px/1.8 var(--mono);color:var(--muted)" id="summary">List documented sample pets.</p><div class="notice">NO LIVE SCAN / SOURCE METADATA IS ILLUSTRATIVE / NO AUTHORIZATION GRANTED</div></div>
+<aside class="source"><div class="mono">CONTRACT INTELLIGENCE</div><dl><dt>DECLARED STATUS</dt><dd id="status">HTTP 200</dd><dt>PROVENANCE</dt><dd>Unverified demonstration fixture</dd><dt>AUTHORIZATION</dt><dd style="color:var(--amber)">LOCKED / HUMAN GATE</dd><dt>OBSERVED RESPONSE</dt><dd>None. No request executed.</dd></dl></aside></div></section>
+<section class="section" id="evidence"><div class="section-header"><div><div class="eyebrow">03 / Repeatable mission briefing</div><h2>Inspect the source.<br><em>Export the proof.</em></h2></div><p>The native C11 engine generates an offline ops-brief.json with declared routes, method distribution, source fingerprints and an explicit REVIEW_REQUIRED decision state.</p></div>
+<pre><code># Native C11, no network access
+cmake -S . -B build-ops -DRESTMORE_NETWORK=OFF -DRESTMORE_TESTS=ON
+cmake --build build-ops --config Release
+
+# Offline briefing from OpenAPI source
+./build-ops/restmore-cli --import examples/openapi-petstore.json --ops-brief --out evidence
+
+# Or from a SHA-256 verified RESTLESS archive
+./build-ops/restmore-cli --fusion-import .restless/botanical --ops-brief --out evidence
+
+# Inspect evidence/ops-brief.json
+ctest --test-dir build-ops --output-on-failure</code></pre>
+<div class="links"><a href="https://github.com/bspippi1337/restmore/blob/main/src/ops_brief.c">BRIEF ENGINE ↗</a><a href="https://github.com/bspippi1337/restmore/blob/main/tests/test_ops.c">AUDIT TESTS ↗</a><a href="https://github.com/bspippi1337/restmore/actions">CI EVIDENCE ↗</a><a href="fusion-42.html">FUSION 42 ↗</a></div>
+<p style="color:var(--muted);font:12px/1.9 var(--mono);max-width:900px;margin-top:28px">A SHA-256 fingerprint is not a publisher signature. This is not a defense agency product, not full JSON Schema validation, not automatic ownership verification and not permission to test another organization's systems.</p>
+</section></main>
+<footer><span>RESTMORE / OPS 42 / MISSION DISCIPLINE, NOT INTRUSION</span><span>UNCLASSIFIED LOCAL DEMONSTRATION / NOT AFFILIATED WITH ANY DEFENSE AGENCY</span></footer>
+</div>
+<script>
+"use strict";
+const demo=[
+ {method:"GET",path:"/v1/pets",status:200,summary:"List documented sample pets."},
+ {method:"POST",path:"/v1/pets",status:201,summary:"Create a sample pet. Documented here, never executed."},
+ {method:"GET",path:"/v1/pets/{id}",status:200,summary:"Read a sample pet. Parameterized route, not eligible for automatic verification."},
+ {method:"DELETE",path:"/v1/pets/{id}",status:204,summary:"Delete a sample pet. Displayed as documentation only."}
+];
+const buttons=[...document.querySelectorAll("button[data-index]")];
+for(const button of buttons)button.addEventListener("click",()=>{
+ const index=Number(button.dataset.index);
+ if(!Number.isInteger(index)||index<0||index>=demo.length)return;
+ const op=demo[index];
+ const method=document.getElementById("method");
+ method.textContent=op.method;method.dataset.method=op.method;
+ document.getElementById("path").textContent=op.path;
+ document.getElementById("status").textContent="HTTP "+op.status;
+ document.getElementById("summary").textContent=op.summary;
+ for(const other of buttons)other.setAttribute("aria-pressed",String(other===button));
+});
+</script></body></html>
