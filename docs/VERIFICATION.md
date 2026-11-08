@@ -8,8 +8,9 @@ A bounded, evidence-first contract check, not a fuzzer or a live-system inventor
 
 1. **Enter only a public domain.** For example, `api.your-company.tld`. Custom ports, URL paths, credentials, fragments, IP literals and reserved/local hostnames are refused.
 2. Click **MAP / REVIEW GITHUB**. RESTMORE opens a GitHub repository **search for that domain** in your browser, before making *any* verification HTTP requests. A domain does not inherently have a unique GitHub repository. Search results are candidates, **not proof of ownership**. The human must review any relevant repository and independently confirm permission to inspect the target.
-3. Back in the native GUI, examine the selected catalog scope and source-binding warning. Click **AUTHORIZE & VERIFY GET**. Only this explicit, per-domain click enables the verification worker. Changing the domain invalidates the pending authorization. The web demo does not perform this action.
-4. The native inspector displays each checked operation's path, expected HTTP status, observed status and verdict. An absent documented response expectation makes an endpoint ineligible for automatic checking.
+3. Back in the native GUI, examine the selected catalog scope and source-binding warning. Click **I REVIEWED GITHUB & HAVE PERMISSION** as a separate, deliberate acknowledgment of your review and authorization to test that server. GitHub search alone is not an identity check.
+4. Click **AUTHORIZE / N DOCUMENTED GET CHECKS**. The C11 engine requires *both* manual review and this independent authorization, plus a source-bound atlas, before allowing requests. Changing the domain or reloading the atlas invalidates pending approval. The web demo does not perform this action.
+5. The native inspector displays each checked operation's path, expected HTTP status, observed status and verdict. An absent documented response expectation makes an endpoint ineligible for automatic checking.
 
 **No API verification request is sent on the first MAP click.**
 
@@ -24,13 +25,13 @@ A candidate must declare a concrete **200 or 204** response in OpenAPI. For each
 - For JSON responses, valid JSON syntax.
 - When the OpenAPI JSON schema declares a simple root `type`, the returned root's type: object, array, string, number, integer, boolean or null.
 
-Results distinguish **MATCH** from **STATUS ONLY**, **MISMATCH**, **SKIPPED** and **ERROR**. A status-only result is not treated as comprehensive proof that the output is correct.
+Results distinguish **MATCH** from **STATUS ONLY**, **MISMATCH**, **SKIPPED** and **ERROR**. Click **EXPORT VERIFICATION JSON** to create `restmore-verification.json` with the normalized domain, recorded consent, expected and observed HTTP codes/media types, JSON root-type expectation and source SHA-256. It does not store response bodies or secrets. A status-only result is not treated as comprehensive proof that the output is correct.
 
 **Not implemented:** full JSON Schema constraint validation, authentication-specific responses, parameter substitution, schema `$ref` resolution, response-body retention, or API request replay. A matching root type alone does not prove every field/value is correct.
 
 ## Network boundaries
 
-- **Explicit authorization** required for the exact normalized host. Authorization is independent of discovery consent.
+- **Two separate human gestures** required: GitHub review acknowledgment and explicit authorization for the exact normalized host. Both are enforced in the C11 network worker, independently of discovery consent.
 - HTTPS only, certificate verification, public-network socket checks and **no redirects**.
 - Robots policy checked first; a failure outside 200/404/410 stops the run.
 - Conservative **at least 2 seconds** between verification requests, greater robots delay wins.
@@ -61,6 +62,6 @@ This is an illustrative fragment. The normal library adds method details, source
 
 Pure C11 planning: `src/verification.c`. OpenAPI response extraction: `src/json.c`. Network worker: `src/network.c` or disabled-network stub `src/network_off.c`. GUI gate/results: `src/gui.c`.
 
-`tests/test_verification.c` exercises public-domain normalization, GitHub search formatting, the positive authorization gate, exact GET selection, forbidden paths, response metadata, simple JSON root type, and library roundtrip. The tests require **no network access**.
+`tests/test_verification.c` exercises public-domain normalization, GitHub search formatting, both positive and negative GitHub-review/authorization gates, JSON report validity, exact GET selection, forbidden paths, response metadata, simple JSON root type, and library roundtrip. The tests require **no network access**.
 
-[Product site](index.html) · [Architecture](ARCHITECTURE.md) · [Build guide](BUILD.md) · [Source](https://github.com/bspippi1337/restmore)
+[Contract verification field notes](CONTRACT-VERIFICATION.md) · [Product site](index.html) · [Architecture](ARCHITECTURE.md) · [Build guide](BUILD.md) · [Source](https://github.com/bspippi1337/restmore)
