@@ -50,6 +50,7 @@ typedef struct {
   rm_target target;
   size_t count;
   int authorized; /* set ONLY after explicit human action for exactly this target */
+  int github_reviewed; /* set ONLY when user confirms manually inspecting GitHub link */
   int source_bound; /* imported catalog matched this domain */
   rm_check checks[RM_MAX_VERIFY_CHECKS];
 } rm_verification;
