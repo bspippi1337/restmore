@@ -27,6 +27,10 @@ int main(void){
  assert(cat->operation_count==6);
  assert(cat->operations[0].expected_status==200);
  assert(!strcmp(cat->operations[0].expected_content_type,"application/json"));
+ assert(!strcmp(cat->operations[0].expected_json_type,"array"));
+ assert(rm_json_root_is("[1,2,3]",7,"array")==1);
+ assert(rm_json_root_is("{\"ok\":true}",11,"array")==0);
+ assert(rm_json_root_is("{\"ok\":true}",11,"object")==1);
  assert(cat->operations[1].expected_status==204);
  assert(rm_verify_plan(cat,"api.example.org",plan,error,sizeof(error))==0);
  assert(plan->count==2);
@@ -51,6 +55,7 @@ int main(void){
  assert(rm_catalog_import_json(loaded,bytes,(size_t)n,error,sizeof(error))==6);
  assert(loaded->operations[0].expected_status==200);
  assert(!strcmp(loaded->operations[0].expected_content_type,"application/json"));
+ assert(!strcmp(loaded->operations[0].expected_json_type,"array"));
  free(bytes);free(loaded);free(plan);free(cat);
  puts("RESTMORE authorized verification planning: PASS");
  return 0;
