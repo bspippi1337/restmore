@@ -11,7 +11,7 @@ static void usage(FILE *f){
  "  restmore-cli [--out DIR] --import OPENAPI_3_JSON\n" "  restmore-cli --fusion-import RESTLESS_ARCHIVE [--out DIR]\n"
  "  restmore-cli --fusion-import RESTLESS_ARCHIVE --fusion-search QUERY\n"
  "  restmore-cli --fusion-import BEFORE --fusion-compare AFTER\n"
- "Options: --max-pages 1..25 --max-depth 0..3 --delay-ms >=2000\n"
+ "Options: --max-pages 1..256 --max-depth 0..8 --delay-ms >=2000\n"
  "         --user-agent TEXT --out DIR --execute --authorized\n"
  "No network access without BOTH execution and authorization.\n"
  "Only linked documentation is fetched; documented API calls are NEVER executed.\n" "All fusion-import/search/diff commands are OFFLINE and verify SHA-256 evidence.\n",RM_VERSION);
