@@ -2,6 +2,20 @@
 
 This changelog separates shipped and verified artifacts from platform support that still requires packaging and device testing.
 
+## [v0.1.0-alpha.3](https://github.com/bspippi1337/restmore/releases/tag/v0.1.0-alpha.3) · 2026-11-08
+
+**Art-directed native GUI and the first Android NativeActivity test APK.**
+
+- Native raylib GUI refreshed with a unified dark/mint visual system, vector logo, adaptive layout, scoped controls, interactive orbital operation map, route index and source inspector.
+- Fixed native compiler conflicts on Windows and raylib, verified native GUI builds on Linux, macOS and Windows.
+- Fixed local OpenAPI import to preserve the actual document's SHA-256 fingerprint for operation provenance, with regression coverage.
+- Compiled and debug-signed an ARM64 Android NativeActivity APK in CI, bundling an offline OpenAPI fixture and a vector launcher icon.
+- New root index entry supports GitHub Pages when the repository uses branch-root deployment; GitHub Pages build and deployment reached a successful state.
+- Captured a real native GUI screenshot during the Linux Xvfb visual smoke test.
+- Release workflow published desktop archives, the Android debug APK and a combined SHA-256 manifest after successful build/test/package jobs.
+
+**Limits:** Android APK is an offline engineering preview, not physically device-tested. It uses an ephemeral debug signing key. iOS app packaging is still outstanding. Do not mistake the static Pages topology for a live API scan.
+
 ## [v0.1.0-alpha.2](https://github.com/bspippi1337/restmore/releases/tag/v0.1.0-alpha.2) · 2026-11-08
 
 **Native C11 preview with full desktop HTTPS support.**
