@@ -2,6 +2,15 @@
 
 This changelog separates shipped and verified artifacts from platform support that still requires packaging and device testing.
 
+## OPS 42 / Unclassified Mission Control integration
+
+- Introduced an offline deterministic C11 operations briefing with method inventory, declared route evidence and a reproducible source-metadata fingerprint; no target execution or authorization is conferred.
+- Added the machine-readable OPS 42 JSON report export to CLI (--ops-brief for local OpenAPI or SHA-verified Botanical archives) and native raylib inspector.
+- Added an operationally inspired olive/amber/phosphor-green GUI theme and original tactical-style architectural illustration. The interface visually distinguishes approval gates from actual test outcomes.
+- Published a separate, interactive, **synthetic** command desk and operational field manual with clear non-government affiliation statements.
+- Enforced offline-only CLI briefing and added C11 negative/positive tests, cross-platform build gates, real controlled TLS regressions, and HTML/SVG validation.
+- No offensive exploitation, credential replay, arbitrary endpoint guessing or approval bypass was introduced. OPS briefing is not a security certification or a digital signature.
+
 ## Unreleased integration / Fusion 42
 
 - Integrated RESTLESS Botanical's content-addressed source ledger into RESTMORE C11, with source-backed archive import, offline operation search, contract diff and native GUI.
