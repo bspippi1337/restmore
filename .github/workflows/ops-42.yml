@@ -1,7 +1,7 @@
 name: RESTMORE OPS 42 / Mission Control
 on:
   push:
-    branches: [feature/ops-command-42]
+    branches: [main, feature/ops-command-42]
     paths:
       - 'src/**'
       - 'include/**'
