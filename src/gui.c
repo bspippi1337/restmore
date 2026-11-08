@@ -290,7 +290,10 @@ static int load_catalog(app *ui){
  char error[256]={0};
  char sha[65];
  rm_sha256(src,length,sha);
- int parsed=rm_catalog_import_json(cat,src,length,error,sizeof(error));
+ /* Preserve the SHA-256 of the actual local source when importing OpenAPI.
+    Library JSON retains its document-level provenance through catalog parsing. */
+ int parsed=rm_openapi_import(cat,ui->filename,sha,src,length,error,sizeof(error));
+ if(parsed<0)parsed=rm_catalog_import_json(cat,src,length,error,sizeof(error));
  free(src);
  if(parsed<0){
   free(cat);
