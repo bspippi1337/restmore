@@ -34,6 +34,7 @@ int main(void){
  assert(!strcmp(cat->operations[0].method,"GET"));
  assert(!strcmp(cat->operations[0].path,"/v1/people"));
  assert(!strcmp(cat->operations[0].summary,"List people"));
+ assert(!strcmp(cat->operations[0].source_sha256,sha));
  assert(!strcmp(cat->operations[2].method,"DELETE"));
 
  /* Number grammar regression: these are invalid JSON per RFC 8259. */
