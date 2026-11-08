@@ -114,10 +114,13 @@ int rm_restless_import(const char *directory,rm_catalog *catalog,
    failed=rm_error(error,cap,"RESTLESS manifest contains invalid JSON");break;
   }
   char url[RM_MAX_URL]={0},hash[65]={0},mime[96]={0},archivepath[128]={0};
+  char etag[256]={0},modified[96]={0};
   if(field_string(p,"url",url,sizeof(url))!=1||
      field_string(p,"sha256",hash,sizeof(hash))!=1||
      field_string(p,"archive_path",archivepath,sizeof(archivepath))!=1||
-     field_string(p,"content_type",mime,sizeof(mime))<0||!hash_ok(hash)){
+     field_string(p,"content_type",mime,sizeof(mime))<0||
+     field_string(p,"etag",etag,sizeof(etag))<0||
+     field_string(p,"last_modified",modified,sizeof(modified))<0||!hash_ok(hash)){
    failed=rm_error(error,cap,"RESTLESS record lacks valid URL, digest or archive path");break;
   }
   char expected[80];snprintf(expected,sizeof(expected),"sha256/%s",hash);
@@ -144,6 +147,8 @@ int rm_restless_import(const char *directory,rm_catalog *catalog,
   snprintf(entries[found].url,sizeof(entries[found].url),"%s",url);
   snprintf(entries[found].sha,sizeof(entries[found].sha),"%s",hash);
   snprintf(entries[found].mime,sizeof(entries[found].mime),"%s",mime);
+  snprintf(entries[found].etag,sizeof(entries[found].etag),"%s",etag);
+  snprintf(entries[found].modified,sizeof(entries[found].modified),"%s",modified);
   info.manifest_records++;
  }
  if(ferror(f)&&!failed)failed=rm_error(error,cap,"RESTLESS manifest read failed");
@@ -164,6 +169,8 @@ int rm_restless_import(const char *directory,rm_catalog *catalog,
   snprintf(doc->url,sizeof(doc->url),"%s",entries[i].url);
   snprintf(doc->sha256,sizeof(doc->sha256),"%s",actual);
   snprintf(doc->content_type,sizeof(doc->content_type),"%s",entries[i].mime);
+  snprintf(doc->etag,sizeof(doc->etag),"%s",entries[i].etag);
+  snprintf(doc->last_modified,sizeof(doc->last_modified),"%s",entries[i].modified);
   doc->bytes=length;doc->status=200;
   if(json_mime(entries[i].mime)){
    char import_error[256]={0};
