@@ -743,6 +743,16 @@ static void inspector(app *ui,Rectangle area){
    Color c=check->outcome==1?MINT:check->outcome==2?AQUA:RM_ORANGE;
    textx(status,x,y,11,c);y+=28;
   }
+  if(button((Rectangle){(float)x,(float)y,(float)inner,42},
+            "EXPORT VERIFICATION JSON",MINT,1)){
+   char report_error[256]={0};
+   if(rm_verify_report(ui->verification,"restmore-verification.json",
+                       report_error,sizeof(report_error)))
+    snprintf(ui->message,sizeof(ui->message),"Report export refused: %.187s",report_error);
+   else snprintf(ui->message,sizeof(ui->message),
+                 "Saved restmore-verification.json / no response bodies stored.");
+  }
+  y+=55;
   textx("Status + type + JSON syntax, not schema proof.",x,y,11,MUTED);y+=22;
  }else if(ui->task.active&&ui->task.mode==2){
   textx("Awaiting bounded HTTPS results...",x,y,12,MINT);y+=29;
