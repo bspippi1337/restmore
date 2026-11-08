@@ -1,5 +1,6 @@
 name: RESTMORE Android NativeActivity C11 GUI
 on:
+  workflow_call:
   push:
     branches: [main]
     paths:
