@@ -425,67 +425,138 @@ static void draw_brand(int width){
 
 static void draw_scope(app *ui,Rectangle area,int busy){
  panel(area,PANEL);
- float maxscroll=770-area.height+28;
- if(maxscroll<0)maxscroll=0;
+ float maxscroll=fmaxf(0.0f,960.0f-area.height);
  if(hit(area))ui->scope_scroll-=GetMouseWheelMove()*45+TOUCH_DY;
  if(ui->scope_scroll<0)ui->scope_scroll=0;
  if(ui->scope_scroll>maxscroll)ui->scope_scroll=maxscroll;
  int x=(int)area.x+22,y=(int)(area.y+21-ui->scope_scroll);
  int inner=(int)area.width-44;
  scissor((Rectangle){area.x+1,area.y+1,area.width-2,area.height-2});
- label(x,y,"01  /  ACQUISITION DESK");y+=26;
- textx("Map a service.",x,y,28,RM_WHITE);y+=43;
- textx("Start with an authorized source.",x,y,13,MUTED);y+=35;
- label(x,y,"HTTPS ORIGIN  /  DOCUMENTATION URL");y+=22;
- inputbox((Rectangle){(float)x,(float)y,(float)inner,48},ui->domain,sizeof(ui->domain),&ui->focus,1,!busy);y+=62;
- if(button((Rectangle){(float)x,(float)y,inner,42},"PREVIEW SCOPE",AQUA,!busy)){
-  rm_target target;char error[256]={0};
-  if(!rm_normalize(ui->domain,&target,error,sizeof(error)))
-   snprintf(ui->message,sizeof(ui->message),"Scope preview: %.185s  /  zero requests",target.url);
-  else snprintf(ui->message,sizeof(ui->message),"Scope refused: %.200s",error);
+ label(x,y,"01  /  DOMAIN TO ATLAS");y+=27;
+ textx("Map a service.",x,y,27,RM_WHITE);y+=41;
+ textx("One domain. A documented contract.",x,y,12,MUTED);y+=34;
+ label(x,y,"PUBLIC HTTPS DOMAIN");y+=23;
+ inputbox((Rectangle){(float)x,(float)y,(float)inner,48},ui->domain,
+          sizeof(ui->domain),&ui->focus,1,!busy);y+=61;
+ /* Any edit after GitHub review invalidates authorization. */
+ if(!busy&&ui->verify_stage&&strcmp(ui->domain,ui->review_domain)){
+  free(ui->verification);ui->verification=NULL;ui->verify_stage=0;
+  snprintf(ui->message,sizeof(ui->message),"Domain changed. Review GitHub and authorize again.");
+ }
+ if(button((Rectangle){(float)x,(float)y,(float)inner,45},
+           "MAP / REVIEW GITHUB",MINT,!busy)){
+  char lookup[RM_MAX_URL],error[256]={0};
+  if(rm_github_lookup(ui->domain,lookup,sizeof(lookup),error,sizeof(error)))
+   snprintf(ui->message,sizeof(ui->message),"Domain refused: %.204s",error);
+  else{
+   /* The FIRST action opens a human-reviewed GitHub repository search.
+      A matching search result is NOT proof of domain ownership. */
+   OpenURL(lookup);
+   rm_verification *candidate=(rm_verification *)calloc(1,sizeof(*candidate));
+   if(!candidate){
+    snprintf(ui->message,sizeof(ui->message),"Verification plan out of memory");
+   }else if(rm_verify_plan(ui->catalog,ui->domain,candidate,error,sizeof(error))){
+    free(candidate);
+    snprintf(ui->message,sizeof(ui->message),"GitHub opened. Atlas not testable: %.177s",error);
+   }else{
+    free(ui->verification);
+    ui->verification=candidate;ui->verify_stage=1;
+    snprintf(ui->review_domain,sizeof(ui->review_domain),"%s",ui->domain);
+    snprintf(ui->message,sizeof(ui->message),
+     "GitHub repository search opened. Review ownership and permission, then click AUTHORIZE.");
+   }
+  }
   ui->focus=0;
  }
- y+=59;
- DrawRectangleRounded((Rectangle){(float)x,(float)y,(float)inner,85},.08f,8,Fade(AQUA,.06f));
- DrawRectangleRoundedLinesEx((Rectangle){(float)x,(float)y,(float)inner,85},.08f,8,1,Fade(AQUA,.20f));
- Rectangle check={(float)x+12,(float)y+14,20,20};
- DrawRectangleRounded(check,.22f,6,ui->consent?MINT:PANEL2);
- DrawRectangleRoundedLinesEx(check,.22f,6,1,MINT);
- if(ui->consent)textx("X",(int)check.x+4,(int)check.y+3,14,BG);
- if(!busy&&clicked((Rectangle){(float)x,(float)y,(float)inner,61}))ui->consent=!ui->consent;
- textx("AUTHORIZED TO INSPECT",x+44,y+17,13,RM_WHITE);
- textx("HTTPS docs only. No methods executed.",x+12,y+53,12,MUTED);
- y+=103;
- if(button((Rectangle){(float)x,(float)y,(float)inner,48},"BUILD SOURCE LIBRARY",MINT,!busy&&ui->consent&&RESTMORE_NETWORK_ENABLED)){
-  rm_target target;char error[256]={0};
+ y+=60;
+ textx("Github search is a lead, not identity proof.",x,y,11,MUTED);y+=25;
+ Rectangle review={(float)x,(float)y,(float)inner,153};
+ DrawRectangleRounded(review,.08f,8,Fade(AQUA,.075f));
+ DrawRectangleRoundedLinesEx(review,.08f,8,1,Fade(AQUA,.28f));
+ label(x+12,y+14,"02  /  MANUAL GITHUB REVIEW");
+ if(ui->verify_stage==1&&ui->verification){
+  char scope[RM_MAX_URL];
+  cut_text(ui->verification->target.host,scope,sizeof(scope),inner-24,15);
+  textx(scope,x+12,y+35,15,RM_WHITE);
+  textx(ui->verification->source_bound?"ATLAS SOURCE HOST MATCHED":
+        "ATLAS / HOST LINK NOT CONFIRMED",
+        x+12,y+61,11,ui->verification->source_bound?MINT:RM_ORANGE);
+  if(button((Rectangle){(float)x+12,(float)y+90,(float)inner-24,49},
+            RESTMORE_NETWORK_ENABLED?"AUTHORIZE & VERIFY GET":"NETWORK DISABLED",
+            MINT,RESTMORE_NETWORK_ENABLED&&!busy)){
+   /* Explicit user click authorizes only this reviewed host and plan.
+      No cookies, tokens, mutations or new endpoint guesses are used. */
+   rm_target check={0};char err[256]={0};
+   if(rm_normalize(ui->domain,&check,err,sizeof(err)) ||
+      strcmp(check.host,ui->verification->target.host)){
+    free(ui->verification);ui->verification=NULL;ui->verify_stage=0;
+    snprintf(ui->message,sizeof(ui->message),"Domain changed; authorization invalidated");
+   }else{
+    ui->verification->authorized=1;
+    if(start_verification(&ui->task,ui->verification)){
+     ui->verification->authorized=0;
+     snprintf(ui->message,sizeof(ui->message),"Cannot start verification worker");
+    }else{
+     ui->verification=NULL;ui->verify_stage=0;
+     snprintf(ui->message,sizeof(ui->message),"Authorized bounded GET verification started");
+    }
+   }
+  }
+ }else if(busy&&ui->task.mode==2){
+  textx("VERIFYING DOCUMENTED GET ROUTES",x+12,y+54,13,MINT);
+ }else if(ui->verify_stage==2){
+  textx("CHECK COMPLETE / OPEN INSPECTOR",x+12,y+52,13,MINT);
+  textx("New MAP review required to repeat.",x+12,y+82,12,MUTED);
+ }else{
+  textx("1. Inspect a plausible GitHub repository.",x+12,y+49,12,MUTED);
+  textx("2. Confirm permission for this domain.",x+12,y+74,12,MUTED);
+  textx("3. Return and click AUTHORIZE.",x+12,y+100,12,MUTED);
+ }
+ y+=169;
+ rule((float)x,(float)y,(float)inner);y+=26;
+ label(x,y,"03  /  OPTIONAL DOCUMENTATION DISCOVERY");y+=27;
+ Rectangle permission={(float)x,(float)y,(float)inner,76};
+ DrawRectangleRounded(permission,.08f,8,Fade(AQUA,.055f));
+ DrawRectangleRoundedLinesEx(permission,.08f,8,1,Fade(AQUA,.20f));
+ Rectangle checkbox={(float)x+12,(float)y+14,20,20};
+ DrawRectangleRounded(checkbox,.22f,6,ui->consent?MINT:PANEL2);
+ DrawRectangleRoundedLinesEx(checkbox,.22f,6,1,MINT);
+ if(ui->consent)textx("X",(int)checkbox.x+4,(int)checkbox.y+3,14,BG);
+ if(!busy&&clicked((Rectangle){(float)x,(float)y,(float)inner,58}))ui->consent=!ui->consent;
+ textx("AUTHORIZED TO FETCH DOCS",x+41,y+17,12,RM_WHITE);
+ textx("Docs GET only / same host / robots-aware",x+12,y+51,11,MUTED);
+ y+=89;
+ if(button((Rectangle){(float)x,(float)y,(float)inner,44},"BUILD SOURCE LIBRARY",
+           AQUA,!busy&&ui->consent&&RESTMORE_NETWORK_ENABLED)){
+  rm_target target={0};char error[256]={0};
   if(rm_normalize(ui->domain,&target,error,sizeof(error)))
    snprintf(ui->message,sizeof(ui->message),"Scope refused: %.200s",error);
   else if(start(&ui->task,ui->domain))
-   snprintf(ui->message,sizeof(ui->message),"Could not start HTTPS worker");
+   snprintf(ui->message,sizeof(ui->message),"Cannot start documentation worker");
   ui->focus=0;
  }
- y+=66;
- rule((float)x,(float)y,(float)inner);y+=26;
- label(x,y,"02  /  OFFLINE INGEST");y+=28;
- textx("Import an atlas.",x,y,23,RM_WHITE);y+=35;
+ y+=61;
+ rule((float)x,(float)y,(float)inner);y+=25;
+ label(x,y,"04  /  OFFLINE INGEST");y+=25;
+ textx("Import an atlas.",x,y,22,RM_WHITE);y+=37;
  label(x,y,"OPENAPI 3 / RESTMORE LIBRARY.JSON");y+=22;
- inputbox((Rectangle){(float)x,(float)y,(float)inner,46},ui->filename,sizeof(ui->filename),&ui->focus,2,!busy);y+=61;
- if(button((Rectangle){(float)x,(float)y,(float)inner,44},"OPEN LOCAL DOCUMENT",AQUA,!busy)){
+ inputbox((Rectangle){(float)x,(float)y,(float)inner,46},ui->filename,
+          sizeof(ui->filename),&ui->focus,2,!busy);y+=58;
+ if(button((Rectangle){(float)x,(float)y,(float)inner,44},"OPEN LOCAL DOCUMENT",
+           AQUA,!busy)){
   load_catalog(ui);ui->focus=0;
  }
- y+=63;
- rule((float)x,(float)y,(float)inner);y+=20;
- textx("SAFE BY DEFAULT",x,y,12,MINT);y+=23;
- textx(RESTMORE_NETWORK_ENABLED?"Capped pages / robots-aware / same host":"Offline preview build / network disabled",x,y,12,MUTED);y+=21;
- textx("Document metadata is never executed.",x,y,12,MUTED);
+ y+=58;
+ textx("No speculative paths. No unsafe methods.",x,y,11,MUTED);
  EndScissorMode();
  if(maxscroll>0){
-  float track=area.height-35,thumb=track*area.height/(770+28);
-  DrawRectangleRounded((Rectangle){area.x+area.width-6,area.y+17,3,track},.4f,6,Fade(MUTED,.13f));
-  DrawRectangleRounded((Rectangle){area.x+area.width-6,area.y+17+ui->scope_scroll/maxscroll*(track-thumb),3,thumb},.4f,6,Fade(MINT,.65f));
+  float track=area.height-35,thumb=track*area.height/960.0f;
+  DrawRectangleRounded((Rectangle){area.x+area.width-6,area.y+17,3,track},
+                       .4f,6,Fade(MUTED,.13f));
+  DrawRectangleRounded((Rectangle){area.x+area.width-6,
+     area.y+17+ui->scope_scroll/maxscroll*(track-thumb),3,thumb},.4f,6,Fade(MINT,.65f));
  }
 }
-
 static void graph(app *ui,Rectangle area){
  panel(area,PANEL);
  if(area.width<220||area.height<240)return;
