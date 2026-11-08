@@ -303,7 +303,8 @@ static int rm_mime_matches(const char *actual,const char *expected){
  * This never guesses routes, sends credentials, replays mutating operations,
  * follows redirects or stores response bodies. */
 int rm_verify_run(rm_verification *plan,rm_progress cb,void *ctx,char *err,size_t cap){
- if(!plan||!plan->authorized)return rm_error(err,cap,"Denied: explicit Authorize click required for this domain");
+ if(!plan||!plan->authorized||!plan->github_reviewed)
+  return rm_error(err,cap,"Denied: review GitHub, then click Authorize for this exact domain");
  if(!plan->count||plan->count>RM_MAX_VERIFY_CHECKS)
   return rm_error(err,cap,"No bounded, documented verification plan");
  if(!plan->source_bound)return rm_error(err,cap,"Atlas is not bound to this domain; import its OpenAPI server contract first");
