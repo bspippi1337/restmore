@@ -70,6 +70,22 @@ void rm_sha256(const void *input, size_t length, char hex[65]);
 int rm_openapi_import(rm_catalog *catalog, const char *source_url, const char *sha256,
                       const char *json, size_t length, char *error, size_t error_cap);
 int rm_catalog_import_json(rm_catalog *catalog,const char *json,size_t length,char *error,size_t error_cap);
+
+/* RESTLESS Botanical <-> RESTMORE native C11 source interchange.
+ * All operations below are OFFLINE; only SHA-256-verified archived OpenAPI
+ * documents may contribute API operations. Nothing is guessed or executed. */
+typedef struct {
+ size_t manifest_records, revalidated, documents, openapi_sources, operations;
+} rm_fusion_stats;
+typedef struct { size_t operation_index; unsigned score; } rm_fusion_hit;
+typedef struct { size_t added, removed, modified, unchanged; } rm_fusion_diff_report;
+int rm_restless_import(const char *archive_directory,rm_catalog *catalog,
+                       rm_fusion_stats *stats,char *error,size_t error_cap);
+size_t rm_fusion_search(const rm_catalog *catalog,const char *query,
+                        rm_fusion_hit *hits,size_t capacity);
+int rm_fusion_diff(const rm_catalog *before,const rm_catalog *after,
+                   rm_fusion_diff_report *result);
+
 int rm_export_postman(const rm_catalog *catalog,const char *directory,char *error,size_t error_cap);
 int rm_export_mermaid(const rm_catalog *catalog,const char *directory,char *error,size_t error_cap);
 int rm_export_svg(const rm_catalog *catalog,const char *directory,char *error,size_t error_cap);
