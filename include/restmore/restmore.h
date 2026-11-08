@@ -81,6 +81,9 @@ typedef struct { size_t operation_index; unsigned score; } rm_fusion_hit;
 typedef struct { size_t added, removed, modified, unchanged; } rm_fusion_diff_report;
 int rm_restless_import(const char *archive_directory,rm_catalog *catalog,
                        rm_fusion_stats *stats,char *error,size_t error_cap);
+/* Append interoperable JSONL record after source bytes exist on disk. */
+int rm_fusion_append_manifest(const char *directory,const rm_document *doc,
+                              char *error,size_t error_cap);
 size_t rm_fusion_search(const rm_catalog *catalog,const char *query,
                         rm_fusion_hit *hits,size_t capacity);
 int rm_fusion_diff(const rm_catalog *before,const rm_catalog *after,
