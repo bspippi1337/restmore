@@ -127,6 +127,7 @@ static void init_type(void){
 }
 /* Blueprint registration lines are intentionally decorative.
    They do not describe a fetched operation, host or verified network state. */
+static void glyph_line(float x1,float y1,float x2,float y2,float weight,Color color);
 static void registration_mark(float x,float y,Color ink){
  glyph_line(x-5,y,x+5,y,.8f,ink);
  glyph_line(x,y-5,x,y+5,.8f,ink);
