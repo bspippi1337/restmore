@@ -29,40 +29,77 @@ static const char *skip_space(const char *p){
 /* The JSONL record is a flat object. Decode its quoted values without
  * accepting ambiguous escapes or injecting values from nested objects.
  * rm_json_valid confirms the complete line before extraction. */
+
+/* Read only TOP-LEVEL object keys. Reject duplicate security-significant
+ * names and ambiguous escapes; never take a nested string as a source URL.
+ * Full JSON syntax is checked independently by rm_json_valid. */
 static int field_string(const char *line,const char *name,char *out,size_t cap){
- const char *p=line;
- while(*p){
-  if(*p!='"'){p++;continue;}
+ if(!line||!name||!out||!cap)return -1;
+ const char *p=skip_space(line);
+ if(*p++!='{')return -1;
+ int found=0;
+ for(;;){
+  p=skip_space(p);
+  if(*p=='}')break;
+  if(*p!='"')return -1;
   p++;
   char key[80];size_t k=0;
   while(*p&&*p!='"'){
-   if(*p=='\\'||k+1>=sizeof(key))return -1;
+   if(*p=='\\'||(unsigned char)*p<32||k+1>=sizeof(key))return -1;
    key[k++]=*p++;
   }
   if(*p!='"')return -1;
   key[k]=0;p++;
-  const char *v=skip_space(p);
-  if(*v!=':'){p=v;continue;}
-  v=skip_space(v+1);
-  if(!strcmp(key,name)){
-   if(*v!='"')return -1;
-   v++;size_t n=0;
-   while(*v&&*v!='"'){
-    unsigned char c=(unsigned char)*v++;
+  p=skip_space(p);
+  if(*p++!=':')return -1;
+  p=skip_space(p);
+  const int wanted=!strcmp(key,name);
+  if(wanted&&found)return -1;
+  if(*p=='"'){
+   p++;size_t n=0;
+   while(*p&&*p!='"'){
+    unsigned char c=(unsigned char)*p++;
     if(c=='\\'){
-     unsigned char escaped=(unsigned char)*v++;
+     unsigned char escaped=(unsigned char)*p++;
      if(escaped=='/'||escaped=='\\'||escaped=='"')c=escaped;
-     else return -1; /* no control or Unicode escapes in validated URLs */
+     else if(wanted)return -1;
+     else continue;
     }
-    if(c<32||c>126||n+1>=cap)return -1;
-    out[n++]=(char)c;
+    if(wanted){
+     if(c<32||c>126||n+1>=cap)return -1;
+     out[n++]=(char)c;
+    }
    }
-   if(*v!='"')return -1;
-   out[n]=0;return n?1:0;
+   if(*p!='"')return -1;
+   p++;
+   if(wanted){out[n]=0;found=1;}
+  }else{
+   if(wanted)return -1;
+   /* Skip non-string values, including nested structures, without confusing
+      their keys with top-level record metadata. */
+   int depth=0,in_string=0,escape=0;
+   while(*p){
+    const char c=*p;
+    if(in_string){
+     if(escape)escape=0;
+     else if(c=='\\')escape=1;
+     else if(c=='"')in_string=0;
+    }else{
+     if(c=='"')in_string=1;
+     else if(c=='{'||c=='[')depth++;
+     else if(c=='}'||c==']'){
+      if(depth==0)break;depth--;
+     }else if(c==','&&depth==0)break;
+    }
+    p++;
+   }
   }
-  p=v;
+  p=skip_space(p);
+  if(*p==','){p++;continue;}
+  if(*p=='}')break;
+  return -1;
  }
- return 0;
+ return found?1:0;
 }
 static int load_file(const char *filename,char **body,size_t *length,
                      char *error,size_t cap){
