@@ -32,7 +32,11 @@ int rm_catalog_save(const rm_catalog *cat,const char *dir,char *error,size_t cap
    if(!ok&&rm_json_escape(f,d->sha256))ok=-1;
    if(!ok&&fputs(",\"content_type\":",f)==EOF)ok=-1;
    if(!ok&&rm_json_escape(f,d->content_type))ok=-1;
-   if(!ok&&fprintf(f,",\"bytes\":%zu,\"depth\":%u,\"status\":%d}",d->bytes,d->depth,d->status)<0)ok=-1;
+   if(!ok&&fputs(",\"etag\":",f)==EOF)ok=-1;
+   if(!ok&&rm_json_escape(f,d->etag))ok=-1;
+   if(!ok&&fputs(",\"last_modified\":",f)==EOF)ok=-1;
+   if(!ok&&rm_json_escape(f,d->last_modified))ok=-1;
+   if(!ok&&fprintf(f,",\"bytes\":%zu,\"depth\":%u,\"status\":%d,\"response_status\":%d}",d->bytes,d->depth,d->status,d->response_status?d->response_status:d->status)<0)ok=-1;
  }
  if(!ok&&fputs("\n  ],\n  \"operations\":[\n",f)==EOF)ok=-1;
  for(size_t i=0;!ok&&i<cat->operation_count;i++){
