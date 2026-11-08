@@ -357,7 +357,10 @@ int rm_verify_run(rm_verification *plan,rm_progress cb,void *ctx,char *err,size_
   if(status!=check->expected_status)check->outcome=3;
   else if(!check->expected_content_type[0])check->outcome=2;
   else if(!rm_mime_matches(mime,check->expected_content_type))check->outcome=3;
-  else if(!strcmp(check->expected_content_type,"application/json")&&!rm_json_valid(body.data,body.length))
+  else if(!strcmp(check->expected_content_type,"application/json")&&
+          (!rm_json_valid(body.data,body.length)||
+           (check->expected_json_type[0]&&
+            !rm_json_root_is(body.data,body.length,check->expected_json_type))))
    check->outcome=3;
   else check->outcome=1;
   free(body.data);
