@@ -84,6 +84,9 @@ int rm_verify_plan(const rm_catalog *catalog,const char *domain,rm_verification 
                    char *error,size_t error_cap);
 int rm_verify_run(rm_verification *plan,rm_progress progress,void *context,
                   char *error,size_t error_cap);
+/* Save exact-plan results and outcomes; never exports bodies or authentication. */
+int rm_verify_report(const rm_verification *plan,const char *path,
+                     char *error,size_t error_cap);
 /* Strict syntax validation only; does not implement JSON Schema. */
 int rm_json_valid(const char *text,size_t length);
 int rm_json_root_is(const char *text,size_t length,const char *expected_type);
