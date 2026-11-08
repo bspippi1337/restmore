@@ -50,6 +50,8 @@ int rm_catalog_save(const rm_catalog *cat,const char *dir,char *error,size_t cap
    if(!ok&&rm_json_escape(f,op->source_url))ok=-1;
    if(!ok&&fputs(",\"source_sha256\":",f)==EOF)ok=-1;
    if(!ok&&rm_json_escape(f,op->source_sha256))ok=-1;
+   if(!ok&&fprintf(f,",\"expected_status\":%d,\"expected_content_type\":",op->expected_status)<0)ok=-1;
+   if(!ok&&rm_json_escape(f,op->expected_content_type))ok=-1;
    if(!ok&&fputc('}',f)==EOF)ok=-1;
  }
  if(!ok&&fputs("\n  ]\n}\n",f)==EOF)ok=-1;
