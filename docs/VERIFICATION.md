@@ -16,7 +16,7 @@ A bounded, evidence-first contract check, not a fuzzer or a live-system inventor
 
 ## Exactly what is checked
 
-The verifier selects no more than **five** `GET` operations from the already imported RESTMORE atlas/library. Paths must be literal (no `{parameter}`, wildcards, escapes, query strings, or guessed segments). It refuses obvious authentication, administrative, money movement and lifecycle paths even if declared `GET`, since poorly designed services can have side effects on read requests.
+The verifier selects **5, 25 or the full eligible atlas**, as chosen by the operator before the GitHub review and authorization step, from existing `GET` operations from the already imported RESTMORE atlas/library. Paths must be literal (no `{parameter}`, wildcards, escapes, query strings, or guessed segments). It refuses obvious authentication, administrative, money movement and lifecycle paths even if declared `GET`, since poorly designed services can have side effects on read requests.
 
 A candidate must declare a concrete **200 or 204** response in OpenAPI. For each eligible request, the verifier checks:
 

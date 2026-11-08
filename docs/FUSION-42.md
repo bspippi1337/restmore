@@ -2,7 +2,7 @@
 
 **MAP THE UNSEEN. PRESERVE THE EVIDENCE.**
 
-Branch: feature/restless-restmore-fusion-42. A reviewable experiment, NOT merged into RESTMORE main and NOT a released binary. Remote execution is off by default.
+Originally developed in branch `feature/restless-restmore-fusion-42` as a separately reviewable C11 integration. It is not a production-certified application or a signed mobile release. Remote execution is off by default.
 
 ## How RESTLESS originally began
 
@@ -86,12 +86,12 @@ All archive import, search and diff operations are offline. GitHub search is a l
 - **No hidden execution:** No auth bypass, credential replay, speculative endpoint calls or mutating HTTP methods. Robots, TLS certificate checks, public-address restrictions, pacing and explicit scope remain mandatory.
 - **SHA-256 is content integrity**, not publisher authentication or proof that an API operation is deployed.
 - **Already integrated:** RESTLESS-style append-only evidence manifests, SHA validation, ETag/Last-Modified conditional GET and verified HTTP 304 reuse, offline indexing, offline route search and response-contract diff.
-- **Not yet ported:** RESTLESS Go's full RFC 9309 robots precedence, YAML and local spec reference resolution, and text-reference search. These remain independent modules until there is real tested C11 parity. The 304 feature has compile and offline cache-integrity tests, but its remote conditional-response behavior has not yet been tested against a controlled HTTPS integration server.
+- **Not yet ported:** RESTLESS Go's full RFC 9309 robots precedence, YAML and local spec reference resolution, and text-reference search. These remain independent modules until there is real tested C11 parity. A controlled private HTTPS integration server has now exercised TLS peer verification, genuine 200 responses, conditional ETag/304 reuse, changed ETags, tampered cache rejection before document GET, robots denial and 429/503 without retries. No public target was scanned.
 
 ## Test evidence
 
-The dedicated [Fusion 42 CI](../.github/workflows/fusion-42.yml) runs C11 SHA/source/authorization tests across Linux, Windows and macOS and verifies that a network-enabled Linux core compiles. Tests cover corrupted archives, source host binding, ETag/Last-Modified metadata and cache recovery, latest-manifest-entry behavior, offline query, contract diff and adversarial JSONL.
+The dedicated [Fusion 42 CI](../.github/workflows/fusion-42.yml) runs C11 SHA/source/authorization tests across Linux, Windows and macOS and verifies that a network-enabled Linux core compiles. Tests cover corrupted archives, source host binding, ETag/Last-Modified metadata and cache recovery, latest-manifest-entry behavior, offline query, contract diff and adversarial JSONL. `tests/e2e_https_fixture.py` executes eight separate scenarios using a real test-only TLS endpoint, while `CMakeLists.txt` refuses to enable its loopback exception in Release builds.
 
-This branch is intentionally separate from main, and suitable for technical code review. No production security certification or real-target authorization is claimed.
+The original feature branch and [review PR #1](https://github.com/bspippi1337/restmore/pull/1) preserve the integration history. No production security certification or authority to test third-party targets is claimed.
 
 [RESTLESS source](https://github.com/bspippi1337/restless) · [RESTLESS Botanical](https://github.com/bspippi1337/restless/tree/main/internal/botanical) · [RESTMORE](https://github.com/bspippi1337/restmore)

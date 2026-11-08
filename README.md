@@ -9,7 +9,7 @@
 
 *Native API cartography. ISO C11. Evidence before assumptions.*
 
-[**EXPLORE THE WEBSITE**](https://bspippi1337.github.io/restmore/) &nbsp; / &nbsp; [**DOWNLOAD ALPHA 6**](https://github.com/bspippi1337/restmore/releases/tag/v0.1.0-alpha.6) &nbsp; / &nbsp; [**ILLUSTRATED FIELD GUIDE**](docs/field-guide.html)
+[**EXPLORE THE WEBSITE**](https://bspippi1337.github.io/restmore/) &nbsp; / &nbsp; [**DOWNLOAD ALPHA 7**](https://github.com/bspippi1337/restmore/releases/tag/v0.1.0-alpha.7) &nbsp; / &nbsp; [**ILLUSTRATED FIELD GUIDE**](docs/field-guide.html)
 
 ![Native build](https://github.com/bspippi1337/restmore/actions/workflows/native-gui.yml/badge.svg) &nbsp; ![C11](https://img.shields.io/badge/engine-ISO%20C11-79f9dc?labelColor=07101b) &nbsp; ![License: MIT](https://img.shields.io/badge/license-MIT-96acbf?labelColor=07101b)
 
@@ -18,18 +18,18 @@
 </div>
 
 
-## Fusion 42 / RESTLESS × RESTMORE  <small>feature branch only</small>
+## Fusion 42 / RESTLESS × RESTMORE  <small>native C11 integration</small>
 
-> **Engineering prototype for review, not merged, not released.**
-> The same authorization boundaries apply on this branch as on RESTMORE main.
+> **Experimental C11 integration, separately reviewed and tested.**
+> Integration does not imply production certification or automatic authority to inspect a target.
 
 ![Architectural illustration of RESTLESS Botanical and RESTMORE C11 meeting at a SHA-256 source ledger](docs/assets/fusion-42-pipeline.svg)
 
 **The original RESTLESS began 8 February 2026** as a one-domain, Go CLI API discovery engine. Its later Botanical harvester brought content-addressed SHA-256 evidence, JSONL provenance, ETag revalidation, source-backed search and contract diff. Fusion 42 ports the best interoperable parts to a standalone native C11 engine and GUI, without introducing speculative endpoint probing.
 
-**Working feature-branch capabilities:** authenticated-scope documentation GET crawler with RESTLESS-compatible archives; SHA-verified local Botanical import; ETag/Last-Modified + HTTP 304 reuse with cache-integrity check; source-backed route search and contract diff; native GUI archive import; configurable documentation scope and 5/25/full-atlas documented GET verification behind GitHub review + separate AUTHORIZE.
+**Implemented Fusion 42 capabilities:** authenticated-scope documentation GET crawler with RESTLESS-compatible archives; SHA-verified local Botanical import; ETag/Last-Modified + HTTP 304 reuse with cache-integrity check; source-backed route search and contract diff; native GUI archive import; configurable documentation scope and 5/25/full-atlas documented GET verification behind GitHub review + separate AUTHORIZE.
 
-**Live target execution is never triggered by archive import, search or diff.** Source identity and permission must be reviewed independently. Robots, TLS, rate policy and same-host validation remain enforced.
+**Live target execution is never triggered by archive import, search or diff.** The controlled TLS integration suite exercises real HTTP 200/304, SHA-256 tamper rejection, robots denial, rate limits and certificate validation without contacting public hosts. Source identity and permission must be reviewed independently. Robots, TLS, rate policy and same-host validation remain enforced.
 
 [**SEE THE ART-DIRECTED FUSION 42 CASE STUDY**](docs/fusion-42.html) · [**TECHNICAL DESIGN + ORIGINAL RESTLESS HISTORY**](docs/FUSION-42.md) · [**CI BUILD & VISUAL TESTS**](https://github.com/bspippi1337/restmore/actions/workflows/fusion-42.yml)
 
@@ -124,13 +124,13 @@ The two flags deliberately belong together. RESTMORE fetches **documentation**, 
 
 | Platform | Alpha 4 artifact | Present limitations |
 | --- | --- | --- |
-| **Windows x64** | [Native GUI + CLI · HTTPS](https://github.com/bspippi1337/restmore/releases/download/v0.1.0-alpha.6/restmore-v0.1.0-alpha.6-windows-x64-https.zip) | Unsigned experimental desktop preview |
-| **Linux x86-64** | [Native GUI + CLI · HTTPS](https://github.com/bspippi1337/restmore/releases/download/v0.1.0-alpha.6/restmore-v0.1.0-alpha.6-linux-x86_64.zip) | Requires supported local runtime libraries |
-| **macOS** | [Native GUI + CLI · HTTPS](https://github.com/bspippi1337/restmore/releases/download/v0.1.0-alpha.6/restmore-v0.1.0-alpha.6-macos-native.zip) | No notarization or broad device verification |
-| **Android ARM64** | [NativeActivity test APK](https://github.com/bspippi1337/restmore/releases/download/v0.1.0-alpha.6/restmore-v0.1.0-alpha.6-android-arm64-debug.apk) | **Offline**, debug-signed, physical-device UI tests pending |
+| **Windows x64** | [Native GUI + CLI · HTTPS](https://github.com/bspippi1337/restmore/releases/download/v0.1.0-alpha.7/restmore-v0.1.0-alpha.7-windows-x64-https.zip) | Unsigned experimental desktop preview |
+| **Linux x86-64** | [Native GUI + CLI · HTTPS](https://github.com/bspippi1337/restmore/releases/download/v0.1.0-alpha.7/restmore-v0.1.0-alpha.7-linux-x86_64.zip) | Requires supported local runtime libraries |
+| **macOS** | [Native GUI + CLI · HTTPS](https://github.com/bspippi1337/restmore/releases/download/v0.1.0-alpha.7/restmore-v0.1.0-alpha.7-macos-native.zip) | No notarization or broad device verification |
+| **Android ARM64** | [NativeActivity test APK](https://github.com/bspippi1337/restmore/releases/download/v0.1.0-alpha.7/restmore-v0.1.0-alpha.7-android-arm64-debug.apk) | **Offline**, debug-signed, physical-device UI tests pending |
 | **iOS** | C11 core builds in CI | No installable IPA yet |
 
-The [Alpha 4 release](https://github.com/bspippi1337/restmore/releases/tag/v0.1.0-alpha.6) includes SHA-256 checksums for all published archives. The repo's website is a product showroom with a **synthetic** interactive demonstration, not a web crawler.
+The [Alpha 4 release](https://github.com/bspippi1337/restmore/releases/tag/v0.1.0-alpha.7) includes SHA-256 checksums for all published archives. The repo's website is a product showroom with a **synthetic** interactive demonstration, not a web crawler.
 
 ## The evidence chain.
 
