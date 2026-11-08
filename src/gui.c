@@ -194,7 +194,14 @@ static void glyph_line(float x1,float y1,float x2,float y2,float weight,Color co
 static void rule(float x,float y,float width){glyph_line(x,y,x+width,y,1,BORDER);}
 static void line(int x,int y,int font,const char *caption){textx(caption,x,y,font,MUTED);}
 static int hit(Rectangle r){return CheckCollisionPointRec(pointer(),r);}
-static int clicked(Rectangle r){return hit(r)&&(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)||TOUCH_PRESSED);}
+static int clicked(Rectangle r){
+#if defined(__ANDROID__) || defined(PLATFORM_ANDROID)
+ /* Android may mirror touch-down as a mouse press. Use release-only taps. */
+ return hit(r)&&TOUCH_PRESSED;
+#else
+ return hit(r)&&(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)||TOUCH_PRESSED);
+#endif
+}
 static void label(int x,int y,const char *s){textx(s,x,y,11,MUTED);}
 static void method_pill(const char *verb,float x,float y,int width);
 static int button(Rectangle r,const char *caption,Color color,int enabled){
