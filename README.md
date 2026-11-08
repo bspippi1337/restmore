@@ -47,6 +47,21 @@ With an imported OpenAPI atlas whose **server matches the selected host**, click
 
 **What makes it different:** for every route, the question is not merely *“what does it do?”* but also **“where did we learn that?”**
 
+## Contract verification. No fuzzing required.
+
+**One domain → MAP → GitHub review → AUTHORIZE → evidence.**
+
+The native C11 application now includes a bounded response contract check based exclusively on the operations already documented in your imported OpenAPI atlas:
+
+1. Enter a public HTTPS domain and click **MAP / REVIEW GITHUB**. RESTMORE opens GitHub repository **search** for that exact domain without contacting the target API. A matching search result is a lead, **not ownership proof**.
+2. Import an OpenAPI source that explicitly declares that domain's API server. The planner selects only eligible literal GET routes with documented HTTP 200 or 204 responses, at most five.
+3. Inspect GitHub and independently confirm your permission. Click **I REVIEWED GITHUB & HAVE PERMISSION**. Then separately click **AUTHORIZE**. Both human actions and exact host binding are enforced in the C engine.
+4. Inspect matched status, response MIME and shallow JSON type in the native inspector. Save **`restmore-verification.json`** with expected/actual codes and outcome. No response bodies or credentials are saved.
+
+RESTMORE does **not** guess paths, mutate requests, execute other HTTP methods or validate a complete JSON Schema. It stops on rate limits and server errors, and the current Android APK stays offline. Authorization is a user assertion, not proof of domain ownership.
+
+[**READ THE CONTRACT VERIFICATION FIELD NOTES**](docs/CONTRACT-VERIFICATION.md) · [C11 source](src/verification.c) · [Regression tests](tests/test_verification.c)
+
 ## From zero to atlas in three commands
 
 ```bash
