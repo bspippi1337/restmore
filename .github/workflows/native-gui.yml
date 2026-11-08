@@ -39,6 +39,14 @@ jobs:
       - name: Real native GUI smoke under virtual X11
         if: runner.os == 'Linux'
         run: xvfb-run -a ./build-gui/restmore-gui --smoke
+      - name: Attach Linux native UI screenshot for design review
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: restmore-native-ui-preview
+          path: restmore-native-preview.png
+          if-no-files-found: error
+          retention-days: 30
       - name: Package programs
         shell: bash
         run: |
