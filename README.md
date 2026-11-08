@@ -6,7 +6,7 @@
 
 **Native API cartography · ISO C11 · Evidence before assumptions**
 
-[**Download the latest alpha**](https://github.com/bspippi1337/restmore/releases/tag/v0.1.0-alpha.2) · [Visual design preview source](docs/index.html) · [Architecture](docs/ARCHITECTURE.md) · [Build guide](docs/BUILD.md) · [Changelog](CHANGELOG.md)
+[**Download the latest alpha**](https://github.com/bspippi1337/restmore/releases/tag/v0.1.0-alpha.3) · [Visual design preview source](docs/index.html) · [Architecture](docs/ARCHITECTURE.md) · [Build guide](docs/BUILD.md) · [Changelog](CHANGELOG.md)
 
 [![Native release build](https://github.com/bspippi1337/restmore/actions/workflows/release.yml/badge.svg)](https://github.com/bspippi1337/restmore/actions/workflows/release.yml) ![C11](https://img.shields.io/badge/core-ISO%20C11-75f9dc?style=flat-square&labelColor=07101b) ![CMake](https://img.shields.io/badge/build-CMake-75f9dc?style=flat-square&labelColor=07101b) ![Status](https://img.shields.io/badge/status-early%20development-ffc77c?style=flat-square&labelColor=07101b)
 
@@ -16,9 +16,9 @@
 
 ## Latest native release
 
-[**v0.1.0-alpha.2**](https://github.com/bspippi1337/restmore/releases/tag/v0.1.0-alpha.2) provides downloadable Windows x64, Linux x86-64 and macOS C11 GUI/CLI preview archives with HTTPS documentation discovery. All release build/test jobs completed successfully. Checksums are supplied as `SHA256SUMS.txt`. **Android/iOS installable apps are not shipped yet.**
+[**v0.1.0-alpha.3**](https://github.com/bspippi1337/restmore/releases/tag/v0.1.0-alpha.3) ships C11 GUI/CLI archives for Windows x64, Linux x86-64 and macOS with HTTPS documentation discovery, **plus an ARM64 Android NativeActivity test APK** for offline OpenAPI exploration. The release build, Android APK packaging, and SHA-256 manifest checks completed successfully. **The APK is CI-debug signed and has not yet passed a physical-device runtime test. No iOS IPA is shipped.**
 
-> **GitHub Pages notice:** The graphical website and interactive synthetic topology are committed in [`docs/`](docs/index.html), but the repository still requires one-time **Settings → Pages → Build and deployment → GitHub Actions** activation. Do not treat the site URL as live until the Pages deploy succeeds.
+> **GitHub Pages:** [Open the RESTMORE site](https://bspippi1337.github.io/restmore/). GitHub's branch-based Pages build and deployment workflow has completed successfully. The website contains an interactive **synthetic** topology, not a web-based network crawler.
 
 ## The mission
 
