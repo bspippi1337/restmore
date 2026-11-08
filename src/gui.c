@@ -650,13 +650,16 @@ static void graph(app *ui,Rectangle area){
   }
  }
  EndScissorMode();
- label((int)area.x+20,(int)(area.y+area.height-18),"OBSERVED / DOCUMENTED / NO REQUEST EXECUTION");
+ label((int)area.x+20,(int)(area.y+area.height-18),
+  ui->verification&&ui->verify_stage==2?
+   "AUTHORIZED GET CHECKS / RESULTS IN INSPECTOR":
+   "DOCUMENTED OPERATIONS / NO AUTOMATIC EXECUTION");
 }
 
 static void inspector(app *ui,Rectangle area){
  panel(area,PANEL);
  if(area.width<220||area.height<210)return;
- float maxscroll=fmaxf(0,640-area.height+25);
+ float maxscroll=fmaxf(0,1020-area.height+25);
  if(hit(area))ui->atlas_scroll-=GetMouseWheelMove()*45+TOUCH_DY;
  if(ui->atlas_scroll<0)ui->atlas_scroll=0;
  if(ui->atlas_scroll>maxscroll)ui->atlas_scroll=maxscroll;
@@ -705,11 +708,38 @@ static void inspector(app *ui,Rectangle area){
   else snprintf(ui->message,sizeof(ui->message),"Saved restmore-export/library.json and related formats");
  }
  y+=62;
- textx("GET / POST / PUT / PATCH / DELETE",x,y,12,MUTED);y+=19;
- textx("Routes are declared, never executed.",x,y,12,MUTED);
+ rule((float)x,(float)y,(float)inner);y+=22;
+ label(x,y,"05  /  CONTRACT VERIFICATION");y+=24;
+ if(ui->verification&&ui->verify_stage==2){
+  char heading[120];
+  snprintf(heading,sizeof(heading),"%zu planned GET checks / %.105s",
+    ui->verification->count,ui->verification->target.host);
+  char shortheading[130];cut_text(heading,shortheading,sizeof(shortheading),inner,12);
+  textx(shortheading,x,y,12,MINT);y+=25;
+  for(size_t i=0;i<ui->verification->count;i++){
+   const rm_check *check=&ui->verification->checks[i];
+   char route[RM_MAX_PATH],status[96];
+   cut_text(check->path,route,sizeof(route),inner-8,13);
+   textx(route,x,y,13,RM_WHITE);y+=19;
+   const char *verdict=check->outcome==1?"MATCH":
+     check->outcome==2?"STATUS ONLY":check->outcome==3?"MISMATCH":
+     check->outcome==4?"ERROR":check->outcome==5?"SKIPPED":"NOT RUN";
+   snprintf(status,sizeof(status),"%s / expected %d / HTTP %d",
+           verdict,check->expected_status,check->actual_status);
+   Color c=check->outcome==1?MINT:check->outcome==2?AQUA:RM_ORANGE;
+   textx(status,x,y,11,c);y+=28;
+  }
+  textx("Status + type + JSON syntax, not schema proof.",x,y,11,MUTED);y+=22;
+ }else if(ui->task.active&&ui->task.mode==2){
+  textx("Awaiting bounded HTTPS results...",x,y,12,MINT);y+=29;
+ }else{
+  textx("Map > GitHub review > Authorize.",x,y,12,MUTED);y+=27;
+ }
+ textx("Only explicit, safe GETs may be tested.",x,y,11,MUTED);y+=19;
+ textx("No fuzzing, mutation, or credential replay.",x,y,11,MUTED);
  EndScissorMode();
  if(maxscroll>0){
-  float track=area.height-32,thumb=track*area.height/(640+25);
+  float track=area.height-32,thumb=track*area.height/(1020+25);
   DrawRectangleRounded((Rectangle){area.x+area.width-6,area.y+16,3,track},1,6,Fade(MUTED,.14f));
   DrawRectangleRounded((Rectangle){area.x+area.width-6,area.y+16+ui->atlas_scroll/maxscroll*(track-thumb),3,thumb},1,6,MINT);
  }
@@ -730,7 +760,7 @@ int main(int argc,char **argv){
  }
  snprintf(ui->domain,sizeof(ui->domain),"docs.example.org");
  snprintf(ui->filename,sizeof(ui->filename),"examples/openapi-petstore.json");
- snprintf(ui->message,sizeof(ui->message),"Atlas ready. Import OpenAPI documentation or authorize a bounded scan.");
+ snprintf(ui->message,sizeof(ui->message),"Atlas ready. Map a domain, review GitHub, then explicitly authorize GET checks.");
  mutex_init(&ui->task);
  load_catalog(ui);
  int frames=0;
