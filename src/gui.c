@@ -42,6 +42,28 @@ static const Color RM_WHITE={238,249,247,255},MUTED={150,173,190,255};
 static const Color MINT={121,249,220,255},AQUA={94,190,226,255};
 static const Color BORDER={39,62,82,255},RM_ORANGE={232,190,116,255};
 static const Color CORAL={255,146,135,255},PURPLE={177,163,255,255};
+
+static void mutex_init(work *w){
+#ifdef _WIN32
+ InitializeCriticalSection(&w->mutex);
+#else
+ pthread_mutex_init(&w->mutex,NULL);
+#endif
+}
+static void mutex_lock(work *w){
+#ifdef _WIN32
+ EnterCriticalSection(&w->mutex);
+#else
+ pthread_mutex_lock(&w->mutex);
+#endif
+}
+static void mutex_unlock(work *w){
+#ifdef _WIN32
+ LeaveCriticalSection(&w->mutex);
+#else
+ pthread_mutex_unlock(&w->mutex);
+#endif
+}
 static Font FACE={0};
 static int FACE_OWNED=0;
 static float UI_SCALE=1.0f;
@@ -95,6 +117,7 @@ static void glyph_line(float x1,float y1,float x2,float y2,float weight,Color co
  DrawLineEx((Vector2){x1,y1},(Vector2){x2,y2},weight,color);
 }
 static void rule(float x,float y,float width){glyph_line(x,y,x+width,y,1,BORDER);}
+static void line(int x,int y,int font,const char *caption){textx(caption,x,y,font,MUTED);}
 static int hit(Rectangle r){return CheckCollisionPointRec(pointer(),r);}
 static int clicked(Rectangle r){return hit(r)&&IsMouseButtonPressed(MOUSE_BUTTON_LEFT);}
 static void label(int x,int y,const char *s){textx(s,x,y,11,MUTED);}
@@ -384,7 +407,7 @@ int main(int argc,char **argv){
  int smoke=argc>1&&!strcmp(argv[1],"--smoke");
  SetConfigFlags(FLAG_WINDOW_RESIZABLE|FLAG_MSAA_4X_HINT);
  InitWindow(1350,820,"RESTMORE / Native C11 API Atlas");
- SetWindowMinSize(760,540);SetTargetFPS(60);
+ SetWindowMinSize(360,580);SetTargetFPS(60);init_type();
  app *ui=(app *)calloc(1,sizeof(*ui));if(!ui){CloseWindow();return 1;}
  snprintf(ui->domain,sizeof(ui->domain),"docs.example.org");
  snprintf(ui->filename,sizeof(ui->filename),"examples/openapi-petstore.json");
@@ -431,5 +454,6 @@ int main(int argc,char **argv){
 #endif
  }
  free(ui->catalog);free(ui);
+ if(FACE_OWNED)UnloadFont(FACE);
  CloseWindow();return 0;
 }
