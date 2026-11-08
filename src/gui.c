@@ -111,7 +111,11 @@ static void cut_text(const char *s,char *out,size_t cap,int pixels,int font){
 }
 static void init_type(void){
  const char *fonts[]={
-#ifdef _WIN32
+#if defined(__ANDROID__) || defined(PLATFORM_ANDROID)
+ /* Prefer the platform's high-resolution sans-serif if available; fall back
+    to raylib's embedded font without shipping an unlicensed typeface. */
+ "/system/fonts/Roboto-Regular.ttf","/system/fonts/NotoSans-Regular.ttf",
+#elif defined(_WIN32)
  "C:/Windows/Fonts/segoeui.ttf","C:/Windows/Fonts/arial.ttf",
 #elif defined(__APPLE__)
  "/System/Library/Fonts/Supplemental/Arial.ttf",
@@ -192,8 +196,10 @@ static int button(Rectangle r,const char *caption,Color color,int enabled){
  DrawRectangleRounded(r,.12f,8,fill);
  DrawRectangleRoundedLinesEx(r,.12f,8,1,enabled?Fade(color,.8f):BORDER);
  int px=r.width<85?11:r.width<132?13:15;
- int tw=textwidth(caption,px);
- textx(caption,(int)(r.x+(r.width-tw)*.5f),(int)(r.y+(r.height-px)*.5f)-2,px,enabled?RM_WHITE:MUTED);
+ char fitted[160];
+ cut_text(caption,fitted,sizeof(fitted),(int)r.width-16,px);
+ int tw=textwidth(fitted,px);
+ textx(fitted,(int)(r.x+(r.width-tw)*.5f),(int)(r.y+(r.height-px)*.5f)-2,px,enabled?RM_WHITE:MUTED);
  return press;
 }
 static void scissor(Rectangle r){
@@ -859,9 +865,22 @@ static void inspector(app *ui,Rectangle area){
 
 int main(int argc,char **argv){
  int smoke=argc>1&&!strcmp(argv[1],"--smoke");
+#if defined(__ANDROID__) || defined(PLATFORM_ANDROID)
+ /* CRITICAL: raylib Android treats InitWindow dimensions as the logical
+  * framebuffer AND uses their aspect ratio to decide orientation. Reusing
+  * the desktop 1350x820 buffer made real phones draw an oversized landscape
+  * canvas, cropped in both portrait and landscape (OPS 42 field report).
+  *
+  * Target a legible, handset-first 20:9 portrait framebuffer. The Android
+  * platform maps it to the physical display. Do not apply a SECOND scale
+  * inside our camera or touch coordinates. */
+ SetConfigFlags(FLAG_MSAA_4X_HINT);
+ InitWindow(432,960,"RESTMORE / OPS 42");
+#else
  SetConfigFlags(FLAG_WINDOW_RESIZABLE|FLAG_MSAA_4X_HINT);
  InitWindow(1350,820,"RESTMORE  /  OPS 42 MISSION CONTROL");
  SetWindowMinSize(360,580);
+#endif
  SetTargetFPS(60);
  init_type();
  app *ui=(app *)calloc(1,sizeof(*ui));
@@ -877,14 +896,20 @@ int main(int argc,char **argv){
  snprintf(ui->message,sizeof(ui->message),"OPS 42 ready. Offline evidence briefing available. No target GET without review and authorization.");
  mutex_init(&ui->task);
  load_catalog(ui);
+#if defined(__ANDROID__) || defined(PLATFORM_ANDROID)
+ /* Show actual imported routes first, rather than a desktop-sized
+    authorization form that cannot perform remote checks on Android. */
+ ui->tab=1;
+#endif
  int frames=0;
  while(!WindowShouldClose()&&(!smoke||frames++<60)){
   poll_work(ui);
   int actualW=GetScreenWidth(),actualH=GetScreenHeight();
 #if defined(__ANDROID__) || defined(PLATFORM_ANDROID)
-  /* Android surfaces report physical pixels, not desktop-style points.
-     Preserve ~440 logical units on a portrait phone for legible controls. */
-  UI_SCALE=fmaxf(1.0f,fminf(3.5f,fminf((float)actualW/440.0f,(float)actualH/700.0f)));
+  /* The native framebuffer is already 432x960 logical portrait pixels;
+     Android scales this to the physical display. Double scaling would
+     enlarge/crop the interface and de-align touch and scissor regions. */
+  UI_SCALE=1.0f;
 #else
   UI_SCALE=fminf(1.0f,fmaxf(.84f,(float)actualW/690.0f));
 #endif
@@ -907,7 +932,11 @@ int main(int argc,char **argv){
    graph(ui,center);
    inspector(ui,right);
   }else{
+#if defined(__ANDROID__) || defined(PLATFORM_ANDROID)
+   const char *tabs[]={"01  SCOPE","02  ATLAS","03  EVIDENCE"};
+#else
    const char *tabs[]={"01  SCOPE","02  ATLAS","03  INSPECT"};
+#endif
    float tabW=((float)W-44.0f)/3.0f;
    for(int i=0;i<3;i++){
     Rectangle tab={22+tabW*(float)i,104,tabW-8,41};
