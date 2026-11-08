@@ -273,3 +273,96 @@ int rm_crawl(const rm_options *options,rm_catalog *cat,rm_progress cb,void *ctx,
  free(queue);curl_global_cleanup();
  return result;
 }
+
+/* Deliberately mirror the planner's conservative path restrictions. */
+static int ok_path_verify(const char *p){
+ if(!p||p[0]!='/'||p[1]==0||strlen(p)>=RM_MAX_PATH)return 0;
+ if(strstr(p,"//")||strstr(p,"/./")||strstr(p,"/../"))return 0;
+ size_t n=strlen(p);
+ if((n>=2&&!strcmp(p+n-2,"/."))||(n>=3&&!strcmp(p+n-3,"/..")))return 0;
+ for(size_t i=1;i<n;i++){
+  unsigned char c=(unsigned char)p[i];
+  if(!(isalnum(c)||c=='/'||c=='_'||c=='-'||c=='.'||c=='~'))return 0;
+ }
+ static const char *deny[]={"logout","signout","login","password","token","secret",
+ "delete","remove","reset","revoke","disable","shutdown","admin","purchase",
+ "payment","billing","transaction","withdraw","transfer","refund",
+ "unsubscribe","session","credential"};
+ char lo[RM_MAX_PATH];for(size_t i=0;i<n;i++)lo[i]=(char)tolower((unsigned char)p[i]);lo[n]=0;
+ for(size_t k=0;k<sizeof(deny)/sizeof(deny[0]);k++)if(strstr(lo,deny[k]))return 0;
+ return 1;
+}
+static int rm_mime_matches(const char *actual,const char *expected){
+ size_t i=0;for(;expected[i];i++){
+  if(!actual[i]||tolower((unsigned char)actual[i])!=
+     tolower((unsigned char)expected[i]))return 0;
+ }
+ return actual[i]==0||actual[i]==';'||isspace((unsigned char)actual[i]);
+}
+/* A bounded, human-authorized audit of declared OpenAPI GET responses.
+ * This never guesses routes, sends credentials, replays mutating operations,
+ * follows redirects or stores response bodies. */
+int rm_verify_run(rm_verification *plan,rm_progress cb,void *ctx,char *err,size_t cap){
+ if(!plan||!plan->authorized)return rm_error(err,cap,"Denied: explicit Authorize click required for this domain");
+ if(!plan->count||plan->count>RM_MAX_VERIFY_CHECKS)
+  return rm_error(err,cap,"No bounded, documented verification plan");
+ rm_target host={0};
+ if(rm_normalize(plan->target.host,&host,err,cap)||strcmp(host.host,plan->target.host))
+  return rm_error(err,cap,"Verification domain no longer matches authorized plan");
+ if(curl_global_init(CURL_GLOBAL_DEFAULT)!=CURLE_OK)
+  return rm_error(err,cap,"libcurl initialization failed");
+ char robots_url[RM_MAX_URL],mime[128]={0};
+ snprintf(robots_url,sizeof(robots_url),"https://%s/robots.txt",host.host);
+ response robots={0};long status=0;
+ if(cb)cb("verification-robots",robots_url,ctx);
+ if(fetch(robots_url,"RESTMORE-Verifier/0.1 (+https://github.com/bspippi1337/restmore)",
+          RM_ROBOTS_LIMIT,&robots,mime,sizeof(mime),&status,err,cap)){
+  curl_global_cleanup();return -1;
+ }
+ robot_rules rules={0};
+ if(status==200)parse_robots(robots.data,&rules);
+ else if(status==404||status==410)rules.delay_ms=2000;
+ else{free(robots.data);curl_global_cleanup();
+  return rm_error(err,cap,"Cannot verify robots policy; verification stopped without API requests");}
+ free(robots.data);
+ unsigned gap=rules.delay_ms>2000?rules.delay_ms:2000;
+ for(size_t i=0;i<plan->count;i++){
+  rm_check *check=&plan->checks[i];
+  check->actual_status=0;check->observed_content_type[0]=0;check->outcome=0;
+  /* Double-check exact, fixed read-only operations against the original planner. */
+  if(strcmp(check->method,"GET")||!ok_path_verify(check->path)||
+     (check->expected_status!=200&&check->expected_status!=204)){
+   check->outcome=5;continue;
+  }
+  char url[RM_MAX_URL];
+  int n=snprintf(url,sizeof(url),"https://%s%s",host.host,check->path);
+  rm_target normalized={0};
+  if(n<0||(size_t)n>=sizeof(url)||rm_normalize(url,&normalized,NULL,0)||
+     strcmp(normalized.host,host.host)||!allowed(&rules,url,host.host)){
+   check->outcome=5;continue;
+  }
+  if(cb)cb("verify-GET",url,ctx);
+  delay_ms(gap);
+  response body={0};status=0;mime[0]=0;
+  if(fetch(url,"RESTMORE-Verifier/0.1 (+https://github.com/bspippi1337/restmore)",
+           128u*1024u,&body,mime,sizeof(mime),&status,err,cap)){
+    check->outcome=4;curl_global_cleanup();return -1;
+  }
+  check->actual_status=(int)status;
+  snprintf(check->observed_content_type,sizeof(check->observed_content_type),"%s",mime);
+  if(status==429||status>=500){
+   check->outcome=4;free(body.data);curl_global_cleanup();
+   return rm_error(err,cap,"Remote service requested pause; verification stopped");
+  }
+  if(status!=check->expected_status)check->outcome=3;
+  else if(!check->expected_content_type[0])check->outcome=2;
+  else if(!rm_mime_matches(mime,check->expected_content_type))check->outcome=3;
+  else if(!strcmp(check->expected_content_type,"application/json")&&!rm_json_valid(body.data,body.length))
+   check->outcome=3;
+  else check->outcome=1;
+  free(body.data);
+ }
+ curl_global_cleanup();
+ if(err&&cap)err[0]=0;
+ return 0;
+}
