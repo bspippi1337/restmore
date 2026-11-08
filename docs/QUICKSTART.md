@@ -50,7 +50,7 @@ Look for the method, operation ID, summary, source URL and SHA-256. A fingerprin
 
 [Read the illustrated HTML guide](field-guide.html) · [Build manual](BUILD.md) · [Product story](PRODUCT.md)
 
-**Current illustrated distribution:** [RESTMORE Alpha 5 / Architectural Edition](https://github.com/bspippi1337/restmore/releases/tag/v0.1.0-alpha.5).
+**Current illustrated distribution:** [RESTMORE Alpha 5 / Architectural Edition](https://github.com/bspippi1337/restmore/releases/tag/v0.1.0-alpha.8).
 
 ## 06 / Optional native response verification
 
