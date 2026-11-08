@@ -34,7 +34,7 @@ int main(void){
  assert(cat->operations[1].expected_status==204);
  assert(rm_verify_plan(cat,"api.example.org",plan,error,sizeof(error))==0);
  assert(plan->count==2);
- assert(plan->authorized==0);
+ assert(plan->authorized==0 && plan->github_reviewed==0);
  assert(plan->source_bound==1);
  assert(!strcmp(plan->checks[0].path,"/v1/pets"));
  assert(plan->checks[0].expected_status==200);
@@ -48,10 +48,17 @@ int main(void){
  assert(plan->source_bound==0);
  plan->authorized=1;
  assert(rm_verify_run(plan,NULL,NULL,error,sizeof(error))!=0);
+ plan->github_reviewed=1;
+ assert(rm_verify_run(plan,NULL,NULL,error,sizeof(error))!=0);
  assert(strstr(error,"not bound")!=NULL);
  assert(rm_normalize("api.example.org",&cat->target,error,sizeof(error))==0);
  assert(rm_verify_plan(cat,"api.example.org",plan,error,sizeof(error))==0);
- assert(plan->source_bound==1&&plan->authorized==0);
+ assert(plan->source_bound==1&&plan->authorized==0&&plan->github_reviewed==0);
+ /* A planned run without a manual GitHub review is denied even if authorized. */
+ plan->authorized=1;
+ assert(rm_verify_run(plan,NULL,NULL,error,sizeof(error))!=0);
+ assert(strstr(error,"GitHub")!=NULL);
+ plan->authorized=0;
  assert(rm_json_valid("{\"ok\":true}",11)==1);
  assert(rm_json_valid("{\"ok\":NaN}",10)==0);
  /* local catalog roundtrip retains response status and MIME */
