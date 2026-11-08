@@ -1,137 +1,107 @@
 <div align="center">
 
-# R / M   RESTMORE
+<img src="docs/assets/restmore-mark.svg" alt="RESTMORE / Cartographic mark" width="90" />
 
+# RESTMORE
 ### MAP THE UNSEEN.
 
-**Native API cartography · ISO C11 · Evidence before assumptions**
+**THE API IS TERRITORY. THE DOCUMENTATION IS OUR STARTING POINT.**
 
-[**Download the latest alpha**](https://github.com/bspippi1337/restmore/releases/tag/v0.1.0-alpha.4) · [Visual design preview source](docs/index.html) · [Architecture](docs/ARCHITECTURE.md) · [Build guide](docs/BUILD.md) · [Changelog](CHANGELOG.md)
+*Native API cartography. ISO C11. Evidence before assumptions.*
 
-[![Native release build](https://github.com/bspippi1337/restmore/actions/workflows/release.yml/badge.svg)](https://github.com/bspippi1337/restmore/actions/workflows/release.yml) ![C11](https://img.shields.io/badge/core-ISO%20C11-75f9dc?style=flat-square&labelColor=07101b) ![CMake](https://img.shields.io/badge/build-CMake-75f9dc?style=flat-square&labelColor=07101b) ![Status](https://img.shields.io/badge/status-early%20development-ffc77c?style=flat-square&labelColor=07101b)
+[**EXPLORE THE WEBSITE**](https://bspippi1337.github.io/restmore/) &nbsp; / &nbsp; [**DOWNLOAD ALPHA 4**](https://github.com/bspippi1337/restmore/releases/tag/v0.1.0-alpha.4) &nbsp; / &nbsp; [**ILLUSTRATED FIELD GUIDE**](docs/field-guide.html)
+
+![Native build](https://github.com/bspippi1337/restmore/actions/workflows/native-gui.yml/badge.svg) &nbsp; ![C11](https://img.shields.io/badge/engine-ISO%20C11-79f9dc?labelColor=07101b) &nbsp; ![License: MIT](https://img.shields.io/badge/license-MIT-96acbf?labelColor=07101b)
+
+<img src="docs/assets/mountain-section.svg" alt="Architectural pencil and contour study of the territory to be mapped." width="100%" />
 
 </div>
 
----
+## Meet your cartographer.
 
-## Latest native release
+APIs are sprawling territories. Their documentation is a partial map, often spread across pages, specifications and disconnected route lists.
 
-[**v0.1.0-alpha.4**](https://github.com/bspippi1337/restmore/releases/tag/v0.1.0-alpha.4) ships C11 GUI/CLI archives for Windows x64, Linux x86-64 and macOS with HTTPS documentation discovery, **plus an ARM64 Android NativeActivity test APK** for offline OpenAPI exploration. The release build, Android APK packaging, and SHA-256 manifest checks completed successfully. Alpha 4 adds Android display-density-aware sizing, touch controls and native panel swipe scrolling. **The APK is CI-debug signed and has not yet passed a physical-device runtime test. No iOS IPA is shipped.**
+**RESTMORE turns documentation you are authorized to inspect into a structured, traceable atlas.** It identifies *documented* paths and HTTP operations, maps their relationships, preserves their sources and builds exports you can actually use.
 
-> **GitHub Pages:** [Open the RESTMORE site](https://bspippi1337.github.io/restmore/). GitHub's branch-based Pages build and deployment workflow has completed successfully. The website contains an interactive **synthetic** topology, not a web-based network crawler.
+It does not guess endpoints, bombard hosts, or execute the API operations it discovers. **An atlas, not a fuzzer.**
 
-## The mission
+<p align="center"><img src="docs/assets/atlas-plate.svg" width="100%" alt="Illustrative RESTMORE orbital route atlas with four documented operations. This plate is schematic, not a live scan result." /></p>
 
-RESTMORE exists to turn **authorized API documentation** into a structured, auditable map: documented paths, HTTP methods, sources, provenance hashes, and formats designed for further inspection.
+*PLATE 03. An illustrative operation atlas. The actual native application renders its own evidence from imported documentation.*
 
-This is a **documentation atlas**, **not** a fuzzer or an aggressive endpoint enumerator. It does not execute the API operations it discovers.
+## Four instruments. One clear picture.
 
-The application's implementation is written in **C11**. CMake handles native builds. libcurl supplies HTTPS connectivity, and raylib provides the optional graphical interface. The browser-only GitHub Pages site is a product showcase with an illustrative interactive topology, not the scanner.
+| 01 · Acquisition desk | 02 · Operation atlas | 03 · Source intelligence | 04 · Export desk |
+| :--- | :--- | :--- | :--- |
+| Preview a scope. Explicitly authorize bounded HTTPS documentation discovery, or import OpenAPI locally. | Explore declared operations as an orbital map or a scrollable route list. | Read method, path, summary, operation identifier, document source and SHA-256 fingerprint. | Save the reusable source library, OpenAPI/Postman data, Mermaid diagrams and SVG maps. |
 
-![RESTMORE evidence pipeline](docs/assets/evidence-pipeline.svg)
+**What makes it different:** for every route, the question is not merely *“what does it do?”* but also **“where did we learn that?”**
 
-## The pipeline
+## From zero to atlas in three commands
 
-```text
-         EXPLICIT TARGET + AUTHORIZATION
-                        |
-                   NORMALIZE URL
-                        |
-                 SCOPE / DNS CHECKS
-                        |
-          ROBOTS RULES + REQUEST LIMITS
-                        |
-              GET DOCUMENTATION ONLY
-                        |
-           DOCUMENT SHA-256 + SOURCE URL
-                        |
-              OPENAPI JSON EXTRACTION
-                        |
-                 DOCUMENTED OPERATIONS
-                        |
-                EVIDENCE-BASED ATLAS
-                        |
-          +-------------+-------------+
-          |             |             |
-        OpenAPI        Postman       Graph
-                                     SVG / Mermaid
-```
-
-The source reference for each discovered operation matters as much as the operation itself.
-
-## Native build
-
-**Prerequisites:** CMake 3.21+, a working C11 compiler, libcurl development package, and optional raylib source acquisition for GUI targets.
-
-```sh
-git clone https://github.com/bspippi1337/restmore.git
-cd restmore
+```bash
+# 1. Build C11 engine + CLI (CMake 3.21+ and libcurl)
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --config Release
-ctest --test-dir build --output-on-failure
+
+# 2. Import the included demonstration, entirely offline
+./build/restmore-cli --import examples/openapi-petstore.json --out atlas
+
+# 3. Browse the exported library, OpenAPI and route illustrations
+ls atlas/
 ```
 
-The CLI executable is `restmore-cli` (or `restmore-cli.exe` on Windows).
+On Windows, use `build/Release/restmore-cli.exe` or your CMake generator's output path. To compile the **native raylib GUI**, use `cmake -S . -B build-gui -DRESTMORE_GUI=ON` followed by `cmake --build build-gui --config Release`.
 
-### Preview and import
+Want to inspect documentation? Preview first, with **no network activity**:
 
-```sh
-# Safe preview: no network execution by default
+```bash
 ./build/restmore-cli docs.example.org
-
-# Import a local OpenAPI 3 JSON document
-./build/restmore-cli --import example-openapi.json --out atlas
-
-# Crawl only documentation you are authorized to inspect
-./build/restmore-cli https://docs.example.org/reference --execute --authorized --out atlas
 ```
 
-For documented options and packaging constraints see **[BUILD.md](docs/BUILD.md)**. Run `restmore-cli --help` to check options supported by your checkout.
+Only with documented permission, start bounded retrieval:
 
-### Native GUI
-
-```sh
-cmake -S . -B build-gui -DRESTMORE_GUI=ON -DCMAKE_BUILD_TYPE=Release
-cmake --build build-gui --config Release
+```bash
+./build/restmore-cli https://docs.example.org/reference \
+  --execute --authorized --out atlas
 ```
 
-The optional GUI uses raylib **in C**, with a shared application core. Android and iOS require the usual platform-specific SDK/NDK, runtime dependencies and packaging/signing. Cross-platform source support does **not** imply tested or published binary releases for every platform.
+The two flags deliberately belong together. RESTMORE fetches **documentation**, not the operations described *in* that documentation.
 
-## Safety and scope
+[**GET THE ILLUSTRATED FIVE-STEP GUIDE**](docs/field-guide.html) · [README-compatible quickstart](docs/QUICKSTART.md) · [Native build manual](docs/BUILD.md)
 
-RESTMORE deliberately requires **both** `--execute` and `--authorized` before initiating discovery requests. The implementation is designed around limited page counts, depth bounds, request delays, robots guidance, public-network restrictions, and conservative same-origin discovery.
+## Download an instrument for your platform.
 
-**Do not interpret these guardrails as a guarantee of complete isolation or production-ready security.** Validate network boundaries and crawler behavior in your own environment before using against sensitive systems. No arbitrary method probing, parameter fuzzing, or credential attacks are intended.
+| Platform | Alpha 4 artifact | Present limitations |
+| --- | --- | --- |
+| **Windows x64** | [Native GUI + CLI · HTTPS](https://github.com/bspippi1337/restmore/releases/download/v0.1.0-alpha.4/restmore-v0.1.0-alpha.4-windows-x64-https.zip) | Unsigned experimental desktop preview |
+| **Linux x86-64** | [Native GUI + CLI · HTTPS](https://github.com/bspippi1337/restmore/releases/download/v0.1.0-alpha.4/restmore-v0.1.0-alpha.4-linux-x86_64.zip) | Requires supported local runtime libraries |
+| **macOS** | [Native GUI + CLI · HTTPS](https://github.com/bspippi1337/restmore/releases/download/v0.1.0-alpha.4/restmore-v0.1.0-alpha.4-macos-native.zip) | No notarization or broad device verification |
+| **Android ARM64** | [NativeActivity test APK](https://github.com/bspippi1337/restmore/releases/download/v0.1.0-alpha.4/restmore-v0.1.0-alpha.4-android-arm64-debug.apk) | **Offline**, debug-signed, physical-device UI tests pending |
+| **iOS** | C11 core builds in CI | No installable IPA yet |
 
-## Project organization
+The [Alpha 4 release](https://github.com/bspippi1337/restmore/releases/tag/v0.1.0-alpha.4) includes SHA-256 checksums for all published archives. The repo's website is a product showroom with a **synthetic** interactive demonstration, not a web crawler.
 
-| Area | Role |
-|:--|:--|
-| `include/restmore/` | Public C interfaces and data structures |
-| `src/core.c` | Input normalization and local core logic |
-| `src/network.c` | Bounded HTTPS documentation discovery |
-| `src/json.c`, `src/catalog.c` | Evidence and OpenAPI ingestion |
-| `src/sha256.c` | Document content fingerprints |
-| `src/exports.c` | Atlas format exports |
-| `src/cli.c` | Native command-line application |
-| `src/gui.c` | Optional native raylib visualization |
-| `tests/` | C regression tests |
-| `docs/` | Product site, diagrams and engineering docs |
-| `.github/workflows/` | CI, builds, site deployment |
+## The evidence chain.
 
-## Engineering priorities
+<p align="center"><img src="docs/assets/evidence-pipeline.svg" width="100%" alt="Evidence pipeline from explicit scope to bounded documentation retrieval, SHA-256 hashing and inspectable exports." /></p>
 
-1. **Verifiable behavior:** test normalization, hashing, JSON imports and exports with fixtures; add integration tests with controlled HTTP fixtures.
-2. **Documented capability:** distinguish implemented features from target architecture. No invented releases or unsupported platform claims.
-3. **Safe discovery:** prevent scope expansion, accidental private-network access, redirects outside the intended origin and unbounded traffic.
-4. **Consistent UI:** a shared visual grammar across native raylib, sample topology, README, and GitHub Pages.
-5. **Release discipline:** publish binaries only when each target has passed build, runtime and distribution checks.
+A source's hash describes its exact bytes, **not its authenticity**. Documentation can be wrong, stale or incomplete, so the atlas does not claim to be a comprehensive inventory of a live service. The network boundary and importer are under active development; treat every build as an alpha, not a security certification.
 
-## Status
+## Inside the workshop.
 
-This is an **early-stage implementation**. C11 modules, a native GUI source, tests, and a GitHub Pages visual prototype exist in the repository. The website preview uses synthetic endpoints, and build/deployment success should be confirmed via GitHub Actions before treating release targets as verified.
+The portable C11 implementation lives in `include/restmore/` and `src/`. `src/gui.c` is the native raylib surface. `docs/` contains the original architectural SVG plates, field guide and the Pages storefront. `tests/` contains C regression cases; `.github/workflows/` builds and checks the desktop and mobile targets.
 
-> **RESTMORE** · An atlas, not a fuzzer. · RESTLESS / 42
+[**Architecture**](docs/ARCHITECTURE.md) · [**Product story**](docs/PRODUCT.md) · [**Design manual**](docs/CREATIVE-DIRECTION.md) · [**Change log**](CHANGELOG.md) · [**License**](LICENSE)
 
----
-MIT license, subject to the repository's LICENSE file.
+<div align="center">
+
+<img src="docs/assets/evidence-ledger.svg" width="75%" alt="Illustrated architectural evidence ledger: from a source document to a SHA-256 fingerprint." />
+
+**KNOW WHAT IS DOCUMENTED. KNOW WHERE IT CAME FROM.**
+
+RESTMORE / RESTLESS EDITION / 0042
+
+*MIT-licensed source. Not production security-certified.*
+
+</div>
