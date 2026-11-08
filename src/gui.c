@@ -26,6 +26,7 @@ typedef struct {
  pthread_t thread;
 #endif
  int active,finished,success,mode; /* 1 documentation, 2 verification */
+ unsigned pages,depth;
  rm_verification *verification;
  char input[RM_MAX_URL],out[512],error[256],stage[48],detail[RM_MAX_URL];
  rm_catalog *catalog;
@@ -38,6 +39,8 @@ typedef struct {
  work task;
  char domain[RM_MAX_URL],filename[512],archive_dir[512],message[256];
  int consent,focus,tab,selected;
+ size_t check_budget; /* 0 = all eligible documented GETs */
+ unsigned crawl_pages,crawl_depth;
  float scroll,scope_scroll,atlas_scroll;
  int view;
 } app;
@@ -263,7 +266,8 @@ static void *worker(void *data)
  }else{
   rm_options options={0};
   options.input=w->input;options.output_dir=w->out;
-  options.max_pages=12;options.max_depth=2;options.delay_ms=2000;
+  options.max_pages=w->pages?w->pages:12;
+  options.max_depth=w->depth;options.delay_ms=2000;
   options.execute=1;options.authorized=1;
   outcome=cat?rm_crawl(&options,cat,progress,w,err,sizeof(err)):-1;
  }
@@ -277,9 +281,10 @@ static void *worker(void *data)
  return NULL;
 #endif
 }
-static int start(work *w,const char *input){
+static int start(work *w,const char *input,unsigned pages,unsigned depth){
  if(w->active)return -1;
  w->mode=1;w->verification=NULL;
+ w->pages=pages;w->depth=depth;
  snprintf(w->input,sizeof(w->input),"%s",input);
  snprintf(w->out,sizeof(w->out),".restmore");
  w->finished=0;w->active=1;w->success=0;
@@ -445,7 +450,7 @@ static void draw_brand(int width){
 
 static void draw_scope(app *ui,Rectangle area,int busy){
  panel(area,PANEL);
- float maxscroll=fmaxf(0.0f,1235.0f-area.height);
+ float maxscroll=fmaxf(0.0f,1415.0f-area.height);
  if(hit(area))ui->scope_scroll-=GetMouseWheelMove()*45+TOUCH_DY;
  if(ui->scope_scroll<0)ui->scope_scroll=0;
  if(ui->scope_scroll>maxscroll)ui->scope_scroll=maxscroll;
@@ -458,6 +463,22 @@ static void draw_scope(app *ui,Rectangle area,int busy){
  label(x,y,"PUBLIC HTTPS DOMAIN");y+=23;
  inputbox((Rectangle){(float)x,(float)y,(float)inner,48},ui->domain,
           sizeof(ui->domain),&ui->focus,1,!busy);y+=61;
+
+ label(x,y,"CONTRACT COVERAGE / CHOOSE BEFORE MAP");y+=22;
+ int gap=7;float bw=((float)inner-2*gap)/3.0f;
+ size_t wanted=ui->check_budget;
+ if(button((Rectangle){(float)x,(float)y,bw,38},"5 CHECKS",
+           wanted==5?MINT:AQUA,!busy))ui->check_budget=5;
+ if(button((Rectangle){(float)x+bw+gap,(float)y,bw,38},"25 CHECKS",
+           wanted==25?MINT:AQUA,!busy))ui->check_budget=25;
+ if(button((Rectangle){(float)x+2*(bw+gap),(float)y,bw,38},"FULL ATLAS",
+           wanted==0?MINT:AQUA,!busy))ui->check_budget=0;
+ if(wanted!=ui->check_budget&&ui->verify_stage){
+  free(ui->verification);ui->verification=NULL;ui->verify_stage=0;
+  snprintf(ui->message,sizeof(ui->message),
+           "Coverage changed. Review GitHub and authorize the new plan.");
+ }
+ y+=54;
  /* Any edit after GitHub review invalidates authorization. */
  if(!busy&&ui->verify_stage&&strcmp(ui->domain,ui->review_domain)){
   free(ui->verification);ui->verification=NULL;ui->verify_stage=0;
@@ -475,7 +496,7 @@ static void draw_scope(app *ui,Rectangle area,int busy){
    rm_verification *candidate=(rm_verification *)calloc(1,sizeof(*candidate));
    if(!candidate){
     snprintf(ui->message,sizeof(ui->message),"Verification plan out of memory");
-   }else if(rm_verify_plan(ui->catalog,ui->domain,candidate,error,sizeof(error))){
+   }else if(rm_verify_plan_limit(ui->catalog,ui->domain,candidate,ui->check_budget,error,sizeof(error))){
     free(candidate);
     snprintf(ui->message,sizeof(ui->message),"GitHub opened. Atlas not testable: %.177s",error);
    }else{
@@ -509,7 +530,7 @@ static void draw_scope(app *ui,Rectangle area,int busy){
        permission; the application does not claim to verify domain ownership. */
     ui->verification->github_reviewed=1;
     snprintf(ui->message,sizeof(ui->message),
-      "Human GitHub review acknowledged. Click Authorize to run at most 5 documented GET checks.");
+      "GitHub review acknowledged. Authorize only the displayed documented GET plan.");
   }
   textx("No repo ownership claim; check the source yourself.",x+12,y+140,10,MUTED);
   char authorization_label[90];
@@ -560,12 +581,23 @@ static void draw_scope(app *ui,Rectangle area,int busy){
  textx("AUTHORIZED TO FETCH DOCS",x+41,y+17,12,RM_WHITE);
  textx("Docs GET only / same host / robots-aware",x+12,y+51,11,MUTED);
  y+=89;
+ char crawl_label[112];
+ snprintf(crawl_label,sizeof(crawl_label),
+          "CRAWL BUDGET: %u DOCS / DEPTH %u",ui->crawl_pages,ui->crawl_depth);
+ if(button((Rectangle){(float)x,(float)y,(float)inner,42},
+           crawl_label,AQUA,!busy)){
+  /* Explicit operator scope selection, never a background scan. */
+  if(ui->crawl_pages==12){ui->crawl_pages=64;ui->crawl_depth=4;}
+  else if(ui->crawl_pages==64){ui->crawl_pages=256;ui->crawl_depth=8;}
+  else{ui->crawl_pages=12;ui->crawl_depth=2;}
+ }
+ y+=57;
  if(button((Rectangle){(float)x,(float)y,(float)inner,44},"BUILD SOURCE LIBRARY",
            AQUA,!busy&&ui->consent&&RESTMORE_NETWORK_ENABLED)){
   rm_target target={0};char error[256]={0};
   if(rm_normalize(ui->domain,&target,error,sizeof(error)))
    snprintf(ui->message,sizeof(ui->message),"Scope refused: %.200s",error);
-  else if(start(&ui->task,ui->domain))
+  else if(start(&ui->task,ui->domain,ui->crawl_pages,ui->crawl_depth))
    snprintf(ui->message,sizeof(ui->message),"Cannot start documentation worker");
   ui->focus=0;
  }
@@ -596,7 +628,7 @@ static void draw_scope(app *ui,Rectangle area,int busy){
  textx("No speculative paths. No unsafe methods.",x,y,11,MUTED);
  EndScissorMode();
  if(maxscroll>0){
-  float track=area.height-35,thumb=track*area.height/1235.0f;
+  float track=area.height-35,thumb=track*area.height/1415.0f;
   DrawRectangleRounded((Rectangle){area.x+area.width-6,area.y+17,3,track},
                        .4f,6,Fade(MUTED,.13f));
   DrawRectangleRounded((Rectangle){area.x+area.width-6,
@@ -817,6 +849,7 @@ int main(int argc,char **argv){
  snprintf(ui->domain,sizeof(ui->domain),"docs.example.org");
  snprintf(ui->filename,sizeof(ui->filename),"examples/openapi-petstore.json");
  snprintf(ui->archive_dir,sizeof(ui->archive_dir),".restless/botanical");
+ ui->check_budget=5;ui->crawl_pages=12;ui->crawl_depth=2;
  snprintf(ui->message,sizeof(ui->message),"Atlas ready. Map a domain, review GitHub, then explicitly authorize GET checks.");
  mutex_init(&ui->task);
  load_catalog(ui);
