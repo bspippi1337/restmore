@@ -17,6 +17,31 @@
 
 </div>
 
+
+## Fusion 42 / RESTLESS × RESTMORE  <small>feature branch only</small>
+
+> **Engineering prototype for review, not merged, not released.**
+> The same authorization boundaries apply on this branch as on RESTMORE main.
+
+![Architectural illustration of RESTLESS Botanical and RESTMORE C11 meeting at a SHA-256 source ledger](docs/assets/fusion-42-pipeline.svg)
+
+**The original RESTLESS began 8 February 2026** as a one-domain, Go CLI API discovery engine. Its later Botanical harvester brought content-addressed SHA-256 evidence, JSONL provenance, ETag revalidation, source-backed search and contract diff. Fusion 42 ports the best interoperable parts to a standalone native C11 engine and GUI, without introducing speculative endpoint probing.
+
+**Working feature-branch capabilities:** authenticated-scope documentation GET crawler with RESTLESS-compatible archives; SHA-verified local Botanical import; ETag/Last-Modified + HTTP 304 reuse with cache-integrity check; source-backed route search and contract diff; native GUI archive import; configurable documentation scope and 5/25/full-atlas documented GET verification behind GitHub review + separate AUTHORIZE.
+
+**Live target execution is never triggered by archive import, search or diff.** Source identity and permission must be reviewed independently. Robots, TLS, rate policy and same-host validation remain enforced.
+
+[**SEE THE ART-DIRECTED FUSION 42 CASE STUDY**](docs/fusion-42.html) · [**TECHNICAL DESIGN + ORIGINAL RESTLESS HISTORY**](docs/FUSION-42.md) · [**CI BUILD & VISUAL TESTS**](https://github.com/bspippi1337/restmore/actions/workflows/fusion-42.yml)
+
+Offline demonstration using an existing RESTLESS Botanical archive:
+
+    cmake -S . -B build-fusion -DRESTMORE_NETWORK=OFF -DRESTMORE_TESTS=ON
+    cmake --build build-fusion --config Release
+    ./build-fusion/restmore-cli --fusion-import .restless/botanical --out fusion-atlas
+    ./build-fusion/restmore-cli --fusion-import .restless/botanical --fusion-search "list pets" --out fusion-atlas
+
+---
+
 ## Meet your cartographer.
 
 APIs are sprawling territories. Their documentation is a partial map, often spread across pages, specifications and disconnected route lists.
