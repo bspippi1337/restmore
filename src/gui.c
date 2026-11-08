@@ -479,11 +479,11 @@ static void draw_scope(app *ui,Rectangle area,int busy){
   cut_text(ui->verification->target.host,scope,sizeof(scope),inner-24,15);
   textx(scope,x+12,y+35,15,RM_WHITE);
   textx(ui->verification->source_bound?"ATLAS SOURCE HOST MATCHED":
-        "ATLAS / HOST LINK NOT CONFIRMED",
+        "IMPORT MATCHING OPENAPI SERVER FIRST",
         x+12,y+61,11,ui->verification->source_bound?MINT:RM_ORANGE);
   if(button((Rectangle){(float)x+12,(float)y+90,(float)inner-24,49},
             RESTMORE_NETWORK_ENABLED?"AUTHORIZE & VERIFY GET":"NETWORK DISABLED",
-            MINT,RESTMORE_NETWORK_ENABLED&&!busy)){
+            MINT,RESTMORE_NETWORK_ENABLED&&!busy&&ui->verification->source_bound)){
    /* Explicit user click authorizes only this reviewed host and plan.
       No cookies, tokens, mutations or new endpoint guesses are used. */
    rm_target check={0};char err[256]={0};
