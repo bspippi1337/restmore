@@ -11,6 +11,7 @@ extern "C" {
 #define RM_MAX_URL 2048
 #define RM_MAX_PATH 1024
 #define RM_MAX_DOCUMENT_BYTES (2u * 1024u * 1024u)
+#define RM_MAX_VERIFY_CHECKS 5 /* explicit, fixed bounded verification budget */
 typedef struct { char host[254]; char url[RM_MAX_URL]; } rm_target;
 typedef struct {
   char url[RM_MAX_URL];
@@ -27,6 +28,8 @@ typedef struct {
   char operation_id[128];
   char source_url[RM_MAX_URL];
   char source_sha256[65];
+  int expected_status; /* OpenAPI 200/204 response; 0 means no testable response contract */
+  char expected_content_type[96]; /* optional declared response MIME, not a schema guarantee */
 } rm_operation;
 typedef struct {
   rm_target target;
@@ -34,6 +37,20 @@ typedef struct {
   rm_document documents[RM_MAX_DOCUMENTS];
   rm_operation operations[RM_MAX_OPERATIONS];
 } rm_catalog;
+typedef struct {
+  char method[8],path[RM_MAX_PATH],source_sha256[65];
+  int expected_status,actual_status;
+  char expected_content_type[96],observed_content_type[96];
+  int outcome; /* 0 pending, 1 verified status+type+JSON, 2 status-only,
+                  3 mismatch, 4 transport/error, 5 skipped */
+} rm_check;
+typedef struct {
+  rm_target target;
+  size_t count;
+  int authorized; /* set ONLY after explicit human action for exactly this target */
+  int source_bound; /* imported catalog matched this domain */
+  rm_check checks[RM_MAX_VERIFY_CHECKS];
+} rm_verification;
 typedef struct {
   const char *input;
   const char *output_dir;
@@ -58,6 +75,14 @@ int rm_catalog_save(const rm_catalog *catalog, const char *directory, char *erro
 int rm_crawl(const rm_options *options, rm_catalog *catalog, rm_progress progress,
              void *context, char *error, size_t error_cap);
 int rm_make_dir(const char *path);
+/* Offline-only plan: formats GitHub repo SEARCH, never assumes a repo belongs to a host. */
+int rm_github_lookup(const char *domain,char *url,size_t cap,char *error,size_t error_cap);
+int rm_verify_plan(const rm_catalog *catalog,const char *domain,rm_verification *plan,
+                   char *error,size_t error_cap);
+int rm_verify_run(rm_verification *plan,rm_progress progress,void *context,
+                  char *error,size_t error_cap);
+/* Strict syntax validation only; does not implement JSON Schema. */
+int rm_json_valid(const char *text,size_t length);
 #ifdef __cplusplus
 }
 #endif
