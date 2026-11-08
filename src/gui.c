@@ -47,10 +47,10 @@ typedef struct {
 
 /* RESTMORE / visual system v2: calm dark surfaces, mint evidence, deliberate density.
    All drawing is vector/native raylib; no browser or embedded web assets. */
-static const Color BG={7,16,27,255},PANEL={14,27,43,255},PANEL2={24,44,62,255};
+static const Color BG={7,17,17,255},PANEL={15,29,29,255},PANEL2={25,48,46,255};
 static const Color RM_WHITE={238,249,247,255},MUTED={150,173,190,255};
-static const Color MINT={121,249,220,255},AQUA={94,190,226,255};
-static const Color BORDER={39,62,82,255},RM_ORANGE={232,190,116,255};
+static const Color MINT={166,242,174,255},AQUA={101,183,155,255};
+static const Color BORDER={48,75,66,255},RM_ORANGE={244,190,103,255};
 static const Color CORAL={255,146,135,255},RM_VIOLET={177,163,255,255};
 
 static void mutex_init(work *w){
@@ -430,7 +430,7 @@ static int load_restless_archive(app *ui){
  return 0;
 }
 static void draw_brand(int width){
- DrawRectangle(0,0,width,94,(Color){9,20,33,255});
+ DrawRectangle(0,0,width,94,(Color){9,24,24,255});
  DrawRectangleGradientH(0,0,width,4,MINT,AQUA);
  rule(0,93,(float)width);
  Rectangle sig={22,22,55,50};
@@ -441,10 +441,10 @@ static void draw_brand(int width){
  glyph_line(51,56,64,35,3,AQUA);
  DrawCircle(64,35,3,MINT);
  textx("RESTMORE",91,21,width<650?27:31,RM_WHITE);
- textx(width<650?"NATIVE API ATLAS":"API CARTOGRAPHY / EVIDENCE-FIRST ENGINE",92,59,11,MUTED);
+ textx(width<650?"OPS 42 / EVIDENCE ATLAS":"OPS 42 / SOURCE INTELLIGENCE / C11",92,59,11,MUTED);
  if(width>980){
-  textx("C11 / RESTLESS EDITION",width-274,29,14,MINT);
-  textx("MAP THE UNSEEN. / FIELD NOTES 0042",width-270,56,11,MUTED);
+  textx("MISSION CONTROL / OPS 42",width-295,29,14,MINT);
+  textx("LOCAL SOURCE BRIEF / AUTHORIZATION FIRST",width-295,56,10,MUTED);
  }
 }
 
@@ -457,9 +457,9 @@ static void draw_scope(app *ui,Rectangle area,int busy){
  int x=(int)area.x+22,y=(int)(area.y+21-ui->scope_scroll);
  int inner=(int)area.width-44;
  scissor((Rectangle){area.x+1,area.y+1,area.width-2,area.height-2});
- label(x,y,"01  /  DOMAIN TO ATLAS");y+=27;
- textx("Map a service.",x,y,27,RM_WHITE);y+=41;
- textx("One domain. A documented contract.",x,y,12,MUTED);y+=34;
+ label(x,y,"01  /  OPERATIONS DESK");y+=27;
+ textx("Plan the mission.",x,y,25,RM_WHITE);y+=41;
+ textx("Document. Attribute. Review. Authorize.",x,y,11,MUTED);y+=34;
  label(x,y,"PUBLIC HTTPS DOMAIN");y+=23;
  inputbox((Rectangle){(float)x,(float)y,(float)inner,48},ui->domain,
           sizeof(ui->domain),&ui->focus,1,!busy);y+=61;
@@ -514,7 +514,7 @@ static void draw_scope(app *ui,Rectangle area,int busy){
  Rectangle review={(float)x,(float)y,(float)inner,215};
  DrawRectangleRounded(review,.08f,8,Fade(AQUA,.075f));
  DrawRectangleRoundedLinesEx(review,.08f,8,1,Fade(AQUA,.28f));
- label(x+12,y+14,"02  /  MANUAL GITHUB REVIEW");
+ label(x+12,y+14,"02  /  SOURCE & AUTHORIZATION GATE");
  if(ui->verify_stage==1&&ui->verification){
   char scope[RM_MAX_URL];
   cut_text(ui->verification->target.host,scope,sizeof(scope),inner-24,15);
@@ -640,7 +640,7 @@ static void graph(app *ui,Rectangle area){
  if(area.width<220||area.height<240)return;
  int x=(int)area.x+20,y=(int)area.y+21;
  label(x,y,"03  /  EVIDENCE TOPOLOGY");
- textx("Operation atlas",x,y+23,25,RM_WHITE);
+ textx("Operational atlas",x,y+23,25,RM_WHITE);
  size_t count=ui->catalog?ui->catalog->operation_count:0;
  char summary[90];snprintf(summary,sizeof(summary),"%zu documented operations",count);
  textx(summary,x,y+60,12,MUTED);
@@ -739,7 +739,7 @@ static void inspector(app *ui,Rectangle area){
  if(area.width<220||area.height<210)return;
  size_t check_rows=ui->verification&&ui->verify_stage==2?
                    ui->verification->count:0;
- float content_height=fmaxf(1020.0f,670.0f+47.0f*(float)check_rows);
+ float content_height=fmaxf(1080.0f,738.0f+47.0f*(float)check_rows);
  float maxscroll=fmaxf(0,content_height-area.height+25);
  if(hit(area)){
   ui->atlas_scroll-=GetMouseWheelMove()*45+TOUCH_DY;
@@ -752,7 +752,7 @@ static void inspector(app *ui,Rectangle area){
  if(ui->atlas_scroll>maxscroll)ui->atlas_scroll=maxscroll;
  int x=(int)area.x+22,y=(int)(area.y+23-ui->atlas_scroll),inner=(int)area.width-44;
  scissor((Rectangle){area.x+1,area.y+1,area.width-2,area.height-2});
- label(x,y,"04  /  OPERATION INSPECTOR");y+=28;
+ label(x,y,"04  /  EVIDENCE INSPECTOR");y+=28;
  textx("Source intelligence",x,y,24,RM_WHITE);y+=45;
  rule((float)x,(float)y,(float)inner);y+=25;
  if(!ui->catalog||!ui->catalog->operation_count){
@@ -793,6 +793,16 @@ static void inspector(app *ui,Rectangle area){
   if(rm_make_dir("restmore-export")||rm_catalog_save(ui->catalog,"restmore-export",error,sizeof(error)))
    snprintf(ui->message,sizeof(ui->message),"Export failed: %.200s",error[0]?error:"Cannot create directory");
   else snprintf(ui->message,sizeof(ui->message),"Saved restmore-export/library.json and related formats");
+ }
+ y+=59;
+ if(button((Rectangle){(float)x,(float)y,(float)inner,43},
+           "EXPORT OPS 42 MISSION BRIEF",RM_ORANGE,1)){
+  char error[256]={0};
+  if(rm_make_dir("restmore-export")||
+     rm_ops_brief_write(ui->catalog,"restmore-export/ops-brief.json",error,sizeof(error)))
+   snprintf(ui->message,sizeof(ui->message),"Mission brief failed: %.202s",error[0]?error:"Cannot create output");
+  else snprintf(ui->message,sizeof(ui->message),
+                "Exported offline evidence brief. State: REVIEW REQUIRED, no authorization granted.");
  }
  y+=62;
  rule((float)x,(float)y,(float)inner);y+=22;
@@ -850,7 +860,7 @@ static void inspector(app *ui,Rectangle area){
 int main(int argc,char **argv){
  int smoke=argc>1&&!strcmp(argv[1],"--smoke");
  SetConfigFlags(FLAG_WINDOW_RESIZABLE|FLAG_MSAA_4X_HINT);
- InitWindow(1350,820,"RESTMORE  /  NATIVE API ATLAS");
+ InitWindow(1350,820,"RESTMORE  /  OPS 42 MISSION CONTROL");
  SetWindowMinSize(360,580);
  SetTargetFPS(60);
  init_type();
@@ -864,7 +874,7 @@ int main(int argc,char **argv){
  snprintf(ui->filename,sizeof(ui->filename),"examples/openapi-petstore.json");
  snprintf(ui->archive_dir,sizeof(ui->archive_dir),".restless/botanical");
  ui->check_budget=5;ui->crawl_pages=12;ui->crawl_depth=2;
- snprintf(ui->message,sizeof(ui->message),"Atlas ready. Map a domain, review GitHub, then explicitly authorize GET checks.");
+ snprintf(ui->message,sizeof(ui->message),"OPS 42 ready. Offline evidence briefing available. No target GET without review and authorization.");
  mutex_init(&ui->task);
  load_catalog(ui);
  int frames=0;
@@ -908,7 +918,7 @@ int main(int argc,char **argv){
    else if(ui->tab==1)graph(ui,whole);
    else inspector(ui,whole);
   }
-  DrawRectangle(0,H-56,W,56,(Color){8,20,31,255});
+  DrawRectangle(0,H-56,W,56,(Color){8,25,24,255});
   rule(0,H-56,(float)W);
   char notice[256];
   int width=ui->task.active?W-220:W-46;
@@ -921,7 +931,7 @@ int main(int argc,char **argv){
    mutex_unlock(&ui->task);
    textx(stage,W-165,H-38,14,MINT);
    DrawCircle(W-187,H-30,5,MINT);
-  }else if(W>850)textx("R/M  42  /  C11",W-182,H-38,13,MINT);
+  }else if(W>850)textx("OPS 42 / CONSENT GATED",W-232,H-38,12,MINT);
   EndMode2D();
   if(smoke && frames==30)TakeScreenshot("restmore-native-preview.png");
   EndDrawing();

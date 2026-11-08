@@ -96,6 +96,20 @@ size_t rm_fusion_search(const rm_catalog *catalog,const char *query,
 int rm_fusion_diff(const rm_catalog *before,const rm_catalog *after,
                    rm_fusion_diff_report *result);
 
+/* OPS 42: deterministic OFFLINE mission brief. This is evidence inventory,
+ * never permission to contact a system or any government classification. */
+typedef struct {
+ size_t documents,operations,document_hashes_recorded;
+ size_t get_count,post_count,put_count,patch_count,delete_count,other_count;
+ size_t declared_success_responses;
+ char atlas_fingerprint_sha256[65];
+} rm_ops_summary;
+int rm_ops_profile(const rm_catalog *catalog,rm_ops_summary *out,
+                   char *error,size_t error_cap);
+int rm_ops_brief_write(const rm_catalog *catalog,const char *file_path,
+                       char *error,size_t error_cap);
+
+
 int rm_export_postman(const rm_catalog *catalog,const char *directory,char *error,size_t error_cap);
 int rm_export_mermaid(const rm_catalog *catalog,const char *directory,char *error,size_t error_cap);
 int rm_export_svg(const rm_catalog *catalog,const char *directory,char *error,size_t error_cap);

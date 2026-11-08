@@ -9,7 +9,7 @@
 
 *Native API cartography. ISO C11. Evidence before assumptions.*
 
-[**EXPLORE THE WEBSITE**](https://bspippi1337.github.io/restmore/) &nbsp; / &nbsp; [**DOWNLOAD ALPHA 7**](https://github.com/bspippi1337/restmore/releases/tag/v0.1.0-alpha.7) &nbsp; / &nbsp; [**ILLUSTRATED FIELD GUIDE**](docs/field-guide.html)
+[**OPS 42 MISSION CONTROL**](https://bspippi1337.github.io/restmore/ops-42.html) &nbsp; / &nbsp; [**EXPLORE THE WEBSITE**](https://bspippi1337.github.io/restmore/) &nbsp; / &nbsp; [**DOWNLOAD ALPHA 7**](https://github.com/bspippi1337/restmore/releases/tag/v0.1.0-alpha.7) &nbsp; / &nbsp; [**ILLUSTRATED FIELD GUIDE**](docs/field-guide.html)
 
 ![Native build](https://github.com/bspippi1337/restmore/actions/workflows/native-gui.yml/badge.svg) &nbsp; ![C11](https://img.shields.io/badge/engine-ISO%20C11-79f9dc?labelColor=07101b) &nbsp; ![License: MIT](https://img.shields.io/badge/license-MIT-96acbf?labelColor=07101b)
 
@@ -17,6 +17,26 @@
 
 </div>
 
+
+## OPS 42 / Operational Mission Control
+
+![RESTMORE OPS 42 command console, an original unclassified illustrative architectural diagram](docs/assets/ops-42-console.svg)
+
+**A source-backed operational briefing desk, not a network attack console.** The native GUI now uses a restrained olive/phosphor-green field-console design with amber approval locks. An operator can export a deterministic **offline mission brief** from the existing RESTMORE or RESTLESS atlas, including documented routes, method inventory, SHA-256 atlas fingerprint and explicit `REVIEW_REQUIRED` state.
+
+The authorization workflow is unchanged: entering a domain does not grant access, GitHub search is a manual attribution step, and separate acknowledgment plus **AUTHORIZE** are required before eligible documented GET checks.
+
+[**ENTER OPS 42 MISSION CONTROL**](docs/ops-42.html) · [**OPERATIONAL FIELD MANUAL**](docs/OPS-42.md) · [**REVIEW C11 BRIEF WRITER**](src/ops_brief.c) · [**CI PROOF**](https://github.com/bspippi1337/restmore/actions/workflows/ops-42.yml)
+
+Build without network access and generate an inspectable evidence brief:
+
+    cmake -S . -B build-ops -DRESTMORE_NETWORK=OFF -DRESTMORE_TESTS=ON
+    cmake --build build-ops --config Release
+    ./build-ops/restmore-cli --import examples/openapi-petstore.json --ops-brief --out evidence
+
+Output: evidence/ops-brief.json, with no network requests, no inferred authorization, and no invented security findings.
+
+---
 
 ## Fusion 42 / RESTLESS × RESTMORE  <small>native C11 integration</small>
 

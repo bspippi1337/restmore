@@ -82,3 +82,7 @@ Never label a build target `production ready` without passing its release gates.
 ## Architectural Edition distribution
 
 The v0.1.0-alpha.6 desktop release archives ship with native executables, OpenAPI example, and a self-contained `docs/` folder: product website, illustrated field-guide HTML, original architectural SVG plates and engineering notes. Open `docs/field-guide.html` locally in any modern browser. The Android APK remains a separate offline debug preview; it does not bundle the full documentation folder.
+
+## OPS 42 offline briefing
+
+From a native C11 CLI build, use --import examples/openapi-petstore.json --ops-brief --out evidence, or --fusion-import an existing RESTLESS Botanical archive --ops-brief --out evidence. The generated evidence/ops-brief.json records documented methods/routes and a deterministic atlas fingerprint. It always records REVIEW_REQUIRED and does not contact a target. See [OPS 42](OPS-42.md) and [command desk](ops-42.html).

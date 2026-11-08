@@ -1,0 +1,151 @@
+name: RESTMORE OPS 42 / Mission Control
+on:
+  push:
+    branches: [feature/ops-command-42]
+    paths:
+      - 'src/**'
+      - 'include/**'
+      - 'tests/**'
+      - 'docs/**'
+      - 'CMakeLists.txt'
+      - 'README.md'
+      - '.github/workflows/ops-42.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  portable:
+    name: Mission brief C11 / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15, windows-2022]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure pure offline C11
+        run: cmake -S . -B build-ops -DRESTMORE_NETWORK=OFF -DRESTMORE_GUI=OFF -DRESTMORE_TESTS=ON -DCMAKE_BUILD_TYPE=Release
+      - name: Compile
+        run: cmake --build build-ops --config Release --parallel 2
+      - name: Regression suites
+        run: ctest --test-dir build-ops -C Release --output-on-failure
+  command-desk:
+    name: Offline CLI + evidence integrity + portfolio
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: cmake -S . -B build-ops -DRESTMORE_NETWORK=OFF -DRESTMORE_GUI=OFF -DRESTMORE_TESTS=ON -DCMAKE_BUILD_TYPE=Release
+      - name: Compile
+        run: cmake --build build-ops --parallel 2
+      - name: Exercise CLI offline, inspect deterministic machine report
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./build-ops/restmore-cli --import examples/openapi-petstore.json --ops-brief --out "$RUNNER_TEMP/restmore-brief"
+          python3 - <<'PY'
+          import json,os
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])/"restmore-brief"/"ops-brief.json"
+          data=json.loads(p.read_text())
+          assert data["mission_state"]=="REVIEW_REQUIRED"
+          assert not data["target_execution"]
+          assert not data["permission_conferred"]
+          assert not data["approval_gates"]["authorized_by_this_export"]
+          assert data["evidence"]["hashes_reverified_by_this_export"] is False
+          assert len(data["evidence"]["atlas_fingerprint_sha256"])==64
+          assert len(data["declared_routes"])==data["scope"]["declared_operations"]
+          print("OPS 42 offline machine-readability / approval gate: PASS")
+          PY
+          if ./build-ops/restmore-cli docs.example.org --ops-brief >/dev/null 2>&1; then
+            echo 'OPS brief unexpectedly enabled direct domain operation' >&2
+            exit 1
+          fi
+      - name: Validate original tactical SVG and HTML
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from xml.etree import ElementTree as ET
+          from html.parser import HTMLParser
+          class Check(HTMLParser):
+              def __init__(self): super().__init__();self.images=[]
+              def handle_starttag(self,tag,attrs):
+                  if tag=="img":
+                      self.images.extend(v for k,v in attrs if k=="src")
+          ET.parse("docs/assets/ops-42-console.svg")
+          html=Path("docs/ops-42.html").read_text(encoding="utf-8")
+          check=Check();check.feed(html)
+          assert "NO LIVE SCAN" in html
+          assert "REVIEW REQUIRED" in html
+          assert len(check.images)>=1
+          for image in check.images:
+              assert not image.startswith(("http:","https:","/"))
+              assert (Path("docs")/image).exists(),image
+          print("OPS 42 design system / HTML / SVG validation: PASS")
+          PY
+  tls-fixture:
+    name: Real controlled TLS regression / release fixture guard
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install local test dependencies
+        run: sudo apt-get update -qq && sudo apt-get install -y libcurl4-openssl-dev openssl python3
+      - name: Configure isolated Debug fixture
+        run: cmake -S . -B build-tls -DRESTMORE_NETWORK=ON -DRESTMORE_GUI=OFF -DRESTMORE_TESTS=ON -DRESTMORE_TEST_ONLY_LOOPBACK=ON -DCMAKE_BUILD_TYPE=Debug
+      - name: Build and run C11 regressions
+        run: |
+          cmake --build build-tls --parallel 2
+          ctest --test-dir build-tls --output-on-failure
+      - name: Real local HTTPS / ETag / 304 / tamper
+        run: sudo python3 tests/e2e_https_fixture.py "$PWD/build-tls/restmore-cli"
+      - name: Ensure Release rejects test-only trust
+        shell: bash
+        run: |
+          set -euo pipefail
+          if cmake -S . -B build-rejected -DRESTMORE_NETWORK=ON -DRESTMORE_TESTS=ON -DRESTMORE_TEST_ONLY_LOOPBACK=ON -DCMAKE_BUILD_TYPE=Release >/tmp/ops-refusal.log 2>&1; then
+            echo 'Release build accepted unsafe test-only trust override' >&2
+            exit 1
+          fi
+          grep -q 'CI_LOOPBACK_FORBIDDEN_IN_RELEASE' /tmp/ops-refusal.log
+
+  native-gui:
+    name: OPS 42 native raylib / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            network: ON
+          - os: macos-15
+            network: ON
+          - os: windows-2022
+            network: OFF
+    steps:
+      - uses: actions/checkout@v4
+      - name: Linux OpenGL, X11 and CURL dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libcurl4-openssl-dev libasound2-dev libgl1-mesa-dev libx11-dev libxcursor-dev libxi-dev libxinerama-dev libxrandr-dev libwayland-dev libxkbcommon-dev xvfb
+      - name: Configure real C11 native GUI
+        run: cmake -S . -B build-ops-gui -DRESTMORE_NETWORK=${{ matrix.network }} -DRESTMORE_GUI=ON -DRESTMORE_TESTS=ON -DCMAKE_BUILD_TYPE=Release
+      - name: Compile raylib C application
+        run: cmake --build build-ops-gui --config Release --parallel 2
+      - name: Run source/verification/ops C11 tests
+        run: ctest --test-dir build-ops-gui -C Release --output-on-failure
+      - name: Real native interface screenshot under Xvfb
+        if: runner.os == 'Linux'
+        run: xvfb-run -a ./build-ops-gui/restmore-gui --smoke
+      - name: Attach native console screenshot
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: restmore-ops42-native-screenshot
+          path: restmore-native-preview.png
+          if-no-files-found: error
+          retention-days: 30
+  android-native:
+    name: OPS 42 Android ARM64 debug compile and package
+    uses: ./.github/workflows/android-gui.yml
