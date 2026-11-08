@@ -353,46 +353,98 @@ static void draw_scope(app *ui,Rectangle area,int busy){
   DrawRectangleRounded((Rectangle){area.x+area.width-6,area.y+17+ui->scope_scroll/maxscroll*(track-thumb),3,thumb},.4f,6,Fade(MINT,.65f));
  }
 }
+
 static void graph(app *ui,Rectangle area){
- card(area,PANEL);
- int x=(int)area.x+24,y=(int)area.y+24;
- textx("03 / RESOURCE TOPOLOGY",x,y,20,RM_WHITE);
- char count[96];snprintf(count,sizeof(count),"%zu declared methods",ui->catalog?ui->catalog->operation_count:0u);
- textx(count,x,y+30,15,MUTED);
- DrawLine(x,y+62,(int)(area.x+area.width-24),y+62,BORDER);
- if(!ui->catalog||!ui->catalog->operation_count){
-  textx("No documented API loaded",x+24,y+110,21,RM_WHITE);
-  textx("Import an OpenAPI file or archive authorized docs.",x+24,y+150,16,MUTED);
-  return;
- }
- Rectangle viewport={area.x+12,area.y+94,area.width-24,area.height-110};
- float wheel=GetMouseWheelMove();
- if(hit(viewport)&&wheel!=0)ui->scroll-=wheel*62;
- if(ui->scroll<0)ui->scroll=0;
- float maxscroll=(float)(ui->catalog->operation_count*68+100)-(float)viewport.height;
- if(ui->scroll>maxscroll)ui->scroll=maxscroll>0?maxscroll:0;
- BeginScissorMode((int)viewport.x,(int)viewport.y,(int)viewport.width,(int)viewport.height);
- Vector2 root={area.x+52,area.y+126-ui->scroll};
- DrawCircleV(root,13,AQUA);DrawCircleLines((int)root.x,(int)root.y,20,Fade(AQUA,0.4f));
- for(size_t i=0;i<ui->catalog->operation_count;i++){
-  const rm_operation *op=&ui->catalog->operations[i];
-  float yy=area.y+160+(float)i*68-ui->scroll;
-  if(yy<viewport.y-65||yy>viewport.y+viewport.height+64)continue;
-  float node_x=area.x+88;
-  Rectangle r={node_x,yy,area.width-117,55};
-  if(i==0)DrawLineBezier(root,(Vector2){node_x,yy+27},1.5f,Fade(AQUA,0.6f));
-  else DrawLineEx((Vector2){area.x+54,yy-42},(Vector2){node_x,yy+27},1,Fade(AQUA,0.23f));
-  DrawRectangleRounded(r,0.19f,8,i==(size_t)ui->selected?PANEL2:Fade(PANEL2,0.68f));
-  DrawRectangleRoundedLinesEx(r,0.19f,8,1,i==(size_t)ui->selected?MINT:BORDER);
-  Color mc=method_color(op->method);
-  DrawRectangleRounded((Rectangle){node_x+9,yy+11,68,31},0.24f,6,Fade(mc,0.15f));
-  textx(op->method,(int)node_x+16,(int)yy+19,16,mc);
-  const char *path=op->path;
-  while(MeasureText(path,16)>r.width-115&&strlen(path)>5)path++;
-  textx(path,(int)node_x+87,(int)yy+19,16,RM_WHITE);
-  if(hit(r)&&IsMouseButtonPressed(MOUSE_BUTTON_LEFT))ui->selected=(int)i;
+ panel(area,PANEL);
+ if(area.width<220||area.height<240)return;
+ int x=(int)area.x+20,y=(int)area.y+21;
+ label(x,y,"03  /  EVIDENCE TOPOLOGY");
+ textx("Operation atlas",x,y+23,25,RM_WHITE);
+ size_t count=ui->catalog?ui->catalog->operation_count:0;
+ char summary[90];snprintf(summary,sizeof(summary),"%zu documented operations",count);
+ textx(summary,x,y+60,12,MUTED);
+ int narrow=area.width<460;
+ float bh=33,bw=narrow?66:84, bx=area.x+area.width-(narrow?145:188);
+ if(button((Rectangle){bx,area.y+21,bw,bh},"MAP",ui->view==0?MINT:AQUA,1))ui->view=0;
+ if(button((Rectangle){bx+bw+7,area.y+21,bw,bh},"ROUTES",ui->view==1?MINT:AQUA,1))ui->view=1;
+ rule(area.x+20,area.y+99,area.width-40);
+ Rectangle viewport={area.x+13,area.y+109,area.width-26,area.height-132};
+ scissor(viewport);
+ if(!count){
+  orbital(area.x+area.width*.5f,viewport.y+viewport.height*.43f,
+          fminf(viewport.width,viewport.height)*.23f,(float)GetTime());
+  textx("NO SOURCE LIBRARY",x+10,(int)(viewport.y+viewport.height*.72f),19,RM_WHITE);
+  char hint[110];cut_text("Import OpenAPI JSON or scan permitted documentation.",hint,sizeof(hint),(int)area.width-60,13);
+  textx(hint,x+10,(int)(viewport.y+viewport.height*.72f)+29,13,MUTED);
+ }else if(ui->view==0){
+  float cx=area.x+area.width*.50f;
+  float cy=viewport.y+viewport.height*.51f;
+  float rx=fmaxf(55.0f,(viewport.width-130.0f)*.45f);
+  float ry=fmaxf(52.0f,(viewport.height-118.0f)*.43f);
+  if(rx>viewport.width*.37f)rx=viewport.width*.37f;
+  if(ry>viewport.height*.35f)ry=viewport.height*.35f;
+  orbital(cx,cy,fminf(rx,ry)*.76f,(float)GetTime());
+  const size_t shown=count<12?count:12;
+  const float pi=3.14159265358979323846f;
+  Vector2 nodes[12];
+  for(size_t i=0;i<shown;i++){
+   float a=2.0f*pi*(float)i/(float)shown-pi*.5f;
+   nodes[i]=(Vector2){cx+cosf(a)*rx,cy+sinf(a)*ry};
+   glyph_line(cx,cy,nodes[i].x,nodes[i].y,1.3f,Fade(AQUA,.27f));
+  }
+  DrawCircleV((Vector2){cx,cy},35,(Color){24,57,66,255});
+  DrawCircleLines((int)cx,(int)cy,35,MINT);
+  textx("API",(int)cx-17,(int)cy-10,19,RM_WHITE);
+  for(size_t i=0;i<shown;i++){
+   const rm_operation *op=&ui->catalog->operations[i];
+   Vector2 p=nodes[i];Color c=method_color(op->method);
+   int selected=(int)i==ui->selected;
+   DrawCircleV(p,selected?15:12,selected?MINT:PANEL2);
+   DrawCircleLines((int)p.x,(int)p.y,selected?17:13,c);
+   DrawCircleV(p,4,c);
+   Rectangle target={p.x-19,p.y-19,38,38};
+   if(clicked(target))ui->selected=(int)i;
+   char path[80];cut_text(op->path,path,sizeof(path),narrow?85:134,11);
+   int txtw=textwidth(path,11);
+   float tx=p.x+(p.x<cx?-txtw-18:18);
+   if(tx<viewport.x+7)tx=viewport.x+7;
+   if(tx+txtw>viewport.x+viewport.width-7)tx=viewport.x+viewport.width-txtw-7;
+   float ty=p.y+((i%2)?14:-24);
+   textx(path,(int)tx,(int)ty,11,selected?RM_WHITE:MUTED);
+  }
+  if(count>shown){
+   char rest[80];snprintf(rest,sizeof(rest),"+%zu ROUTES  /  SWITCH TO ROUTES VIEW",count-shown);
+   textx(rest,(int)viewport.x+16,(int)(viewport.y+viewport.height-22),12,MINT);
+  }
+ }else{
+  const int card_height=62,step=70;
+  float content=(float)count*step+15;
+  float maxscroll=fmaxf(0,content-viewport.height);
+  if(hit(viewport)&&GetMouseWheelMove()!=0)ui->scroll-=GetMouseWheelMove()*58;
+  if(ui->scroll<0)ui->scroll=0;
+  if(ui->scroll>maxscroll)ui->scroll=maxscroll;
+  for(size_t i=0;i<count;i++){
+   const rm_operation *op=&ui->catalog->operations[i];
+   float yy=viewport.y+8+(float)i*step-ui->scroll;
+   if(yy+card_height<viewport.y||yy>viewport.y+viewport.height)continue;
+   Rectangle row={viewport.x+6,yy,viewport.width-15,card_height};
+   DrawRectangleRounded(row,.08f,8,(int)i==ui->selected?PANEL2:Fade(PANEL2,.50f));
+   DrawRectangleRoundedLinesEx(row,.08f,8,1,(int)i==ui->selected?MINT:BORDER);
+   method_pill(op->method,row.x+10,row.y+16,65);
+   char path[RM_MAX_PATH];cut_text(op->path,path,sizeof(path),(int)row.width-107,14);
+   textx(path,(int)row.x+88,(int)row.y+12,14,RM_WHITE);
+   char small[125];cut_text(op->summary,small,sizeof(small),(int)row.width-107,11);
+   textx(small,(int)row.x+88,(int)row.y+37,11,MUTED);
+   if(clicked(row))ui->selected=(int)i;
+  }
+  if(maxscroll>0){
+   float track=viewport.height-12,thumb=track*viewport.height/content;
+   DrawRectangleRounded((Rectangle){viewport.x+viewport.width-4,viewport.y+5,3,track},1,6,Fade(MUTED,.16f));
+   DrawRectangleRounded((Rectangle){viewport.x+viewport.width-4,viewport.y+5+ui->scroll/maxscroll*(track-thumb),3,thumb},1,6,MINT);
+  }
  }
  EndScissorMode();
+ label((int)area.x+20,(int)(area.y+area.height-18),"OBSERVED / DOCUMENTED / NO REQUEST EXECUTION");
 }
 static void inspector(app *ui,Rectangle area){
  card(area,PANEL);
