@@ -24,7 +24,8 @@ Legacy enginewow/discoverwow experiments went further into automatic probing of 
 4. Offline relevance search ranks actual operation IDs, paths, summaries, methods and source URLs without making requests.
 5. Offline contract diff reports added, removed, modified and unchanged documented operations.
 6. The native raylib GUI has a new **IMPORT VERIFIED ARCHIVE** action that reuses the existing operation atlas, inspector and export workflow.
-7. RESTMORE's already separate **GitHub review** and **AUTHORIZE** actions remain enforced in C before any live, bounded GET contract check.
+7. The native GUI offers **12, 64 or 256** documentation-page budgets and **5, 25 or the full documented atlas** for separately authorized GET contract checks. Choosing full coverage never skips human approval.
+8. RESTMORE's already separate **GitHub review** and **AUTHORIZE** actions remain enforced in C before any live, bounded GET contract check.
 
 ### Try it
 
@@ -81,7 +82,7 @@ All archive import, search and diff operations are offline. GitHub search is a l
 
 - **No guessing:** A route exists in the atlas only when a verified source actually documents it.
 - **No arbitrary authority:** Approval to inspect the GitHub source is distinct from documented authorization to test the API host.
-- **No silent truncation:** The current static RESTMORE catalog has finite document and operation capacities; exceeding them fails explicitly. Scaling larger datasets will require dynamic indexing or sharding, rather than pretending memory is unlimited.
+- **No silent truncation:** The C11 catalog now has an explicit **256-document / 4096-operation** capacity. Operators can select larger scoped discovery budgets and full eligible-atlas verification, rather than being stuck with tiny fixed presets. Oversized inputs fail explicitly. Truly unbounded datasets will require dynamic sharding and cannot responsibly be promised in a finite process.
 - **No hidden execution:** No auth bypass, credential replay, speculative endpoint calls or mutating HTTP methods. Robots, TLS certificate checks, public-address restrictions, pacing and explicit scope remain mandatory.
 - **SHA-256 is content integrity**, not publisher authentication or proof that an API operation is deployed.
 - **Already integrated:** RESTLESS-style append-only evidence manifests, SHA validation, ETag/Last-Modified conditional GET and verified HTTP 304 reuse, offline indexing, offline route search and response-contract diff.
