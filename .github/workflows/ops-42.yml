@@ -108,3 +108,44 @@ jobs:
             exit 1
           fi
           grep -q 'CI_LOOPBACK_FORBIDDEN_IN_RELEASE' /tmp/ops-refusal.log
+
+  native-gui:
+    name: OPS 42 native raylib / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            network: ON
+          - os: macos-15
+            network: ON
+          - os: windows-2022
+            network: OFF
+    steps:
+      - uses: actions/checkout@v4
+      - name: Linux OpenGL, X11 and CURL dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libcurl4-openssl-dev libasound2-dev libgl1-mesa-dev libx11-dev libxcursor-dev libxi-dev libxinerama-dev libxrandr-dev libwayland-dev libxkbcommon-dev xvfb
+      - name: Configure real C11 native GUI
+        run: cmake -S . -B build-ops-gui -DRESTMORE_NETWORK=${{ matrix.network }} -DRESTMORE_GUI=ON -DRESTMORE_TESTS=ON -DCMAKE_BUILD_TYPE=Release
+      - name: Compile raylib C application
+        run: cmake --build build-ops-gui --config Release --parallel 2
+      - name: Run source/verification/ops C11 tests
+        run: ctest --test-dir build-ops-gui -C Release --output-on-failure
+      - name: Real native interface screenshot under Xvfb
+        if: runner.os == 'Linux'
+        run: xvfb-run -a ./build-ops-gui/restmore-gui --smoke
+      - name: Attach native console screenshot
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: restmore-ops42-native-screenshot
+          path: restmore-native-preview.png
+          if-no-files-found: error
+          retention-days: 30
+  android-native:
+    name: OPS 42 Android ARM64 debug compile and package
+    uses: ./.github/workflows/android-gui.yml
