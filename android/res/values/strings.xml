@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">RESTMORE</string>
+    <style name="RestmoreTheme" parent="android:style/Theme.Material.NoActionBar.Fullscreen">
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:statusBarColor">#07101B</item>
+        <item name="android:navigationBarColor">#07101B</item>
+        <item name="android:windowActionModeOverlay">true</item>
+    </style>
+</resources>
