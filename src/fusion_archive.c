@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #define FUSION_LINE_CAP 8192u
 typedef struct {
@@ -259,5 +260,48 @@ int rm_fusion_diff(const rm_catalog *before,const rm_catalog *after,
       !strcmp(b->path,after->operations[j].path)){found=1;break;}
   if(!found)result->removed++;
  }
+ return 0;
+}
+
+
+/* Append one RESTLESS-compatible provenance record AFTER archive bytes were
+ * committed. RESTLESS can re-index this manifest with no format conversion. */
+int rm_fusion_append_manifest(const char *directory,const rm_document *doc,
+                              char *error,size_t cap){
+ if(!directory||!directory[0]||strlen(directory)>2900||!doc||
+    !hash_ok(doc->sha256)||doc->status!=200)
+  return rm_error(error,cap,"valid archived document and provenance required");
+ rm_target target={0};
+ if(rm_normalize(doc->url,&target,error,cap)||strcmp(target.url,doc->url))
+  return rm_error(error,cap,"cannot log unnormalized document URL");
+ char index[4096],rel[128];
+ if(snprintf(index,sizeof(index),"%s/index.jsonl",directory)>=(int)sizeof(index))
+  return rm_error(error,cap,"manifest path too long");
+ snprintf(rel,sizeof(rel),"sha256/%s",doc->sha256);
+ time_t now=time(NULL);struct tm utc={0};
+#ifdef _WIN32
+ if(gmtime_s(&utc,&now)!=0)return rm_error(error,cap,"cannot produce UTC timestamp");
+#else
+ if(!gmtime_r(&now,&utc))return rm_error(error,cap,"cannot produce UTC timestamp");
+#endif
+ char stamp[32];
+ if(!strftime(stamp,sizeof(stamp),"%Y-%m-%dT%H:%M:%SZ",&utc))
+  return rm_error(error,cap,"cannot format archive timestamp");
+ FILE *out=fopen(index,"ab");
+ if(!out)return rm_error(error,cap,"cannot append RESTLESS provenance manifest");
+ int bad=0;
+ if(fputs("{\"url\":",out)==EOF||rm_json_escape(out,doc->url))bad=1;
+ if(!bad&&(fputs(",\"source\":\"restmore-c11\",\"sha256\":",out)==EOF||
+            rm_json_escape(out,doc->sha256)))bad=1;
+ if(!bad&&(fputs(",\"archive_path\":",out)==EOF||rm_json_escape(out,rel)))bad=1;
+ if(!bad&&(fputs(",\"content_type\":",out)==EOF||
+            rm_json_escape(out,doc->content_type)))bad=1;
+ if(!bad&&fprintf(out,",\"status\":200,\"response_status\":200,"
+        "\"bytes\":%zu,\"depth\":%u,\"fetched_at\":\"%s\"}\n",
+        doc->bytes,doc->depth,stamp)<0)bad=1;
+ if(fflush(out))bad=1;
+ if(fclose(out))bad=1;
+ if(bad)return rm_error(error,cap,"RESTLESS manifest append failed");
+ if(error&&cap)error[0]=0;
  return 0;
 }
