@@ -8,6 +8,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* A recorded 64-character string is not automatically a valid digest. */
+static int has_sha256_text(const char sha[65]){
+ for(size_t i=0;i<64;i++){
+  char c=sha[i];
+  if(!((c>='0'&&c<='9')||(c>='a'&&c<='f')))return 0;
+ }
+ return sha[64]==0;
+}
 static int chain_hash(char digest[65],const char *record){
  size_t n=strlen(record);
  if(n>8192)return -1;
@@ -53,7 +61,7 @@ int rm_ops_profile(const rm_catalog *cat,rm_ops_summary *out,
  s.operations=cat->operation_count;
  for(size_t i=0;i<cat->document_count;i++){
   const rm_document *d=&cat->documents[i];
-  if(strlen(d->sha256)==64)s.document_hashes_recorded++;
+  if(has_sha256_text(d->sha256))s.document_hashes_recorded++;
  }
  for(size_t i=0;i<cat->operation_count;i++){
   const rm_operation *op=&cat->operations[i];
@@ -97,7 +105,7 @@ int rm_ops_brief_write(const rm_catalog *cat,const char *path,
           "\"authorized_by_this_export\":false},\n"
           " \"scope\":{\"documented_server_host\":",f)==EOF)bad=1;
  if(!bad&&rm_json_escape(f,cat->target.host))bad=1;
- if(!bad&&fprintf(f,",\"host_bound\":%s,\"documents\":%zu,"
+ if(!bad&&fprintf(f,",\"source_declares_host\":%s,\"target_ownership_verified\":false,\"documents\":%zu,"
                       "\"declared_operations\":%zu},\n"
                       " \"evidence\":{\"atlas_fingerprint_sha256\":",
                 cat->target.host[0]?"true":"false",
