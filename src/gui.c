@@ -271,20 +271,24 @@ static int load_catalog(app *ui){
  snprintf(ui->message,sizeof(ui->message),"Loaded %d documented operations from local JSON",parsed);
  return 0;
 }
+
 static void draw_brand(int width){
- DrawRectangle(0,0,width,86,(Color){14,22,29,255});
- DrawLine(0,85,width,85,BORDER);
- Vector2 c={48,42};
- DrawCircleV(c,21,Fade(MINT,0.17f));
- DrawCircleLines((int)c.x,(int)c.y,21,MINT);
- DrawLineEx((Vector2){35,49},(Vector2){51,30},4,MINT);
- DrawLineEx((Vector2){51,30},(Vector2){61,45},4,AQUA);
- DrawCircle(49,34,3,RM_WHITE);
- textx("RESTMORE",85,17,32,RM_WHITE);
- textx("NATIVE API ATLAS  /  C11",87,54,13,MUTED);
- const char *badge="EVIDENCE BEFORE ENDPOINTS";
- int b=MeasureText(badge,14);
- if(width>b+520)textx(badge,width-b-28,37,14,AQUA);
+ DrawRectangle(0,0,width,94,(Color){9,20,33,255});
+ DrawRectangleGradientH(0,0,width,4,MINT,AQUA);
+ rule(0,93,(float)width);
+ Rectangle sig={22,22,55,50};
+ DrawRectangleRounded(sig,.18f,8,Fade(MINT,.08f));
+ DrawRectangleRoundedLinesEx(sig,.18f,8,1,Fade(MINT,.50f));
+ glyph_line(32,57,42,36,3,MINT);
+ glyph_line(42,36,51,56,3,MINT);
+ glyph_line(51,56,64,35,3,AQUA);
+ DrawCircle(64,35,3,MINT);
+ textx("RESTMORE",91,21,width<650?27:31,RM_WHITE);
+ textx(width<650?"NATIVE API ATLAS":"API CARTOGRAPHY / EVIDENCE-FIRST ENGINE",92,59,11,MUTED);
+ if(width>980){
+  textx("C11 / RESTLESS EDITION",width-274,29,14,MINT);
+  textx("DISCOVER THE DOCUMENTED",width-270,56,11,MUTED);
+ }
 }
 static void draw_scope(app *ui,Rectangle area,int busy){
  card(area,PANEL);
