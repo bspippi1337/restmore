@@ -425,7 +425,7 @@ static void draw_brand(int width){
 
 static void draw_scope(app *ui,Rectangle area,int busy){
  panel(area,PANEL);
- float maxscroll=fmaxf(0.0f,960.0f-area.height);
+ float maxscroll=fmaxf(0.0f,1040.0f-area.height);
  if(hit(area))ui->scope_scroll-=GetMouseWheelMove()*45+TOUCH_DY;
  if(ui->scope_scroll<0)ui->scope_scroll=0;
  if(ui->scope_scroll>maxscroll)ui->scope_scroll=maxscroll;
@@ -469,8 +469,8 @@ static void draw_scope(app *ui,Rectangle area,int busy){
   ui->focus=0;
  }
  y+=60;
- textx("Github search is a lead, not identity proof.",x,y,11,MUTED);y+=25;
- Rectangle review={(float)x,(float)y,(float)inner,153};
+ textx("GitHub search: lead only, not ownership proof.",x,y,11,MUTED);y+=25;
+ Rectangle review={(float)x,(float)y,(float)inner,215};
  DrawRectangleRounded(review,.08f,8,Fade(AQUA,.075f));
  DrawRectangleRoundedLinesEx(review,.08f,8,1,Fade(AQUA,.28f));
  label(x+12,y+14,"02  /  MANUAL GITHUB REVIEW");
@@ -478,14 +478,28 @@ static void draw_scope(app *ui,Rectangle area,int busy){
   char scope[RM_MAX_URL];
   cut_text(ui->verification->target.host,scope,sizeof(scope),inner-24,15);
   textx(scope,x+12,y+35,15,RM_WHITE);
-  textx(ui->verification->source_bound?"ATLAS SOURCE HOST MATCHED":
-        "IMPORT MATCHING OPENAPI SERVER FIRST",
+  textx(ui->verification->source_bound?"OPENAPI SERVER MATCHED TO DOMAIN":
+        "BLOCKED: IMPORT DOMAIN-BOUND OPENAPI",
         x+12,y+61,11,ui->verification->source_bound?MINT:RM_ORANGE);
-  if(button((Rectangle){(float)x+12,(float)y+90,(float)inner-24,49},
-            RESTMORE_NETWORK_ENABLED?"AUTHORIZE & VERIFY GET":"NETWORK DISABLED",
-            MINT,RESTMORE_NETWORK_ENABLED&&!busy&&ui->verification->source_bound)){
-   /* Explicit user click authorizes only this reviewed host and plan.
-      No cookies, tokens, mutations or new endpoint guesses are used. */
+  Rectangle consent_area={(Rectangle){(float)x+12,(float)y+88,(float)inner-24,44}};
+  if(button(consent_area,
+      ui->verification->github_reviewed?"GITHUB REVIEW CONFIRMED":"I REVIEWED GITHUB & HAVE PERMISSION",
+      AQUA,!busy&&!ui->verification->github_reviewed)){
+    /* GitHub search is merely a lead. The human explicitly confirms their
+       permission; the application does not claim to verify domain ownership. */
+    ui->verification->github_reviewed=1;
+    snprintf(ui->message,sizeof(ui->message),
+      "Human GitHub review acknowledged. Click Authorize to run at most 5 documented GET checks.");
+  }
+  textx("No repo ownership claim; check the source yourself.",x+12,y+140,10,MUTED);
+  char authorization_label[90];
+  snprintf(authorization_label,sizeof(authorization_label),
+    "AUTHORIZE / %zu DOCUMENTED GET CHECKS",ui->verification->count);
+  if(button((Rectangle){(float)x+12,(float)y+155,(float)inner-24,46},
+            RESTMORE_NETWORK_ENABLED?authorization_label:"NETWORK DISABLED",
+            MINT,RESTMORE_NETWORK_ENABLED&&!busy&&ui->verification->source_bound&&ui->verification->github_reviewed)){
+   /* Separate authorization gesture, bound to this exact host and OpenAPI
+      source. Unknown routes, mutations and credentials are never executed. */
    rm_target check={0};char err[256]={0};
    if(rm_normalize(ui->domain,&check,err,sizeof(err)) ||
       strcmp(check.host,ui->verification->target.host)){
@@ -508,11 +522,11 @@ static void draw_scope(app *ui,Rectangle area,int busy){
   textx("CHECK COMPLETE / OPEN INSPECTOR",x+12,y+52,13,MINT);
   textx("New MAP review required to repeat.",x+12,y+82,12,MUTED);
  }else{
-  textx("1. Inspect a plausible GitHub repository.",x+12,y+49,12,MUTED);
-  textx("2. Confirm permission for this domain.",x+12,y+74,12,MUTED);
-  textx("3. Return and click AUTHORIZE.",x+12,y+100,12,MUTED);
+  textx("1. GitHub search opened by MAP.",x+12,y+51,12,MUTED);
+  textx("2. Verify correct repo and permission.",x+12,y+78,12,MUTED);
+  textx("3. Click review, then AUTHORIZE.",x+12,y+108,12,MUTED);
  }
- y+=169;
+ y+=231;
  rule((float)x,(float)y,(float)inner);y+=26;
  label(x,y,"03  /  OPTIONAL DOCUMENTATION DISCOVERY");y+=27;
  Rectangle permission={(float)x,(float)y,(float)inner,76};
@@ -550,7 +564,7 @@ static void draw_scope(app *ui,Rectangle area,int busy){
  textx("No speculative paths. No unsafe methods.",x,y,11,MUTED);
  EndScissorMode();
  if(maxscroll>0){
-  float track=area.height-35,thumb=track*area.height/960.0f;
+  float track=area.height-35,thumb=track*area.height/1040.0f;
   DrawRectangleRounded((Rectangle){area.x+area.width-6,area.y+17,3,track},
                        .4f,6,Fade(MUTED,.13f));
   DrawRectangleRounded((Rectangle){area.x+area.width-6,
