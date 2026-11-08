@@ -1,0 +1,53 @@
+name: RESTLESS + RESTMORE / Fusion 42 proof
+on:
+  push:
+    branches: [feature/restless-restmore-fusion-42]
+    paths:
+      - 'src/**'
+      - 'include/**'
+      - 'tests/**'
+      - 'CMakeLists.txt'
+      - '.github/workflows/fusion-42.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  portable:
+    name: C11 fusion / ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15, windows-2022]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure C11 offline core
+        run: cmake -S . -B build-fusion -DRESTMORE_NETWORK=OFF -DRESTMORE_TESTS=ON -DRESTMORE_GUI=OFF -DCMAKE_BUILD_TYPE=Release
+      - name: Build C11 fusion
+        run: cmake --build build-fusion --config Release --parallel 2
+      - name: Test SHA integrity, import, search, diff, authorization
+        run: ctest --test-dir build-fusion -C Release --output-on-failure
+  https:
+    name: HTTPS parity + fail-closed offline tests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure network-enabled library (no external runtime calls)
+        run: cmake -S . -B build-fusion-https -DRESTMORE_NETWORK=ON -DRESTMORE_TESTS=ON -DRESTMORE_GUI=OFF -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build-fusion-https --config Release --parallel 2
+      - name: Test
+        run: ctest --test-dir build-fusion-https --output-on-failure
+      - name: Validate new CLI entry points
+        shell: bash
+        run: |
+          set -euo pipefail
+          build-fusion-https/restmore-cli --help | grep -q -- '--fusion-import'
+          if build-fusion-https/restmore-cli --fusion-search pets 2>/dev/null; then
+            echo "Unexpected success for fusion search without a source" >&2
+            exit 1
+          fi
+          if build-fusion-https/restmore-cli --fusion-import missing-directory --execute 2>/dev/null; then
+            echo "Fusion importer incorrectly enabled live execution" >&2
+            exit 1
+          fi
