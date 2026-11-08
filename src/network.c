@@ -258,6 +258,11 @@ int rm_crawl(const rm_options *options,rm_catalog *cat,rm_progress cb,void *ctx,
   if(!f){free(body.data);result=rm_error(err,cap,"cannot write documentation archive");break;}
   int saved=fwrite(body.data,1,body.length,f)==body.length;
   if(fclose(f)||!saved){free(body.data);result=rm_error(err,cap,"archive write failed");break;}
+  /* RESTLESS Botanical can now ingest these archives in place:
+     index.jsonl + sha256/<digest> are written to the same directory. */
+  if(rm_fusion_append_manifest(directory,doc,err,cap)){
+    free(body.data);result=-1;break;
+  }
   if(strstr(mime,"json")){
     /* Ordinary JSON is valid; only confirmed OpenAPI 3 paths are cataloged. */
     char import_error[256]={0};
