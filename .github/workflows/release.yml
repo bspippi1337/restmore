@@ -1,4 +1,4 @@
-name: RESTMORE v0.1.0-alpha.6 release
+name: RESTMORE v0.1.0-alpha.7 release
 on:
   push:
     branches: [main]
@@ -10,11 +10,11 @@ permissions:
   contents: read
 
 concurrency:
-  group: restmore-release-0.1.0-alpha.6
+  group: restmore-release-0.1.0-alpha.7
   cancel-in-progress: false
 
 env:
-  RESTMORE_TAG: v0.1.0-alpha.6
+  RESTMORE_TAG: v0.1.0-alpha.7
 
 jobs:
   package:
@@ -91,7 +91,7 @@ jobs:
           cp -R docs dist/docs
           if [ -f restmore-native-preview.png ]; then cp restmore-native-preview.png dist/; fi
           cat > dist/RELEASE-NOTES.txt <<'EOF'
-          RESTMORE v0.1.0-alpha.6 / Verification Edition / native preview
+          RESTMORE v0.1.0-alpha.7 / Verification Edition / native preview
 
           Native application and CLI source: ISO C11. Optional raylib GUI.
           Linux and macOS binaries: libcurl HTTPS documentation discovery.
@@ -147,14 +147,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cp android-preview/restmore-android-arm64-debug.apk             release-assets/restmore-v0.1.0-alpha.6-android-arm64-debug.apk
+          cp android-preview/restmore-android-arm64-debug.apk             release-assets/restmore-v0.1.0-alpha.7-android-arm64-debug.apk
       - name: Verify packages and generate checksums
         shell: bash
         run: |
           set -euo pipefail
           cd release-assets
           test "$(find . -maxdepth 1 -name '*.zip' | wc -l)" -eq 3
-          test -s restmore-v0.1.0-alpha.6-android-arm64-debug.apk
+          test -s restmore-v0.1.0-alpha.7-android-arm64-debug.apk
           sha256sum *.zip *.apk > SHA256SUMS.txt
           cat SHA256SUMS.txt
       - name: Publish alpha release
@@ -169,10 +169,17 @@ jobs:
             exit 0
           fi
           cat > notes.md <<'EOF'
-          ## RESTMORE / v0.1.0-alpha.6
+          ## RESTMORE / v0.1.0-alpha.7
 
+          Contract Verification Edition extends the GitHub-first review to
+          require **two separate C-enforced approvals**: confirming manual
+          repository review and then explicitly authorizing exact-host checks.
+          
           Verification Edition adds a human-reviewed GitHub source search and
           a distinct per-domain **AUTHORIZE** control in the C11 raylib GUI.
+          The inspector now exports a structured `restmore-verification.json`
+          audit report of expected/actual status, content-type, JSON root type,
+          origin fingerprint and outcomes. Response bodies are not persisted.
           The existing atlas now retains documented OpenAPI 200/204 response
           contracts and optional JSON root types. Bounded verification compares
           response status, MIME and JSON shape for up to five literal GETs,
@@ -212,7 +219,7 @@ jobs:
           EOF
           gh release create "$RESTMORE_TAG" \
             --target "$GITHUB_SHA" \
-            --title "RESTMORE 0.1.0 alpha 6 | Verification Edition" \
+            --title "RESTMORE 0.1.0 alpha 7 | Contract Verification" \
             --notes-file notes.md \
             --prerelease \
             release-assets/*.zip release-assets/*.apk release-assets/SHA256SUMS.txt
