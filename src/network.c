@@ -132,6 +132,12 @@ static int fetch(const char *url,const char *agent,size_t limit,response *out,
  curl_easy_setopt(c,CURLOPT_NOPROXY,"*");
  curl_easy_setopt(c,CURLOPT_SSL_VERIFYPEER,1L);
  curl_easy_setopt(c,CURLOPT_SSL_VERIFYHOST,2L);
+#if defined(RESTMORE_TEST_ONLY_LOOPBACK)
+ /* Only the test-only Debug build can trust an ephemeral, local fixture CA.
+    Production releases always use the normal platform trust store. */
+ const char *fixture_ca=getenv("RESTMORE_CI_CA_FILE");
+ if(fixture_ca&&*fixture_ca)curl_easy_setopt(c,CURLOPT_CAINFO,fixture_ca);
+#endif
  curl_easy_setopt(c,CURLOPT_SSLVERSION,CURL_SSLVERSION_TLSv1_2);
  curl_easy_setopt(c,CURLOPT_CONNECTTIMEOUT,8L);
  curl_easy_setopt(c,CURLOPT_TIMEOUT,20L);
