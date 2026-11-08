@@ -1,4 +1,4 @@
-name: RESTMORE v0.1.0-alpha.2 release
+name: RESTMORE v0.1.0-alpha.3 release
 on:
   push:
     branches: [main]
@@ -10,11 +10,11 @@ permissions:
   contents: read
 
 concurrency:
-  group: restmore-release-0.1.0-alpha.2
+  group: restmore-release-0.1.0-alpha.3
   cancel-in-progress: false
 
 env:
-  RESTMORE_TAG: v0.1.0-alpha.2
+  RESTMORE_TAG: v0.1.0-alpha.3
 
 jobs:
   package:
@@ -89,13 +89,14 @@ jobs:
           fi
           cp README.md LICENSE examples/openapi-petstore.json dist/
           cat > dist/RELEASE-NOTES.txt <<'EOF'
-          RESTMORE v0.1.0-alpha.2 / Native technical preview
+          RESTMORE v0.1.0-alpha.3 / Native technical preview
 
           Native application and CLI source: ISO C11. Optional raylib GUI.
           Linux and macOS binaries: libcurl HTTPS documentation discovery.
           Windows binary: libcurl HTTPS documentation discovery with Schannel TLS.
           All desktop binaries support documented HTTPS discovery and local import.
-          Android/iOS C core cross-builds are separate CI artifacts, not APK/IPA.
+          Android ARM64 offline NativeActivity debug APK is a separate release asset.
+          No iOS IPA is currently shipped.
 
           Experimental preview, not security-certified or production hardened.
           Obtain permission before crawling any external documentation target.
@@ -109,9 +110,15 @@ jobs:
           if-no-files-found: error
           retention-days: 60
 
+  android:
+    name: Build and sign ARM64 NativeActivity debug APK
+    uses: ./.github/workflows/android-gui.yml
+    permissions:
+      contents: read
+
   publish:
     name: Create GitHub prerelease with checksums
-    needs: package
+    needs: [package, android]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -121,13 +128,24 @@ jobs:
           pattern: packaged-*
           path: release-assets
           merge-multiple: true
+      - name: Download verified Android C11 NativeActivity APK
+        uses: actions/download-artifact@v4
+        with:
+          name: restmore-android-arm64-nativeactivity-debug
+          path: android-preview
+      - name: Stage Android debug APK beside desktop archives
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp android-preview/restmore-android-arm64-debug.apk             release-assets/restmore-v0.1.0-alpha.3-android-arm64-debug.apk
       - name: Verify packages and generate checksums
         shell: bash
         run: |
           set -euo pipefail
           cd release-assets
           test "$(find . -maxdepth 1 -name '*.zip' | wc -l)" -eq 3
-          sha256sum *.zip > SHA256SUMS.txt
+          test -s restmore-v0.1.0-alpha.3-android-arm64-debug.apk
+          sha256sum *.zip *.apk > SHA256SUMS.txt
           cat SHA256SUMS.txt
       - name: Publish alpha release
         env:
@@ -141,19 +159,24 @@ jobs:
             exit 0
           fi
           cat > notes.md <<'EOF'
-          ## RESTMORE / v0.1.0-alpha.2
+          ## RESTMORE / v0.1.0-alpha.3
 
-          Updated native C11 **technical preview** with graphical raylib interface,
+          Updated C11 **native technical preview** with art-directed raylib interface,
           OpenAPI JSON import, local atlas exports and auditable C regression tests, including strict JSON number validation.
 
           - Linux x86_64 and macOS: libcurl HTTPS documentation crawler is compiled in.
           - Windows x64: native GUI and CLI now include the validated
             libcurl/Schannel HTTPS documentation crawler.
-          - Android and iOS: the C11 static cores are built in CI, but there is
-            **no installable APK or IPA** in this release.
+          - Android arm64: experimental **offline native C11 APK** using Android
+            NativeActivity; CI verified compilation, packaging and debug signing.
+            Physical-device runtime and user interaction are not yet verified.
+          - iOS: portable C11 core build exists, but **no installable IPA** yet.
           - Each archive includes the executables, a sample OpenAPI document,
             the repository license, and build/readme instructions.
           - Verify your archive against `SHA256SUMS.txt`.
+
+          Android debug builds use an ephemeral CI signing key; uninstall older
+          debug builds before installing a newer one. No production signing is claimed.
 
           The release is **prerelease/experimental**, not security-certified.
           Network discovery requires explicit authorization; use only on permitted sources.
@@ -162,7 +185,7 @@ jobs:
           EOF
           gh release create "$RESTMORE_TAG" \
             --target "$GITHUB_SHA" \
-            --title "RESTMORE 0.1.0 alpha 1 | Native C11 Atlas" \
+            --title "RESTMORE 0.1.0 alpha 3 | Native C11 Atlas + Android" \
             --notes-file notes.md \
             --prerelease \
-            release-assets/*.zip release-assets/SHA256SUMS.txt
+            release-assets/*.zip release-assets/*.apk release-assets/SHA256SUMS.txt
