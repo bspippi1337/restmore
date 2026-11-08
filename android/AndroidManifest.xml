@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="dev.blckswan.restmore"
+    android:versionCode="3"
+    android:versionName="0.1.0-alpha.3">
+    <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="35"/>
+    <uses-feature android:glEsVersion="0x00020000" android:required="true"/>
+    <application
+        android:label="@string/app_name"
+        android:icon="@drawable/restmore_icon"
+        android:theme="@style/RestmoreTheme"
+        android:hasCode="false"
+        android:extractNativeLibs="true"
+        android:usesCleartextTraffic="false">
+        <activity android:name="android.app.NativeActivity"
+                  android:label="@string/app_name"
+                  android:exported="true"
+                  android:configChanges="orientation|keyboardHidden|screenSize">
+            <meta-data android:name="android.app.lib_name" android:value="restmore-gui"/>
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>
