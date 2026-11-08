@@ -15,6 +15,13 @@ flowchart TD
     C --> G
     G --> H[Canonical operation catalog]
     H --> I[Native raylib GUI]
+    H --> V[Exact documented GET planner]
+    V --> GH[GitHub repository search / human review]
+    GH --> AUTH{Manual Authorize and host-bound atlas?}
+    AUTH -->|No| STOP[No API verification requests]
+    AUTH -->|Yes| ROBOTS[Robots + public HTTPS / fixed budget]
+    ROBOTS --> COMPARE[HTTP status / MIME / shallow JSON type]
+    COMPARE --> I
     H --> J[Postman / OpenAPI]
     H --> K[Mermaid / SVG]
 ```
@@ -31,7 +38,9 @@ This diagram depicts the architecture and intended flow. Actual implementation c
 | `catalog.c` | Map documented operations and provenance | Preserve source identity |
 | `sha256.c` | Calculate content fingerprints | Fingerprinting, not authentication |
 | `exports.c` | Produce interoperable artifacts | Avoid asserting undiscovered metadata |
-| `gui.c` | Native exploration interface | No embedded browser runtime |
+| `gui.c` | Native atlas, GitHub search handoff and manual consent gate | External browser opened for repository search, never assumed ownership |
+| `verification.c` | Pure C11 documented GET planner | No invented paths or mutating methods |
+| `network.c` verifier | Authorized HTTPS response checks | Host-bound contract, robots, limits, no retained response bodies |
 | `docs/` | Static marketing and sample topology | No live remote scanning |
 
 ## Data flow
@@ -74,6 +83,8 @@ The design tokens are specified in `docs/DESIGN.md`; the static site implements 
 - Treat all retrieved documents as hostile input; bounds-check parsers, escape output, and sanitize file paths.
 - Run the parser with ASan/UBSan and fuzzed **local input fixtures** before a security-sensitive release.
 - Keep the web demo strictly static. It must not fetch a URL provided in its input field.
+- Verification requires a host-bound OpenAPI contract, human-reviewed GitHub lookup and explicit per-domain consent. Search results are not proof of ownership.
+- Execute at most five literal GET operations with declared 200/204 responses, robots policy and no redirects; compare status, MIME and shallow JSON shape only.
 
 ## Platform matrix
 
