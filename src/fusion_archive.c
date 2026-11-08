@@ -12,7 +12,7 @@
 
 #define FUSION_LINE_CAP 8192u
 typedef struct {
- char url[RM_MAX_URL],sha[65],mime[96];
+ char url[RM_MAX_URL],sha[65],mime[96],etag[256],modified[96];
  unsigned depth;
  int status;
 } archived;
@@ -264,6 +264,86 @@ int rm_fusion_diff(const rm_catalog *before,const rm_catalog *after,
 }
 
 
+
+/* The cached representation is eligible for conditional HTTP only after its
+ * exact bytes have been checked against the latest manifest digest. */
+int rm_fusion_cache_get(const char *directory,const char *url,rm_document *record,
+                        char **body,size_t *length,char *error,size_t cap){
+ if(!directory||!url||!record||!body||!length||strlen(directory)>2900)
+  return rm_error(error,cap,"invalid cache lookup parameters");
+ *body=NULL;*length=0;memset(record,0,sizeof(*record));
+ rm_target target={0};
+ if(rm_normalize(url,&target,error,cap)||strcmp(target.url,url))
+  return rm_error(error,cap,"cache lookup requires normalized HTTPS source URL");
+ char path[4096];
+ if(snprintf(path,sizeof(path),"%s/index.jsonl",directory)>=(int)sizeof(path))
+  return rm_error(error,cap,"cache manifest filename too long");
+ FILE *f=fopen(path,"rb");
+ if(!f){if(errno==ENOENT){if(error&&cap)error[0]=0;return 0;}
+  return rm_error(error,cap,"cannot access existing cache manifest");}
+ archived latest={0};char line[FUSION_LINE_CAP];
+ int found=0,failed=0;
+ while(fgets(line,sizeof(line),f)){
+  size_t n=strlen(line);
+  if(n==sizeof(line)-1&&line[n-1]!='\n'){
+   failed=rm_error(error,cap,"cache manifest contains overlong record");break;}
+  const char *p=skip_space(line);
+  if(!*p)continue;
+  if(!rm_json_valid(p,strlen(p))){
+   failed=rm_error(error,cap,"invalid JSON in existing cache manifest");break;}
+  char recorded_url[RM_MAX_URL]={0},sha[65]={0},rel[128]={0};
+  char mime[96]={0},etag[256]={0},modified[96]={0};
+  if(field_string(p,"url",recorded_url,sizeof(recorded_url))!=1||
+     field_string(p,"sha256",sha,sizeof(sha))!=1||
+     field_string(p,"archive_path",rel,sizeof(rel))!=1||
+     field_string(p,"content_type",mime,sizeof(mime))<0||
+     field_string(p,"etag",etag,sizeof(etag))<0||
+     field_string(p,"last_modified",modified,sizeof(modified))<0||
+     !hash_ok(sha)){
+   failed=rm_error(error,cap,"invalid cached source metadata");break;
+  }
+  char expected[80],windows[80];
+  snprintf(expected,sizeof(expected),"sha256/%s",sha);
+  snprintf(windows,sizeof(windows),"sha256\\%s",sha);
+  if(strcmp(rel,expected)&&strcmp(rel,windows)){
+   failed=rm_error(error,cap,"cache archive path does not match SHA digest");break;
+  }
+  rm_target recorded={0};
+  if(rm_normalize(recorded_url,&recorded,error,cap)||
+     strcmp(recorded.host,target.host)||strcmp(recorded.url,recorded_url)){
+   failed=rm_error(error,cap,"cache manifest contains mixed-host or unnormalized URL");break;
+  }
+  if(strcmp(recorded_url,url))continue;
+  found=1;
+  snprintf(latest.url,sizeof(latest.url),"%s",recorded_url);
+  snprintf(latest.sha,sizeof(latest.sha),"%s",sha);
+  snprintf(latest.mime,sizeof(latest.mime),"%s",mime);
+  snprintf(latest.etag,sizeof(latest.etag),"%s",etag);
+  snprintf(latest.modified,sizeof(latest.modified),"%s",modified);
+ }
+ if(ferror(f)&&!failed)failed=rm_error(error,cap,"cache manifest read failed");
+ if(fclose(f)&&!failed)failed=rm_error(error,cap,"cache manifest close failed");
+ if(failed)return -1;
+ if(!found){if(error&&cap)error[0]=0;return 0;}
+ if(snprintf(path,sizeof(path),"%s/sha256/%s",directory,latest.sha)>=(int)sizeof(path))
+  return rm_error(error,cap,"cached archive path too long");
+ char *bytes=NULL;size_t n=0;
+ if(load_file(path,&bytes,&n,error,cap))return -1;
+ char digest[65];rm_sha256(bytes,n,digest);
+ if(strcmp(digest,latest.sha)){
+  free(bytes);return rm_error(error,cap,"corrupted RESTLESS cache SHA-256: remote fetch refused");
+ }
+ snprintf(record->url,sizeof(record->url),"%s",latest.url);
+ snprintf(record->sha256,sizeof(record->sha256),"%s",latest.sha);
+ snprintf(record->content_type,sizeof(record->content_type),"%s",latest.mime);
+ snprintf(record->etag,sizeof(record->etag),"%s",latest.etag);
+ snprintf(record->last_modified,sizeof(record->last_modified),"%s",latest.modified);
+ record->bytes=n;record->status=200;
+ *body=bytes;*length=n;
+ if(error&&cap)error[0]=0;
+ return 1;
+}
+
 /* Append one RESTLESS-compatible provenance record AFTER archive bytes were
  * committed. RESTLESS can re-index this manifest with no format conversion. */
 int rm_fusion_append_manifest(const char *directory,const rm_document *doc,
@@ -296,8 +376,11 @@ int rm_fusion_append_manifest(const char *directory,const rm_document *doc,
  if(!bad&&(fputs(",\"archive_path\":",out)==EOF||rm_json_escape(out,rel)))bad=1;
  if(!bad&&(fputs(",\"content_type\":",out)==EOF||
             rm_json_escape(out,doc->content_type)))bad=1;
- if(!bad&&fprintf(out,",\"status\":200,\"response_status\":200,"
+ if(!bad&&(fputs(",\"etag\":",out)==EOF||rm_json_escape(out,doc->etag)))bad=1;
+ if(!bad&&(fputs(",\"last_modified\":",out)==EOF||rm_json_escape(out,doc->last_modified)))bad=1;
+ if(!bad&&fprintf(out,",\"status\":200,\"response_status\":%d,"
         "\"bytes\":%zu,\"depth\":%u,\"fetched_at\":\"%s\"}\n",
+        doc->response_status?doc->response_status:200,
         doc->bytes,doc->depth,stamp)<0)bad=1;
  if(fflush(out))bad=1;
  if(fclose(out))bad=1;
