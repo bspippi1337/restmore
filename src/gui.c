@@ -481,7 +481,7 @@ static void draw_scope(app *ui,Rectangle area,int busy){
   textx(ui->verification->source_bound?"OPENAPI SERVER MATCHED TO DOMAIN":
         "BLOCKED: IMPORT DOMAIN-BOUND OPENAPI",
         x+12,y+61,11,ui->verification->source_bound?MINT:RM_ORANGE);
-  Rectangle consent_area={(Rectangle){(float)x+12,(float)y+88,(float)inner-24,44}};
+  Rectangle consent_area={(float)x+12,(float)y+88,(float)inner-24,44};
   if(button(consent_area,
       ui->verification->github_reviewed?"GITHUB REVIEW CONFIRMED":"I REVIEWED GITHUB & HAVE PERMISSION",
       AQUA,!busy&&!ui->verification->github_reviewed)){
