@@ -37,9 +37,9 @@ ctest --test-dir build -C Release --output-on-failure
 
 The repository now has a reproducible **C-only NativeActivity application build**, using raylib's Android backend, the Android NDK and the platform-provided NativeActivity. CI packages an ARM64 APK with a bundled sample OpenAPI document and a generated debug signature. No Java/Kotlin application business logic is required.
 
-Download the [v0.1.0-alpha.4 APK](https://github.com/bspippi1337/restmore/releases/tag/v0.1.0-alpha.4). Install with `adb install restmore-v0.1.0-alpha.4-android-arm64-debug.apk` or with the device's own package installer. Debug signing keys are ephemeral per CI run: uninstall a previous incompatible debug build before installing another one.
+Download the [v0.1.0-alpha.5 APK](https://github.com/bspippi1337/restmore/releases/tag/v0.1.0-alpha.5). Install with `adb install restmore-v0.1.0-alpha.5-android-arm64-debug.apk` or with the device's own package installer. Debug signing keys are ephemeral per CI run: uninstall a previous incompatible debug build before installing another one.
 
-The APK is currently **offline**, with HTTPS crawling deliberately disabled. CI verifies NDK compilation, APK packaging, Android manifest and signature validity; runtime launch on a physical phone, external file access and soft-keyboard interaction are **not yet validated**. Alpha 4's C GUI also implements screen-density-aware Android scaling and touch/swipe panel interaction, subject to device-level validation. It is a technical preview, not an app-store release.
+The Alpha 5 APK is currently **offline**, with HTTPS crawling deliberately disabled. CI verifies NDK compilation, APK packaging, Android manifest and signature validity; runtime launch on a physical phone, external file access and soft-keyboard interaction are **not yet validated**. Alpha 4's C GUI also implements screen-density-aware Android scaling and touch/swipe panel interaction, subject to device-level validation. It is a technical preview, not an app-store release.
 
 ### Native Android build source
 
@@ -78,3 +78,7 @@ The final example is **illustrative** and requires explicit permission for the t
 6. Verify Pages rendering, keyboard navigation, mobile layouts and no remote requests from the simulation field.
 
 Never label a build target `production ready` without passing its release gates.
+
+## Architectural Edition distribution
+
+The v0.1.0-alpha.5 desktop release archives ship with native executables, OpenAPI example, and a self-contained `docs/` folder: product website, illustrated field-guide HTML, original architectural SVG plates and engineering notes. Open `docs/field-guide.html` locally in any modern browser. The Android APK remains a separate offline debug preview; it does not bundle the full documentation folder.
