@@ -68,6 +68,13 @@ int main(void){
  assert(fseek(f,0,SEEK_END)==0);long n=ftell(f);assert(n>100);fclose(f);
  rm_options opt={0};opt.input="docs.example.org";opt.max_pages=12;opt.max_depth=2;
  assert(rm_crawl(&opt,cat,NULL,NULL,err,sizeof(err))==0);
+ /* No artificial five-document limit. Explicit operator scope is checked
+    before any network and bounded by process capacity. */
+ opt.max_pages=256;opt.max_depth=8;
+ assert(rm_crawl(&opt,cat,NULL,NULL,err,sizeof(err))==0);
+ opt.max_pages=257;
+ assert(rm_crawl(&opt,cat,NULL,NULL,err,sizeof(err))!=0);
+ opt.max_pages=12;opt.max_depth=2;
  assert(cat->document_count==0);
  assert(rm_crawl(&(rm_options){.input="docs.example.org",.execute=1},cat,NULL,NULL,err,sizeof(err))!=0);
  free(cat);
