@@ -60,8 +60,8 @@ typedef struct {
   const char *input;
   const char *output_dir;
   const char *user_agent;
-  unsigned max_pages; /* 1..25; defaults to 12 */
-  unsigned max_depth; /* 0..3 */
+  unsigned max_pages; /* 1..256; defaults to 12 */
+  unsigned max_depth; /* 0..8 */
   unsigned delay_ms; /* at least 2000, higher robots.txt delay wins */
   int execute; /* preview by default */
   int authorized; /* required independently of execute */
