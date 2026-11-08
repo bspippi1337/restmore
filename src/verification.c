@@ -34,8 +34,12 @@ int rm_github_lookup(const char *domain,char *url,size_t cap,char *error,size_t 
  if(error&&errcap)error[0]=0;
  return 0;
 }
-int rm_verify_plan(const rm_catalog *catalog,const char *domain,rm_verification *plan,
-                   char *error,size_t cap){
+int rm_verify_plan_limit(const rm_catalog *catalog,const char *domain,
+                         rm_verification *plan,size_t max_checks,
+                         char *error,size_t cap){
+ if(max_checks>RM_MAX_VERIFY_CHECKS)
+  return rm_error(error,cap,"requested checks exceed documented atlas capacity");
+ size_t budget=max_checks?max_checks:RM_MAX_VERIFY_CHECKS;
  if(!catalog||!plan)return rm_error(error,cap,"Existing atlas and verification plan required");
  rm_target target={0};
  if(rm_normalize(domain,&target,error,cap))return -1;
@@ -44,7 +48,7 @@ int rm_verify_plan(const rm_catalog *catalog,const char *domain,rm_verification 
  memset(plan,0,sizeof(*plan));
  plan->target=target;
  plan->source_bound= catalog->target.host[0] && !strcmp(catalog->target.host,target.host);
- for(size_t i=0;i<catalog->operation_count && plan->count<RM_MAX_VERIFY_CHECKS;i++){
+ for(size_t i=0;i<catalog->operation_count && plan->count<budget;i++){
   const rm_operation *op=&catalog->operations[i];
   /* No parameters, no mutations, no guessing, and no undefined output contract. */
   if(strcmp(op->method,"GET")||!ok_path(op->path)||op->expected_status==0)continue;
@@ -65,6 +69,11 @@ int rm_verify_plan(const rm_catalog *catalog,const char *domain,rm_verification 
  return 0;
 }
 
+
+int rm_verify_plan(const rm_catalog *catalog,const char *domain,rm_verification *plan,
+                   char *error,size_t cap){
+ return rm_verify_plan_limit(catalog,domain,plan,5,error,cap);
+}
 
 /* A local, inspectable audit file; does not record response bodies, secrets
  * or cookies. Each result is tied to its declared expectation, not a guess. */
