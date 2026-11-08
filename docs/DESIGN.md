@@ -44,3 +44,7 @@ GitHub Pages implements illustration 1 and an interactive **synthetic** example 
 - Operation map labels should clip or pan safely rather than overlap arbitrary nodes.
 - Never obstruct required controls on small displays.
 - Verify screenshots at common Windows/Linux/macOS resolutions and Android portrait orientation.
+
+## Mobile density and interaction (Alpha 4)
+
+The native C renderer uses physical-pixel-aware scaling for Android surfaces, so type sizes and click targets remain legible on high-density phone screens. Tap activates buttons and route nodes; vertical drag scrolls bounded panels. This logic shares source with the desktop GUI; physical-device runtime verification and native soft-keyboard behavior remain open quality gates.

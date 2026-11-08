@@ -37,9 +37,9 @@ ctest --test-dir build -C Release --output-on-failure
 
 The repository now has a reproducible **C-only NativeActivity application build**, using raylib's Android backend, the Android NDK and the platform-provided NativeActivity. CI packages an ARM64 APK with a bundled sample OpenAPI document and a generated debug signature. No Java/Kotlin application business logic is required.
 
-Download the [v0.1.0-alpha.3 APK](https://github.com/bspippi1337/restmore/releases/tag/v0.1.0-alpha.3). Install with `adb install restmore-v0.1.0-alpha.3-android-arm64-debug.apk` or with the device's own package installer. Debug signing keys are ephemeral per CI run: uninstall a previous incompatible debug build before installing another one.
+Download the [v0.1.0-alpha.4 APK](https://github.com/bspippi1337/restmore/releases/tag/v0.1.0-alpha.4). Install with `adb install restmore-v0.1.0-alpha.4-android-arm64-debug.apk` or with the device's own package installer. Debug signing keys are ephemeral per CI run: uninstall a previous incompatible debug build before installing another one.
 
-The APK is currently **offline**, with HTTPS crawling deliberately disabled. CI verifies NDK compilation, APK packaging, Android manifest and signature validity; runtime launch on a physical phone, external file access and soft-keyboard interaction are **not yet validated**. It is a technical preview, not an app-store release.
+The APK is currently **offline**, with HTTPS crawling deliberately disabled. CI verifies NDK compilation, APK packaging, Android manifest and signature validity; runtime launch on a physical phone, external file access and soft-keyboard interaction are **not yet validated**. Alpha 4's C GUI also implements screen-density-aware Android scaling and touch/swipe panel interaction, subject to device-level validation. It is a technical preview, not an app-store release.
 
 ### Native Android build source
 

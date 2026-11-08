@@ -2,6 +2,18 @@
 
 This changelog separates shipped and verified artifacts from platform support that still requires packaging and device testing.
 
+## [v0.1.0-alpha.4](https://github.com/bspippi1337/restmore/releases/tag/v0.1.0-alpha.4) · 2026-11-08
+
+**Native mobile ergonomics follow-up.**
+
+- Android renderer now scales UI units against physical screen dimensions to maintain legible controls on dense portrait phone screens.
+- Unified mouse/touch activation semantics for native buttons and inputs.
+- Vertical touch-drag scrolling added to scope, route and inspector panels.
+- ARM64 Android NativeActivity debug APK versionCode incremented to 4.
+- Full native release pipeline again passed Linux, macOS, Windows HTTPS and Android build/package/signature checks; SHA-256 manifests are provided.
+
+**Validation boundary:** Android package and signature are verified in CI; soft-keyboard integration, touchscreen behavior and rendering on a physical device are not yet confirmed. No iOS IPA is included.
+
 ## [v0.1.0-alpha.3](https://github.com/bspippi1337/restmore/releases/tag/v0.1.0-alpha.3) · 2026-11-08
 
 **Art-directed native GUI and the first Android NativeActivity test APK.**
