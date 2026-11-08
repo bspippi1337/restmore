@@ -9,3 +9,9 @@ int rm_crawl(const rm_options *options,rm_catalog *catalog,rm_progress progress,
  if(progress)progress("preview",catalog->target.url,context);
  return 0;
 }
+
+int rm_verify_run(rm_verification *plan,rm_progress progress,void *context,char *error,size_t cap){
+ (void)progress;(void)context;
+ if(!plan||!plan->authorized)return rm_error(error,cap,"Explicit Authorize required for this domain");
+ return rm_error(error,cap,"Verification HTTPS disabled: build with RESTMORE_NETWORK=ON");
+}
