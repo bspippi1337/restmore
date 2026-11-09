@@ -26,6 +26,24 @@ compounded that mismatch. Buttons were wider than the visible phone screen.
   Moving more than the threshold scrolls without activating the row.
 - Fit button captions to available width rather than spilling outside them.
 
+## Screen evidence / 9 November 2026
+
+A user-provided portrait screenshot shows the Alpha 9 route list rendering all
+four Petstore fixture operations with readable GET/POST/DELETE pills and
+working active selection. The screenshots exposed an Android-only defect:
+the footer notice was placed under the OS navigation buttons.
+
+The following follow-up is **implemented but not yet device-confirmed**:
+
+- A conservative 64-logical-pixel bottom safe area keeps footer notices and
+  the interactive panel above three-button Android navigation.
+- For small catalogs (1–6 operations), the unused Atlas space now shows
+  the selected route and its recorded source metadata. A visible button jumps
+  to the Evidence inspector. For larger catalogs, the scrollable route list
+  retains all available space.
+- Re-test footer placement and tap targets on both three-button and gesture
+  navigation, and on a device with a different aspect ratio.
+
 ## Physical Android QA (required before production claims)
 
 1. Uninstall an earlier debug APK first: each CI build uses a different
