@@ -63,6 +63,13 @@ int main(void){
  assert(strstr(bytes,"\"github_review_required\":true")!=NULL);
  assert(strstr(bytes,"\"hashes_reverified_by_this_export\":false")!=NULL);
  assert(strstr(bytes,"\"target_ownership_verified\":false")!=NULL);
+ assert(strstr(bytes,"\"format\":\"restmore-ops-42/v2\"")!=NULL);
+ assert(strstr(bytes,"\"sources\":[")!=NULL);
+ assert(strstr(bytes,"\"url\":\"https://api.example.org/openapi.json\"")!=NULL);
+ assert(strstr(bytes,"\"operation_id\":\"listPeople\"")!=NULL);
+ assert(strstr(bytes,"\"summary\":\"List people\"")!=NULL);
+ assert(strstr(bytes,"\"expected_json_type\":\"array\"")!=NULL);
+ assert(strstr(bytes,"\"source_url\":")!=NULL);
  assert(strstr(bytes,"\"source_sha256\":")!=NULL);
  assert(strstr(bytes,"/v1/people")!=NULL);
  assert(strstr(bytes,"\"GET\":2")!=NULL);
@@ -78,6 +85,33 @@ int main(void){
  assert(rm_ops_profile(cat,&mutated,error,sizeof(error))==0);
  assert(strcmp(first.atlas_fingerprint_sha256,mutated.atlas_fingerprint_sha256));
  cat->operations[0].expected_status=200;
+ /* Changes to source and response metadata must change the fingerprint. */
+ snprintf(cat->operations[0].source_url,sizeof(cat->operations[0].source_url),
+          "https://changed.example.org/contract");
+ assert(rm_ops_profile(cat,&mutated,error,sizeof(error))==0);
+ assert(strcmp(first.atlas_fingerprint_sha256,mutated.atlas_fingerprint_sha256));
+ snprintf(cat->operations[0].source_url,sizeof(cat->operations[0].source_url),
+          "sample-fixture.json");
+ rm_ops_summary source_restored={0};
+ assert(rm_ops_profile(cat,&source_restored,error,sizeof(error))==0);
+ snprintf(cat->operations[0].expected_content_type,
+          sizeof(cat->operations[0].expected_content_type),"application/problem+json");
+ assert(rm_ops_profile(cat,&mutated,error,sizeof(error))==0);
+ assert(strcmp(source_restored.atlas_fingerprint_sha256,
+               mutated.atlas_fingerprint_sha256));
+ /* Two fields with delimiter characters must be unambiguously encoded. */
+ snprintf(cat->operations[0].operation_id,
+          sizeof(cat->operations[0].operation_id),"A:B");
+ snprintf(cat->operations[0].summary,
+          sizeof(cat->operations[0].summary),"C");
+ rm_ops_summary field_a={0},field_b={0};
+ assert(rm_ops_profile(cat,&field_a,error,sizeof(error))==0);
+ snprintf(cat->operations[0].operation_id,
+          sizeof(cat->operations[0].operation_id),"A");
+ snprintf(cat->operations[0].summary,
+          sizeof(cat->operations[0].summary),"B:C");
+ assert(rm_ops_profile(cat,&field_b,error,sizeof(error))==0);
+ assert(strcmp(field_a.atlas_fingerprint_sha256,field_b.atlas_fingerprint_sha256));
  /* No output is allowed for a corrupt overcapacity catalog. */
  cat->operation_count=RM_MAX_OPERATIONS+1;
  assert(rm_ops_brief_write(cat,report,error,sizeof(error))!=0);
