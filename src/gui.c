@@ -415,7 +415,18 @@ static int load_catalog(app *ui){
  /* Preserve the SHA-256 of the actual local source when importing OpenAPI.
     Library JSON retains its document-level provenance through catalog parsing. */
  int parsed=rm_openapi_import(cat,ui->filename,sha,src,length,error,sizeof(error));
+ int is_openapi=parsed>=0;
  if(parsed<0)parsed=rm_catalog_import_json(cat,src,length,error,sizeof(error));
+ /* A local OpenAPI input is evidence too. Keep its actual byte digest and
+    filename in the document ledger; never invent an HTTP response status. */
+ if(parsed>=0&&is_openapi&&cat->document_count==0){
+  rm_document *doc=&cat->documents[cat->document_count++];
+  snprintf(doc->url,sizeof(doc->url),"%s",ui->filename);
+  snprintf(doc->sha256,sizeof(doc->sha256),"%s",sha);
+  snprintf(doc->content_type,sizeof(doc->content_type),"application/json");
+  doc->bytes=length;
+  doc->status=0;doc->response_status=0;
+ }
  free(src);
  if(parsed<0){
   free(cat);
