@@ -27,26 +27,39 @@ static int chain_hash(char digest[65],const char *record){
  rm_sha256(buffer,d+n,digest);
  return 0;
 }
+/* Length-prefix every free-text field. A ':' inside an operation ID or
+ * summary must not be interchangeable with a field boundary. Changes to
+ * source URL, type and documented response are material to the evidence. */
 static int update_fingerprint(char digest[65],const rm_catalog *cat){
- const char prefix[]="RESTMORE-OPS-42/v1";
+ const char prefix[]="RESTMORE-OPS-42/v2";
  rm_sha256(prefix,sizeof(prefix)-1,digest);
  char record[8192];
- int n=snprintf(record,sizeof(record),"SCOPE:%zu:%s\n",
-                strlen(cat->target.host),cat->target.host);
+ int n=snprintf(record,sizeof(record),
+                "S|HOST:%zu:%s|DOCUMENTS:%zu|OPERATIONS:%zu\n",
+                strlen(cat->target.host),cat->target.host,
+                cat->document_count,cat->operation_count);
  if(n<0||(size_t)n>=sizeof(record)||chain_hash(digest,record))return -1;
  for(size_t i=0;i<cat->document_count;i++){
   const rm_document *d=&cat->documents[i];
-  n=snprintf(record,sizeof(record),"D:%zu:%s:%s:%d:%zu\n",
-             strlen(d->url),d->url,d->sha256,d->response_status,d->bytes);
+  n=snprintf(record,sizeof(record),
+    "D|URL:%zu:%s|SHA256:%zu:%s|STATUS:%d|RESPONSE:%d|BYTES:%zu|MIME:%zu:%s\n",
+    strlen(d->url),d->url,strlen(d->sha256),d->sha256,
+    d->status,d->response_status,d->bytes,
+    strlen(d->content_type),d->content_type);
   if(n<0||(size_t)n>=sizeof(record)||chain_hash(digest,record))return -1;
  }
  for(size_t i=0;i<cat->operation_count;i++){
   const rm_operation *o=&cat->operations[i];
   n=snprintf(record,sizeof(record),
-    "O:%zu:%s:%zu:%s:%s:%s:%d:%s:%s:%s\n",
+    "O|METHOD:%zu:%s|PATH:%zu:%s|ID:%zu:%s|SUMMARY:%zu:%s|STATUS:%d"
+    "|MIME:%zu:%s|ROOT:%zu:%s|SOURCE_URL:%zu:%s|SOURCE_SHA256:%zu:%s\n",
     strlen(o->method),o->method,strlen(o->path),o->path,
-    o->operation_id,o->summary,o->expected_status,
-    o->expected_content_type,o->expected_json_type,o->source_sha256);
+    strlen(o->operation_id),o->operation_id,
+    strlen(o->summary),o->summary,o->expected_status,
+    strlen(o->expected_content_type),o->expected_content_type,
+    strlen(o->expected_json_type),o->expected_json_type,
+    strlen(o->source_url),o->source_url,
+    strlen(o->source_sha256),o->source_sha256);
   if(n<0||(size_t)n>=sizeof(record)||chain_hash(digest,record))return -1;
  }
  return 0;
@@ -94,7 +107,7 @@ int rm_ops_brief_write(const rm_catalog *cat,const char *path,
  if(!f)return rm_error(error,cap,"cannot create operational brief");
  int bad=0;
  if(fputs("{\n"
-          " \"format\":\"restmore-ops-42/v1\",\n"
+          " \"format\":\"restmore-ops-42/v2\",\n"
           " \"designation\":\"UNCLASSIFIED LOCAL WORKSHEET - NOT GOVERNMENT CLASSIFICATION\",\n"
           " \"mode\":\"OFFLINE_SOURCE_BRIEF\",\n"
           " \"target_execution\":false,\n"
@@ -127,10 +140,33 @@ int rm_ops_brief_write(const rm_catalog *cat,const char *path,
   if(!bad&&rm_json_escape(f,op->method))bad=1;
   if(!bad&&fputs(",\"path\":",f)==EOF)bad=1;
   if(!bad&&rm_json_escape(f,op->path))bad=1;
-  if(!bad&&fprintf(f,",\"declared_success_status\":%d,\"source_sha256\":",
+  if(!bad&&fprintf(f,",\"declared_success_status\":%d,\"operation_id\":",
                     op->expected_status)<0)bad=1;
+  if(!bad&&rm_json_escape(f,op->operation_id))bad=1;
+  if(!bad&&fputs(",\"summary\":",f)==EOF)bad=1;
+  if(!bad&&rm_json_escape(f,op->summary))bad=1;
+  if(!bad&&fputs(",\"expected_content_type\":",f)==EOF)bad=1;
+  if(!bad&&rm_json_escape(f,op->expected_content_type))bad=1;
+  if(!bad&&fputs(",\"expected_json_type\":",f)==EOF)bad=1;
+  if(!bad&&rm_json_escape(f,op->expected_json_type))bad=1;
+  if(!bad&&fputs(",\"source_url\":",f)==EOF)bad=1;
+  if(!bad&&rm_json_escape(f,op->source_url))bad=1;
+  if(!bad&&fputs(",\"source_sha256\":",f)==EOF)bad=1;
   if(!bad&&rm_json_escape(f,op->source_sha256))bad=1;
   if(!bad&&fputc('}',f)==EOF)bad=1;
+ }
+ if(!bad&&fputs("\n ],\n \"sources\":[\n",f)==EOF)bad=1;
+ for(size_t i=0;i<cat->document_count&&!bad;i++){
+  const rm_document *d=&cat->documents[i];
+  if(i&&fputs(",\n",f)==EOF)bad=1;
+  if(!bad&&fputs("  {\"url\":",f)==EOF)bad=1;
+  if(!bad&&rm_json_escape(f,d->url))bad=1;
+  if(!bad&&fputs(",\"sha256\":",f)==EOF)bad=1;
+  if(!bad&&rm_json_escape(f,d->sha256))bad=1;
+  if(!bad&&fputs(",\"content_type\":",f)==EOF)bad=1;
+  if(!bad&&rm_json_escape(f,d->content_type))bad=1;
+  if(!bad&&fprintf(f,",\"bytes\":%zu,\"status\":%d,\"response_status\":%d}",
+                    d->bytes,d->status,d->response_status)<0)bad=1;
  }
  if(!bad&&fputs("\n ],\n"
      " \"interpretation\":\"Inventory from local documentation only. "
