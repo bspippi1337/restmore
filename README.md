@@ -18,6 +18,24 @@
 </div>
 
 
+## Alpha 9 candidate / Analyst Workbench
+
+**Evidence is a first-class output, not just a console decoration.** A
+native, offline Android analyst desk now prioritizes the documented route atlas
+and its source provenance. The portable C11 OPS 42 manifest v2 exports
+source-resolvable route contracts, original document metadata and a
+field-boundary-safe, reproducible fingerprint. Separate authorization remains
+mandatory for any desktop network verification.
+
+[**ALPHA 9 ENGINEERING CASE STUDY**](docs/ANALYST-WORKBENCH.md) ·
+[**MOBILE ACCEPTANCE CHECKS**](docs/ANDROID-QA.md) ·
+[**ANDROID SOURCE**](src/gui.c) · [**MANIFEST C11 TESTS**](tests/test_ops.c)
+
+*Under development on a feature branch. Android physical QA is pending; this
+is not a released or certified E-tjenesten product.*
+
+---
+
 ## OPS 42 / Operational Mission Control
 
 ![RESTMORE OPS 42 command console, an original unclassified illustrative architectural diagram](docs/assets/ops-42-console.svg)

@@ -116,6 +116,30 @@ static void cut_text(const char *s,char *out,size_t cap,int pixels,int font){
  }
  if(s&&strcmp(out,s)&&strlen(out)+3<cap)strcat(out,"...");
 }
+#if defined(__ANDROID__) || defined(PLATFORM_ANDROID)
+/* raylib's Android FileExists/LoadFontEx may resolve asset paths rather
+ * than the OS filesystem. Open the system font explicitly and hand the
+ * bytes to raylib; do not bundle, publish or redistribute font files. */
+static int load_android_system_font(const char *path){
+ FILE *file=fopen(path,"rb");
+ if(!file)return 0;
+ if(fseek(file,0,SEEK_END)){fclose(file);return 0;}
+ long length=ftell(file);
+ if(length<=0||length>4L*1024L*1024L){fclose(file);return 0;}
+ rewind(file);
+ unsigned char *bytes=(unsigned char *)malloc((size_t)length);
+ if(!bytes){fclose(file);return 0;}
+ int read_ok=fread(bytes,1,(size_t)length,file)==(size_t)length;
+ fclose(file);
+ if(!read_ok){free(bytes);return 0;}
+ Font loaded=LoadFontFromMemory(".ttf",bytes,(int)length,48,NULL,0);
+ free(bytes);
+ if(loaded.texture.id==0||loaded.glyphCount==0)return 0;
+ FACE=loaded;FACE_OWNED=1;
+ SetTextureFilter(FACE.texture,TEXTURE_FILTER_BILINEAR);
+ return 1;
+}
+#endif
 static void init_type(void){
  const char *fonts[]={
 #if defined(__ANDROID__) || defined(PLATFORM_ANDROID)
@@ -133,6 +157,12 @@ static void init_type(void){
 #endif
  NULL};
  FACE=GetFontDefault();
+#if defined(__ANDROID__) || defined(PLATFORM_ANDROID)
+ for(int i=0;fonts[i];i++)
+  if(load_android_system_font(fonts[i]))return;
+ /* Some Android versions ship their static Roboto face under this name. */
+ if(load_android_system_font("/system/fonts/RobotoStatic-Regular.ttf"))return;
+#endif
  for(int i=0;fonts[i];i++){
   if(!FileExists(fonts[i]))continue;
   Font candidate=LoadFontEx(fonts[i],48,NULL,0);
@@ -415,7 +445,18 @@ static int load_catalog(app *ui){
  /* Preserve the SHA-256 of the actual local source when importing OpenAPI.
     Library JSON retains its document-level provenance through catalog parsing. */
  int parsed=rm_openapi_import(cat,ui->filename,sha,src,length,error,sizeof(error));
+ int is_openapi=parsed>=0;
  if(parsed<0)parsed=rm_catalog_import_json(cat,src,length,error,sizeof(error));
+ /* A local OpenAPI input is evidence too. Keep its actual byte digest and
+    filename in the document ledger; never invent an HTTP response status. */
+ if(parsed>=0&&is_openapi&&cat->document_count==0){
+  rm_document *doc=&cat->documents[cat->document_count++];
+  snprintf(doc->url,sizeof(doc->url),"%s",ui->filename);
+  snprintf(doc->sha256,sizeof(doc->sha256),"%s",sha);
+  snprintf(doc->content_type,sizeof(doc->content_type),"application/json");
+  doc->bytes=length;
+  doc->status=0;doc->response_status=0;
+ }
  free(src);
  if(parsed<0){
   free(cat);
@@ -749,6 +790,36 @@ static void graph(app *ui,Rectangle area){
    textx(summary_label,(int)row.x+88,(int)row.y+37,11,MUTED);
    if(clicked(row))select_operation(ui,(int)i);
   }
+#if defined(__ANDROID__) || defined(PLATFORM_ANDROID)
+  /* Small catalogs leave a large empty panel on handsets. Use the free
+     space to present actual source metadata, not invented live telemetry.
+     For larger catalogs the route list remains fully scrollable. */
+  float preview_y=viewport.y+8+(float)count*step+21;
+  if(count>0&&count<=6&&preview_y+155<viewport.y+viewport.height){
+   size_t selected=ui->selected>=0&&(size_t)ui->selected<count?
+                   (size_t)ui->selected:0;
+   const rm_operation *op=&ui->catalog->operations[selected];
+   Rectangle detail={viewport.x+6,preview_y,viewport.width-15,147};
+   DrawRectangleRounded(detail,.08f,8,Fade(AQUA,.065f));
+   DrawRectangleRoundedLinesEx(detail,.08f,8,1,BORDER);
+   textx("SELECTED / SOURCE EVIDENCE",(int)detail.x+15,
+         (int)detail.y+13,12,MINT);
+   char route[RM_MAX_PATH],source[RM_MAX_URL];
+   cut_text(op->path,route,sizeof(route),(int)detail.width-30,16);
+   textx(route,(int)detail.x+15,(int)detail.y+39,16,RM_WHITE);
+   cut_text(op->source_url[0]?op->source_url:"Source not declared",
+            source,sizeof(source),(int)detail.width-30,12);
+   textx(source,(int)detail.x+15,(int)detail.y+67,12,MUTED);
+   const char *evidence=op->source_sha256[0]?
+                        "RECORDED SHA-256 / NOT REVERIFIED":
+                        "SOURCE HASH NOT AVAILABLE";
+   textx(evidence,(int)detail.x+15,(int)detail.y+91,11,
+         op->source_sha256[0]?AQUA:RM_ORANGE);
+   if(button((Rectangle){detail.x+13,detail.y+113,detail.width-26,29},
+             "OPEN EVIDENCE INSPECTOR",MINT,1))
+    select_operation(ui,(int)selected);
+  }
+#endif
   if(maxscroll>0){
    float track=viewport.height-12,thumb=track*viewport.height/content;
    DrawRectangleRounded((Rectangle){viewport.x+viewport.width-4,viewport.y+5,3,track},1,6,Fade(MUTED,.16f));
@@ -885,6 +956,121 @@ static void inspector(app *ui,Rectangle area){
  }
 }
 
+
+/* Analyst Workbench / native mobile view.
+ * Unlike the desktop scope desk, the Android preview has no HTTPS worker and
+ * no document picker. Expose only usable offline actions; do not dress a
+ * disabled AUTHORIZE control up as if it were operational. */
+#if defined(__ANDROID__) || defined(PLATFORM_ANDROID)
+static void mobile_kpi(Rectangle box,const char *value,const char *caption){
+ DrawRectangleRounded(box,.12f,8,Fade(AQUA,.09f));
+ DrawRectangleRoundedLinesEx(box,.12f,8,1,BORDER);
+ textx(value,(int)box.x+16,(int)box.y+11,28,RM_WHITE);
+ textx(caption,(int)box.x+16,(int)box.y+49,12,MUTED);
+}
+static void mobile_desk(app *ui,Rectangle area){
+ panel(area,PANEL);
+ int x=(int)area.x+19,y=(int)area.y+24,inner=(int)area.width-38;
+ label(x,y,"01  /  ANALYST WORKBENCH"); y+=26;
+ textx("Understand first.",x,y,26,RM_WHITE); y+=43;
+ textx("A documented API is not permission.",x,y,13,MUTED); y+=37;
+ size_t operations=ui->catalog?ui->catalog->operation_count:0;
+ size_t documents=ui->catalog?ui->catalog->document_count:0;
+ char routes[24],sources[24];
+ snprintf(routes,sizeof(routes),"%zu",operations);
+ snprintf(sources,sizeof(sources),"%zu",documents);
+ float half=((float)inner-10)/2.0f;
+ mobile_kpi((Rectangle){(float)x,(float)y,half,83},routes,"ROUTES");
+ mobile_kpi((Rectangle){(float)x+half+10,(float)y,half,83},sources,"SOURCES");
+ y+=101;
+ DrawRectangleRounded((Rectangle){(float)x,(float)y,(float)inner,72},
+                       .10f,8,Fade(MINT,.055f));
+ DrawRectangleRoundedLinesEx((Rectangle){(float)x,(float)y,(float)inner,72},
+                             .10f,8,1,Fade(MINT,.42f));
+ textx("OFFLINE / REVIEW REQUIRED",x+15,y+12,14,MINT);
+ textx("No target contacted. No authority inferred.",x+15,y+40,12,MUTED);
+ y+=94;
+ label(x,y,"LOCAL SOURCE INTELLIGENCE");y+=27;
+ if(button((Rectangle){(float)x,(float)y,(float)inner,53},
+           "OPEN INCLUDED SAMPLE",MINT,!ui->task.active)){
+  snprintf(ui->filename,sizeof(ui->filename),"examples/openapi-petstore.json");
+  if(load_catalog(ui)==0){ui->view=1;ui->tab=1;}
+ } y+=67;
+ if(button((Rectangle){(float)x,(float)y,(float)inner,53},
+           "EXPLORE DOCUMENTED ROUTES",AQUA,operations>0)){
+  ui->view=1;ui->tab=1;
+ } y+=67;
+ if(button((Rectangle){(float)x,(float)y,(float)inner,53},
+           "INSPECT SOURCE EVIDENCE",AQUA,operations>0)){
+  ui->tab=2;
+ } y+=77;
+ rule((float)x,(float)y,(float)inner);y+=24;
+ label(x,y,"CAPABILITY BOUNDARY");y+=26;
+ textx("Android preview: local sample only.",x,y,14,RM_WHITE);y+=25;
+ textx("Desktop CLI: verified import and export.",x,y,12,MUTED);y+=24;
+ textx("No live scan, credentials, or bypass.",x,y,12,MUTED);
+}
+static void mobile_evidence(app *ui,Rectangle area){
+ panel(area,PANEL);
+ int x=(int)area.x+19,y=(int)area.y+23,inner=(int)area.width-38;
+ label(x,y,"03  /  SOURCE INTELLIGENCE");y+=28;
+ textx("Trace the evidence.",x,y,25,RM_WHITE);y+=47;
+ if(!ui->catalog||ui->catalog->operation_count==0){
+  textx("NO DOCUMENTED OPERATIONS",x,y,15,RM_WHITE);
+  textx("Open the included offline sample.",x,y+32,13,MUTED);
+  return;
+ }
+ if(ui->selected<0||ui->selected>=(int)ui->catalog->operation_count)
+  ui->selected=0;
+ const rm_operation *op=&ui->catalog->operations[ui->selected];
+ char route[RM_MAX_PATH],summary[256],source[RM_MAX_URL];
+ method_pill(op->method,(float)x,(float)y,84);
+ char position[48];
+ snprintf(position,sizeof(position),"%d / %zu",ui->selected+1,ui->catalog->operation_count);
+ textx(position,x+inner-69,y+9,15,MUTED);y+=53;
+ label(x,y,"DOCUMENTED ROUTE");y+=25;
+ cut_text(op->path,route,sizeof(route),inner,19);
+ textx(route,x,y,19,RM_WHITE);y+=40;
+ label(x,y,"SOURCE DESCRIPTION");y+=24;
+ cut_text(op->summary[0]?op->summary:"No summary declared",
+          summary,sizeof(summary),inner,14);
+ textx(summary,x,y,14,RM_WHITE);y+=38;
+ rule((float)x,(float)y,(float)inner);y+=25;
+ label(x,y,"ORIGIN / PROVENANCE");y+=27;
+ cut_text(op->source_url[0]?op->source_url:"Not present in source",
+          source,sizeof(source),inner,13);
+ textx(source,x,y,13,RM_WHITE);y+=33;
+ label(x,y,"SOURCE SHA-256 / RECORDED, NOT REVERIFIED");y+=24;
+ if(strlen(op->source_sha256)==64){
+  char first[33],second[33];
+  memcpy(first,op->source_sha256,32);first[32]=0;
+  memcpy(second,op->source_sha256+32,32);second[32]=0;
+  textx(first,x,y,12,MINT);y+=21;
+  textx(second,x,y,12,MINT);y+=39;
+ }else{
+  textx("No document fingerprint supplied",x,y,13,RM_ORANGE);y+=52;
+ }
+ rule((float)x,(float)y,(float)inner);y+=25;
+ char response[96];
+ snprintf(response,sizeof(response),"HTTP %d / %s",
+  op->expected_status,
+  op->expected_content_type[0]?op->expected_content_type:"MIME not specified");
+ label(x,y,"DOCUMENTED RESPONSE CONTRACT");y+=24;
+ char cut[96];
+ cut_text(response,cut,sizeof(cut),inner,13);
+ textx(cut,x,y,13,RM_WHITE);y+=45;
+ if(button((Rectangle){(float)x,(float)y,(float)inner,53},
+           "COPY ROUTE TEMPLATE",AQUA,1)){
+  char copy[RM_MAX_PATH+140];
+  snprintf(copy,sizeof(copy),"curl -X %s '{{baseUrl}}%s'",op->method,op->path);
+  SetClipboardText(copy);
+  snprintf(ui->message,sizeof(ui->message),
+           "Copied illustrative template. Zero target requests.");
+ } y+=57;
+ textx("IMPORTED CONTRACT / NOT LIVE-VERIFIED",x,y,12,RM_ORANGE);
+}
+#endif
+
 int main(int argc,char **argv){
  int smoke=argc>1&&!strcmp(argv[1],"--smoke");
 #if defined(__ANDROID__) || defined(PLATFORM_ANDROID)
@@ -922,6 +1108,7 @@ int main(int argc,char **argv){
  /* Show actual imported routes first, rather than a desktop-sized
     authorization form that cannot perform remote checks on Android. */
  ui->tab=1;
+ ui->view=1;
 #endif
  int frames=0;
  while(!WindowShouldClose()&&(!smoke||frames++<60)){
@@ -937,6 +1124,14 @@ int main(int argc,char **argv){
 #endif
   sample_touch();
   int W=(int)((float)actualW/UI_SCALE),H=(int)((float)actualH/UI_SCALE);
+#if defined(__ANDROID__) || defined(PLATFORM_ANDROID)
+  /* Android system navigation overlays the bottom of a NativeActivity.
+     Reserve a conservative handset safe band until platform insets are
+     available; never place actionable controls or toasts beneath OS keys. */
+  const int bottom_safe=64;
+#else
+  const int bottom_safe=0;
+#endif
   if(IsKeyPressed(KEY_TAB)&&ui->focus==0)ui->tab=(ui->tab+1)%3;
   BeginDrawing();
   ClearBackground(BG);
@@ -955,7 +1150,7 @@ int main(int argc,char **argv){
    inspector(ui,right);
   }else{
 #if defined(__ANDROID__) || defined(PLATFORM_ANDROID)
-   const char *tabs[]={"01  SCOPE","02  ATLAS","03  EVIDENCE"};
+   const char *tabs[]={"01  DESK","02  ATLAS","03  EVIDENCE"};
 #else
    const char *tabs[]={"01  SCOPE","02  ATLAS","03  INSPECT"};
 #endif
@@ -964,25 +1159,32 @@ int main(int argc,char **argv){
     Rectangle tab={22+tabW*(float)i,104,tabW-8,41};
     if(button(tab,tabs[i],i==ui->tab?MINT:AQUA,1))ui->tab=i;
    }
-   Rectangle whole={19,155,(float)W-38,(float)H-226};
+   Rectangle whole={19,155,(float)W-38,(float)H-226-(float)bottom_safe};
+#if defined(__ANDROID__) || defined(PLATFORM_ANDROID)
+   if(ui->tab==0)mobile_desk(ui,whole);
+   else if(ui->tab==1)graph(ui,whole);
+   else mobile_evidence(ui,whole);
+#else
    if(ui->tab==0)draw_scope(ui,whole,ui->task.active);
    else if(ui->tab==1)graph(ui,whole);
    else inspector(ui,whole);
+#endif
   }
-  DrawRectangle(0,H-56,W,56,(Color){8,25,24,255});
-  rule(0,H-56,(float)W);
+  int footer_top=H-56-bottom_safe;
+  DrawRectangle(0,footer_top,W,56,(Color){8,25,24,255});
+  rule(0,(float)footer_top,(float)W);
   char notice[256];
   int width=ui->task.active?W-220:W-46;
   cut_text(ui->message,notice,sizeof(notice),width,13);
-  textx(notice,21,H-36,13,MUTED);
+  textx(notice,21,footer_top+20,13,MUTED);
   if(ui->task.active){
    char stage[48];
    mutex_lock(&ui->task);
    snprintf(stage,sizeof(stage),"%.47s",ui->task.stage);
    mutex_unlock(&ui->task);
-   textx(stage,W-165,H-38,14,MINT);
-   DrawCircle(W-187,H-30,5,MINT);
-  }else if(W>850)textx("OPS 42 / CONSENT GATED",W-232,H-38,12,MINT);
+   textx(stage,W-165,footer_top+18,14,MINT);
+   DrawCircle(W-187,footer_top+26,5,MINT);
+  }else if(W>850)textx("OPS 42 / CONSENT GATED",W-232,footer_top+18,12,MINT);
   EndMode2D();
   if(smoke && frames==30)TakeScreenshot("restmore-native-preview.png");
   EndDrawing();

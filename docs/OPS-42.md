@@ -18,6 +18,23 @@ Every output says **mission_state = REVIEW_REQUIRED**, **target_execution = fals
 
 The briefing step **never executes network requests**, confers no authority and never includes credentials or response bodies.
 
+## Alpha 9 candidate / Source-resolvable Manifest v2
+
+The offline C11 report now uses `restmore-ops-42/v2`. It includes a
+`sources` array with document URL, recorded SHA-256, MIME, byte count and
+response metadata, plus the operation identifier, summary, source URL,
+expected MIME and shallow JSON root type of each declared route.
+
+Its atlas fingerprint uses a new v2 domain separator and explicit field
+lengths. Values containing punctuation cannot be confused with the separators
+between serialized fields. **v1 and v2 fingerprints are not interchangeable.**
+A stored source digest is not independently reverified during this export;
+archive-import verification is a separate operation.
+
+The Android analyst view is an offline local-sample inspector, not a mobile
+network tester or general-purpose Android document importer. For acceptance
+criteria, see [Analyst Workbench](ANALYST-WORKBENCH.md).
+
 ## 02 / Operational workflow
 
 1. **Brief.** Import OpenAPI 3 JSON or a previously archived RESTLESS Botanical folder. The Botanical import checks source bytes against SHA-256 hashes before extracting operations.
