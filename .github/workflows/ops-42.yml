@@ -1,7 +1,16 @@
 name: RESTMORE OPS 42 / Mission Control
 on:
   push:
-    branches: [main, feature/ops-command-42]
+    branches: [main, feature/ops-command-42, feature/ops42-analyst-workbench-alpha9]
+    paths:
+      - 'src/**'
+      - 'include/**'
+      - 'tests/**'
+      - 'docs/**'
+      - 'CMakeLists.txt'
+      - 'README.md'
+      - '.github/workflows/ops-42.yml'
+  pull_request:
     paths:
       - 'src/**'
       - 'include/**'
@@ -48,6 +57,13 @@ jobs:
           from pathlib import Path
           p=Path(os.environ["RUNNER_TEMP"])/"restmore-brief"/"ops-brief.json"
           data=json.loads(p.read_text())
+          assert data["format"]=="restmore-ops-42/v2"
+          assert len(data["sources"])>=1
+          assert data["sources"][0]["url"]=="examples/openapi-petstore.json"
+          assert data["sources"][0]["status"]==0, "local import is not HTTP 200"
+          assert len(data["sources"][0]["sha256"])==64
+          assert all("source_url" in route and "operation_id" in route
+                     and "expected_content_type" in route for route in data["declared_routes"])
           assert data["mission_state"]=="REVIEW_REQUIRED"
           assert not data["target_execution"]
           assert not data["permission_conferred"]
