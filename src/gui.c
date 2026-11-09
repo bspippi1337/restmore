@@ -116,6 +116,30 @@ static void cut_text(const char *s,char *out,size_t cap,int pixels,int font){
  }
  if(s&&strcmp(out,s)&&strlen(out)+3<cap)strcat(out,"...");
 }
+#if defined(__ANDROID__) || defined(PLATFORM_ANDROID)
+/* raylib's Android FileExists/LoadFontEx may resolve asset paths rather
+ * than the OS filesystem. Open the system font explicitly and hand the
+ * bytes to raylib; do not bundle, publish or redistribute font files. */
+static int load_android_system_font(const char *path){
+ FILE *file=fopen(path,"rb");
+ if(!file)return 0;
+ if(fseek(file,0,SEEK_END)){fclose(file);return 0;}
+ long length=ftell(file);
+ if(length<=0||length>4L*1024L*1024L){fclose(file);return 0;}
+ rewind(file);
+ unsigned char *bytes=(unsigned char *)malloc((size_t)length);
+ if(!bytes){fclose(file);return 0;}
+ int read_ok=fread(bytes,1,(size_t)length,file)==(size_t)length;
+ fclose(file);
+ if(!read_ok){free(bytes);return 0;}
+ Font loaded=LoadFontFromMemory(".ttf",bytes,(int)length,48,NULL,0);
+ free(bytes);
+ if(loaded.texture.id==0||loaded.glyphCount==0)return 0;
+ FACE=loaded;FACE_OWNED=1;
+ SetTextureFilter(FACE.texture,TEXTURE_FILTER_BILINEAR);
+ return 1;
+}
+#endif
 static void init_type(void){
  const char *fonts[]={
 #if defined(__ANDROID__) || defined(PLATFORM_ANDROID)
@@ -133,6 +157,12 @@ static void init_type(void){
 #endif
  NULL};
  FACE=GetFontDefault();
+#if defined(__ANDROID__) || defined(PLATFORM_ANDROID)
+ for(int i=0;fonts[i];i++)
+  if(load_android_system_font(fonts[i]))return;
+ /* Some Android versions ship their static Roboto face under this name. */
+ if(load_android_system_font("/system/fonts/RobotoStatic-Regular.ttf"))return;
+#endif
  for(int i=0;fonts[i];i++){
   if(!FileExists(fonts[i]))continue;
   Font candidate=LoadFontEx(fonts[i],48,NULL,0);
