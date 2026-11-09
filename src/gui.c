@@ -970,16 +970,16 @@ static void mobile_evidence(app *ui,Rectangle area){
  textx(position,x+inner-69,y+9,15,MUTED);y+=53;
  label(x,y,"DOCUMENTED ROUTE");y+=25;
  cut_text(op->path,route,sizeof(route),inner,19);
- textx(route,x,y,19,RM_WHITE);y+=45;
+ textx(route,x,y,19,RM_WHITE);y+=40;
  label(x,y,"SOURCE DESCRIPTION");y+=24;
  cut_text(op->summary[0]?op->summary:"No summary declared",
           summary,sizeof(summary),inner,14);
- textx(summary,x,y,14,RM_WHITE);y+=46;
+ textx(summary,x,y,14,RM_WHITE);y+=38;
  rule((float)x,(float)y,(float)inner);y+=25;
  label(x,y,"ORIGIN / PROVENANCE");y+=27;
  cut_text(op->source_url[0]?op->source_url:"Not present in source",
           source,sizeof(source),inner,13);
- textx(source,x,y,13,RM_WHITE);y+=38;
+ textx(source,x,y,13,RM_WHITE);y+=33;
  label(x,y,"SOURCE SHA-256 / RECORDED, NOT REVERIFIED");y+=24;
  if(strlen(op->source_sha256)==64){
   char first[33],second[33];
@@ -998,7 +998,7 @@ static void mobile_evidence(app *ui,Rectangle area){
  label(x,y,"DOCUMENTED RESPONSE CONTRACT");y+=24;
  char cut[96];
  cut_text(response,cut,sizeof(cut),inner,13);
- textx(cut,x,y,13,RM_WHITE);y+=55;
+ textx(cut,x,y,13,RM_WHITE);y+=45;
  if(button((Rectangle){(float)x,(float)y,(float)inner,53},
            "COPY ROUTE TEMPLATE",AQUA,1)){
   char copy[RM_MAX_PATH+140];
@@ -1006,7 +1006,7 @@ static void mobile_evidence(app *ui,Rectangle area){
   SetClipboardText(copy);
   snprintf(ui->message,sizeof(ui->message),
            "Copied illustrative template. Zero target requests.");
- } y+=73;
+ } y+=57;
  textx("IMPORTED CONTRACT / NOT LIVE-VERIFIED",x,y,12,RM_ORANGE);
 }
 #endif
