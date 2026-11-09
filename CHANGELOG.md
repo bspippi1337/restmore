@@ -2,6 +2,20 @@
 
 This changelog separates shipped and verified artifacts from platform support that still requires packaging and device testing.
 
+## Alpha 9 candidate / Analyst Workbench (unreleased)
+
+- Native Android portrait field review confirms legible sample route list; the follow-up
+  reserves a system-navigation safe zone for footer messages and uses excess
+  small-catalog space for actual source evidence rather than empty decoration.
+- Android prefers a local, device-installed sans-serif through raylib memory loading,
+  with an embedded fallback when unavailable. No font is redistributed.
+- Manifest version bumped to `0.1.0-alpha.9`, version code 9.
+- Source-resolvable OPS 42 Manifest v2 with recorded SHA-256, field-safe
+  fingerprints and accurate distinction between a local import and HTTP results.
+- Offline mobile Desk / Atlas / Evidence; no new network execution.
+- Android NativeActivity and cross-platform automated builds are **not** proof
+  of physical-device or production readiness. See `docs/ANDROID-QA.md`.
+
 ## [v0.1.0-alpha.8](https://github.com/bspippi1337/restmore/releases/tag/v0.1.0-alpha.8) · 2026-11-08
 
 **OPS 42 / Mission Control, RESTLESS Fusion and audited native C11**
