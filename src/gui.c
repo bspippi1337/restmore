@@ -77,20 +77,27 @@ static void mutex_unlock(work *w){
 static Font FACE={0};
 static int FACE_OWNED=0;
 static float UI_SCALE=1.0f,TOUCH_DY=0;
-static Vector2 LAST_TOUCH={0};
+static Vector2 LAST_TOUCH={0},TOUCH_START={0};
 static int TOUCH_ACTIVE=0,TOUCH_PRESSED=0;
 static void sample_touch(void){
  int now=GetTouchPointCount()>0;
- TOUCH_DY=0;TOUCH_PRESSED=now&&!TOUCH_ACTIVE;
+ TOUCH_DY=0;TOUCH_PRESSED=0;
  if(now){
   Vector2 p=GetTouchPosition(0);
   if(TOUCH_ACTIVE)TOUCH_DY=(p.y-LAST_TOUCH.y)/UI_SCALE;
+  else TOUCH_START=p;
   LAST_TOUCH=p;
+ }else if(TOUCH_ACTIVE){
+  /* Commit a tap only after release, not at touch-down. Previously every
+     vertical swipe could also activate the row/button it started on. */
+  float dx=(LAST_TOUCH.x-TOUCH_START.x)/UI_SCALE;
+  float dy=(LAST_TOUCH.y-TOUCH_START.y)/UI_SCALE;
+  TOUCH_PRESSED=dx*dx+dy*dy<196.0f;
  }
  TOUCH_ACTIVE=now;
 }
 static Vector2 pointer(void){
- Vector2 p=TOUCH_ACTIVE?GetTouchPosition(0):GetMousePosition();
+ Vector2 p=(TOUCH_ACTIVE||TOUCH_PRESSED)?LAST_TOUCH:GetMousePosition();
  return (Vector2){p.x/UI_SCALE,p.y/UI_SCALE};
 }
 static int textwidth(const char *str,int px){
@@ -111,7 +118,11 @@ static void cut_text(const char *s,char *out,size_t cap,int pixels,int font){
 }
 static void init_type(void){
  const char *fonts[]={
-#ifdef _WIN32
+#if defined(__ANDROID__) || defined(PLATFORM_ANDROID)
+ /* Prefer the platform's high-resolution sans-serif if available; fall back
+    to raylib's embedded font without shipping an unlicensed typeface. */
+ "/system/fonts/Roboto-Regular.ttf","/system/fonts/NotoSans-Regular.ttf",
+#elif defined(_WIN32)
  "C:/Windows/Fonts/segoeui.ttf","C:/Windows/Fonts/arial.ttf",
 #elif defined(__APPLE__)
  "/System/Library/Fonts/Supplemental/Arial.ttf",
@@ -183,7 +194,14 @@ static void glyph_line(float x1,float y1,float x2,float y2,float weight,Color co
 static void rule(float x,float y,float width){glyph_line(x,y,x+width,y,1,BORDER);}
 static void line(int x,int y,int font,const char *caption){textx(caption,x,y,font,MUTED);}
 static int hit(Rectangle r){return CheckCollisionPointRec(pointer(),r);}
-static int clicked(Rectangle r){return hit(r)&&(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)||TOUCH_PRESSED);}
+static int clicked(Rectangle r){
+#if defined(__ANDROID__) || defined(PLATFORM_ANDROID)
+ /* Android may mirror touch-down as a mouse press. Use release-only taps. */
+ return hit(r)&&TOUCH_PRESSED;
+#else
+ return hit(r)&&(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)||TOUCH_PRESSED);
+#endif
+}
 static void label(int x,int y,const char *s){textx(s,x,y,11,MUTED);}
 static void method_pill(const char *verb,float x,float y,int width);
 static int button(Rectangle r,const char *caption,Color color,int enabled){
@@ -192,8 +210,10 @@ static int button(Rectangle r,const char *caption,Color color,int enabled){
  DrawRectangleRounded(r,.12f,8,fill);
  DrawRectangleRoundedLinesEx(r,.12f,8,1,enabled?Fade(color,.8f):BORDER);
  int px=r.width<85?11:r.width<132?13:15;
- int tw=textwidth(caption,px);
- textx(caption,(int)(r.x+(r.width-tw)*.5f),(int)(r.y+(r.height-px)*.5f)-2,px,enabled?RM_WHITE:MUTED);
+ char fitted[160];
+ cut_text(caption,fitted,sizeof(fitted),(int)r.width-16,px);
+ int tw=textwidth(fitted,px);
+ textx(fitted,(int)(r.x+(r.width-tw)*.5f),(int)(r.y+(r.height-px)*.5f)-2,px,enabled?RM_WHITE:MUTED);
  return press;
 }
 static void scissor(Rectangle r){
@@ -635,6 +655,14 @@ static void draw_scope(app *ui,Rectangle area,int busy){
      area.y+17+ui->scope_scroll/maxscroll*(track-thumb),3,thumb},.4f,6,Fade(MINT,.65f));
  }
 }
+static void select_operation(app *ui,int index){
+ ui->selected=index;
+ ui->atlas_scroll=0;
+#if defined(__ANDROID__) || defined(PLATFORM_ANDROID)
+ /* On a handset, opening a route immediately reveals its provenance. */
+ ui->tab=2;
+#endif
+}
 static void graph(app *ui,Rectangle area){
  panel(area,PANEL);
  if(area.width<220||area.height<240)return;
@@ -684,7 +712,7 @@ static void graph(app *ui,Rectangle area){
    DrawCircleLines((int)p.x,(int)p.y,selected?17:13,c);
    DrawCircleV(p,4,c);
    Rectangle target={p.x-19,p.y-19,38,38};
-   if(clicked(target))ui->selected=(int)i;
+   if(clicked(target))select_operation(ui,(int)i);
    char path[80];cut_text(op->path,path,sizeof(path),narrow?85:134,11);
    int txtw=textwidth(path,11);
    float tx=p.x+(p.x<cx?-txtw-18:18);
@@ -719,7 +747,7 @@ static void graph(app *ui,Rectangle area){
    textx(path,(int)row.x+88,(int)row.y+12,14,RM_WHITE);
    char summary_label[125];cut_text(op->summary,summary_label,sizeof(summary_label),(int)row.width-107,11);
    textx(summary_label,(int)row.x+88,(int)row.y+37,11,MUTED);
-   if(clicked(row))ui->selected=(int)i;
+   if(clicked(row))select_operation(ui,(int)i);
   }
   if(maxscroll>0){
    float track=viewport.height-12,thumb=track*viewport.height/content;
@@ -859,9 +887,22 @@ static void inspector(app *ui,Rectangle area){
 
 int main(int argc,char **argv){
  int smoke=argc>1&&!strcmp(argv[1],"--smoke");
+#if defined(__ANDROID__) || defined(PLATFORM_ANDROID)
+ /* CRITICAL: raylib Android treats InitWindow dimensions as the logical
+  * framebuffer AND uses their aspect ratio to decide orientation. Reusing
+  * the desktop 1350x820 buffer made real phones draw an oversized landscape
+  * canvas, cropped in both portrait and landscape (OPS 42 field report).
+  *
+  * Target a legible, handset-first 20:9 portrait framebuffer. The Android
+  * platform maps it to the physical display. Do not apply a SECOND scale
+  * inside our camera or touch coordinates. */
+ SetConfigFlags(FLAG_MSAA_4X_HINT);
+ InitWindow(432,960,"RESTMORE / OPS 42");
+#else
  SetConfigFlags(FLAG_WINDOW_RESIZABLE|FLAG_MSAA_4X_HINT);
  InitWindow(1350,820,"RESTMORE  /  OPS 42 MISSION CONTROL");
  SetWindowMinSize(360,580);
+#endif
  SetTargetFPS(60);
  init_type();
  app *ui=(app *)calloc(1,sizeof(*ui));
@@ -877,14 +918,20 @@ int main(int argc,char **argv){
  snprintf(ui->message,sizeof(ui->message),"OPS 42 ready. Offline evidence briefing available. No target GET without review and authorization.");
  mutex_init(&ui->task);
  load_catalog(ui);
+#if defined(__ANDROID__) || defined(PLATFORM_ANDROID)
+ /* Show actual imported routes first, rather than a desktop-sized
+    authorization form that cannot perform remote checks on Android. */
+ ui->tab=1;
+#endif
  int frames=0;
  while(!WindowShouldClose()&&(!smoke||frames++<60)){
   poll_work(ui);
   int actualW=GetScreenWidth(),actualH=GetScreenHeight();
 #if defined(__ANDROID__) || defined(PLATFORM_ANDROID)
-  /* Android surfaces report physical pixels, not desktop-style points.
-     Preserve ~440 logical units on a portrait phone for legible controls. */
-  UI_SCALE=fmaxf(1.0f,fminf(3.5f,fminf((float)actualW/440.0f,(float)actualH/700.0f)));
+  /* The native framebuffer is already 432x960 logical portrait pixels;
+     Android scales this to the physical display. Double scaling would
+     enlarge/crop the interface and de-align touch and scissor regions. */
+  UI_SCALE=1.0f;
 #else
   UI_SCALE=fminf(1.0f,fmaxf(.84f,(float)actualW/690.0f));
 #endif
@@ -907,7 +954,11 @@ int main(int argc,char **argv){
    graph(ui,center);
    inspector(ui,right);
   }else{
+#if defined(__ANDROID__) || defined(PLATFORM_ANDROID)
+   const char *tabs[]={"01  SCOPE","02  ATLAS","03  EVIDENCE"};
+#else
    const char *tabs[]={"01  SCOPE","02  ATLAS","03  INSPECT"};
+#endif
    float tabW=((float)W-44.0f)/3.0f;
    for(int i=0;i<3;i++){
     Rectangle tab={22+tabW*(float)i,104,tabW-8,41};
