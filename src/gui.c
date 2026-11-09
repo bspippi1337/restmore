@@ -760,6 +760,36 @@ static void graph(app *ui,Rectangle area){
    textx(summary_label,(int)row.x+88,(int)row.y+37,11,MUTED);
    if(clicked(row))select_operation(ui,(int)i);
   }
+#if defined(__ANDROID__) || defined(PLATFORM_ANDROID)
+  /* Small catalogs leave a large empty panel on handsets. Use the free
+     space to present actual source metadata, not invented live telemetry.
+     For larger catalogs the route list remains fully scrollable. */
+  float preview_y=viewport.y+8+(float)count*step+21;
+  if(count>0&&count<=6&&preview_y+155<viewport.y+viewport.height){
+   size_t selected=ui->selected>=0&&(size_t)ui->selected<count?
+                   (size_t)ui->selected:0;
+   const rm_operation *op=&ui->catalog->operations[selected];
+   Rectangle detail={viewport.x+6,preview_y,viewport.width-15,147};
+   DrawRectangleRounded(detail,.08f,8,Fade(AQUA,.065f));
+   DrawRectangleRoundedLinesEx(detail,.08f,8,1,BORDER);
+   textx("SELECTED / SOURCE EVIDENCE",(int)detail.x+15,
+         (int)detail.y+13,12,MINT);
+   char route[RM_MAX_PATH],source[RM_MAX_URL];
+   cut_text(op->path,route,sizeof(route),(int)detail.width-30,16);
+   textx(route,(int)detail.x+15,(int)detail.y+39,16,RM_WHITE);
+   cut_text(op->source_url[0]?op->source_url:"Source not declared",
+            source,sizeof(source),(int)detail.width-30,12);
+   textx(source,(int)detail.x+15,(int)detail.y+67,12,MUTED);
+   const char *evidence=op->source_sha256[0]?
+                        "RECORDED SHA-256 / NOT REVERIFIED":
+                        "SOURCE HASH NOT AVAILABLE";
+   textx(evidence,(int)detail.x+15,(int)detail.y+91,11,
+         op->source_sha256[0]?AQUA:RM_ORANGE);
+   if(button((Rectangle){detail.x+13,detail.y+113,detail.width-26,29},
+             "OPEN EVIDENCE INSPECTOR",MINT,1))
+    select_operation(ui,(int)selected);
+  }
+#endif
   if(maxscroll>0){
    float track=viewport.height-12,thumb=track*viewport.height/content;
    DrawRectangleRounded((Rectangle){viewport.x+viewport.width-4,viewport.y+5,3,track},1,6,Fade(MUTED,.16f));
@@ -1064,6 +1094,14 @@ int main(int argc,char **argv){
 #endif
   sample_touch();
   int W=(int)((float)actualW/UI_SCALE),H=(int)((float)actualH/UI_SCALE);
+#if defined(__ANDROID__) || defined(PLATFORM_ANDROID)
+  /* Android system navigation overlays the bottom of a NativeActivity.
+     Reserve a conservative handset safe band until platform insets are
+     available; never place actionable controls or toasts beneath OS keys. */
+  const int bottom_safe=64;
+#else
+  const int bottom_safe=0;
+#endif
   if(IsKeyPressed(KEY_TAB)&&ui->focus==0)ui->tab=(ui->tab+1)%3;
   BeginDrawing();
   ClearBackground(BG);
@@ -1091,7 +1129,7 @@ int main(int argc,char **argv){
     Rectangle tab={22+tabW*(float)i,104,tabW-8,41};
     if(button(tab,tabs[i],i==ui->tab?MINT:AQUA,1))ui->tab=i;
    }
-   Rectangle whole={19,155,(float)W-38,(float)H-226};
+   Rectangle whole={19,155,(float)W-38,(float)H-226-(float)bottom_safe};
 #if defined(__ANDROID__) || defined(PLATFORM_ANDROID)
    if(ui->tab==0)mobile_desk(ui,whole);
    else if(ui->tab==1)graph(ui,whole);
@@ -1102,20 +1140,21 @@ int main(int argc,char **argv){
    else inspector(ui,whole);
 #endif
   }
-  DrawRectangle(0,H-56,W,56,(Color){8,25,24,255});
-  rule(0,H-56,(float)W);
+  int footer_top=H-56-bottom_safe;
+  DrawRectangle(0,footer_top,W,56,(Color){8,25,24,255});
+  rule(0,(float)footer_top,(float)W);
   char notice[256];
   int width=ui->task.active?W-220:W-46;
   cut_text(ui->message,notice,sizeof(notice),width,13);
-  textx(notice,21,H-36,13,MUTED);
+  textx(notice,21,footer_top+20,13,MUTED);
   if(ui->task.active){
    char stage[48];
    mutex_lock(&ui->task);
    snprintf(stage,sizeof(stage),"%.47s",ui->task.stage);
    mutex_unlock(&ui->task);
-   textx(stage,W-165,H-38,14,MINT);
-   DrawCircle(W-187,H-30,5,MINT);
-  }else if(W>850)textx("OPS 42 / CONSENT GATED",W-232,H-38,12,MINT);
+   textx(stage,W-165,footer_top+18,14,MINT);
+   DrawCircle(W-187,footer_top+26,5,MINT);
+  }else if(W>850)textx("OPS 42 / CONSENT GATED",W-232,footer_top+18,12,MINT);
   EndMode2D();
   if(smoke && frames==30)TakeScreenshot("restmore-native-preview.png");
   EndDrawing();
