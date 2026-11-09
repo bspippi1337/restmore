@@ -40,7 +40,8 @@ static int import_file(const char *path,const char *output,int ops_brief){
  snprintf(doc->url,sizeof(doc->url),"%s",path);
  snprintf(doc->sha256,sizeof(doc->sha256),"%s",digest);
  snprintf(doc->content_type,sizeof(doc->content_type),"application/json");
- doc->bytes=(size_t)n;doc->status=200;
+ /* Importing bytes from a local path is not an HTTP 200 response. */
+ doc->bytes=(size_t)n;doc->status=0;doc->response_status=0;
  if(rm_make_dir(output)||rm_catalog_save(cat,output,err,sizeof(err))){
   fprintf(stderr,"Write failed: %s\n",err);free(text);free(cat);return 1;
  }
