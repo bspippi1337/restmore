@@ -415,7 +415,18 @@ static int load_catalog(app *ui){
  /* Preserve the SHA-256 of the actual local source when importing OpenAPI.
     Library JSON retains its document-level provenance through catalog parsing. */
  int parsed=rm_openapi_import(cat,ui->filename,sha,src,length,error,sizeof(error));
+ int is_openapi=parsed>=0;
  if(parsed<0)parsed=rm_catalog_import_json(cat,src,length,error,sizeof(error));
+ /* A local OpenAPI input is evidence too. Keep its actual byte digest and
+    filename in the document ledger; never invent an HTTP response status. */
+ if(parsed>=0&&is_openapi&&cat->document_count==0){
+  rm_document *doc=&cat->documents[cat->document_count++];
+  snprintf(doc->url,sizeof(doc->url),"%s",ui->filename);
+  snprintf(doc->sha256,sizeof(doc->sha256),"%s",sha);
+  snprintf(doc->content_type,sizeof(doc->content_type),"application/json");
+  doc->bytes=length;
+  doc->status=0;doc->response_status=0;
+ }
  free(src);
  if(parsed<0){
   free(cat);
@@ -885,6 +896,121 @@ static void inspector(app *ui,Rectangle area){
  }
 }
 
+
+/* Analyst Workbench / native mobile view.
+ * Unlike the desktop scope desk, the Android preview has no HTTPS worker and
+ * no document picker. Expose only usable offline actions; do not dress a
+ * disabled AUTHORIZE control up as if it were operational. */
+#if defined(__ANDROID__) || defined(PLATFORM_ANDROID)
+static void mobile_kpi(Rectangle box,const char *value,const char *caption){
+ DrawRectangleRounded(box,.12f,8,Fade(AQUA,.09f));
+ DrawRectangleRoundedLinesEx(box,.12f,8,1,BORDER);
+ textx(value,(int)box.x+16,(int)box.y+11,28,RM_WHITE);
+ textx(caption,(int)box.x+16,(int)box.y+49,12,MUTED);
+}
+static void mobile_desk(app *ui,Rectangle area){
+ panel(area,PANEL);
+ int x=(int)area.x+19,y=(int)area.y+24,inner=(int)area.width-38;
+ label(x,y,"01  /  ANALYST WORKBENCH"); y+=26;
+ textx("Understand first.",x,y,26,RM_WHITE); y+=43;
+ textx("A documented API is not permission.",x,y,13,MUTED); y+=37;
+ size_t operations=ui->catalog?ui->catalog->operation_count:0;
+ size_t documents=ui->catalog?ui->catalog->document_count:0;
+ char routes[24],sources[24];
+ snprintf(routes,sizeof(routes),"%zu",operations);
+ snprintf(sources,sizeof(sources),"%zu",documents);
+ float half=((float)inner-10)/2.0f;
+ mobile_kpi((Rectangle){(float)x,(float)y,half,83},routes,"ROUTES");
+ mobile_kpi((Rectangle){(float)x+half+10,(float)y,half,83},sources,"SOURCES");
+ y+=101;
+ DrawRectangleRounded((Rectangle){(float)x,(float)y,(float)inner,72},
+                       .10f,8,Fade(MINT,.055f));
+ DrawRectangleRoundedLinesEx((Rectangle){(float)x,(float)y,(float)inner,72},
+                             .10f,8,1,Fade(MINT,.42f));
+ textx("OFFLINE / REVIEW REQUIRED",x+15,y+12,14,MINT);
+ textx("No target contacted. No authority inferred.",x+15,y+40,12,MUTED);
+ y+=94;
+ label(x,y,"LOCAL SOURCE INTELLIGENCE");y+=27;
+ if(button((Rectangle){(float)x,(float)y,(float)inner,53},
+           "OPEN INCLUDED SAMPLE",MINT,!ui->task.active)){
+  snprintf(ui->filename,sizeof(ui->filename),"examples/openapi-petstore.json");
+  if(load_catalog(ui)==0){ui->view=1;ui->tab=1;}
+ } y+=67;
+ if(button((Rectangle){(float)x,(float)y,(float)inner,53},
+           "EXPLORE DOCUMENTED ROUTES",AQUA,operations>0)){
+  ui->view=1;ui->tab=1;
+ } y+=67;
+ if(button((Rectangle){(float)x,(float)y,(float)inner,53},
+           "INSPECT SOURCE EVIDENCE",AQUA,operations>0)){
+  ui->tab=2;
+ } y+=77;
+ rule((float)x,(float)y,(float)inner);y+=24;
+ label(x,y,"CAPABILITY BOUNDARY");y+=26;
+ textx("Android preview: local sample only.",x,y,14,RM_WHITE);y+=25;
+ textx("Desktop CLI: verified import and export.",x,y,12,MUTED);y+=24;
+ textx("No live scan, credentials, or bypass.",x,y,12,MUTED);
+}
+static void mobile_evidence(app *ui,Rectangle area){
+ panel(area,PANEL);
+ int x=(int)area.x+19,y=(int)area.y+23,inner=(int)area.width-38;
+ label(x,y,"03  /  SOURCE INTELLIGENCE");y+=28;
+ textx("Trace the evidence.",x,y,25,RM_WHITE);y+=47;
+ if(!ui->catalog||ui->catalog->operation_count==0){
+  textx("NO DOCUMENTED OPERATIONS",x,y,15,RM_WHITE);
+  textx("Open the included offline sample.",x,y+32,13,MUTED);
+  return;
+ }
+ if(ui->selected<0||ui->selected>=(int)ui->catalog->operation_count)
+  ui->selected=0;
+ const rm_operation *op=&ui->catalog->operations[ui->selected];
+ char route[RM_MAX_PATH],summary[256],source[RM_MAX_URL];
+ method_pill(op->method,(float)x,(float)y,84);
+ char position[48];
+ snprintf(position,sizeof(position),"%d / %zu",ui->selected+1,ui->catalog->operation_count);
+ textx(position,x+inner-69,y+9,15,MUTED);y+=53;
+ label(x,y,"DOCUMENTED ROUTE");y+=25;
+ cut_text(op->path,route,sizeof(route),inner,19);
+ textx(route,x,y,19,RM_WHITE);y+=40;
+ label(x,y,"SOURCE DESCRIPTION");y+=24;
+ cut_text(op->summary[0]?op->summary:"No summary declared",
+          summary,sizeof(summary),inner,14);
+ textx(summary,x,y,14,RM_WHITE);y+=38;
+ rule((float)x,(float)y,(float)inner);y+=25;
+ label(x,y,"ORIGIN / PROVENANCE");y+=27;
+ cut_text(op->source_url[0]?op->source_url:"Not present in source",
+          source,sizeof(source),inner,13);
+ textx(source,x,y,13,RM_WHITE);y+=33;
+ label(x,y,"SOURCE SHA-256 / RECORDED, NOT REVERIFIED");y+=24;
+ if(strlen(op->source_sha256)==64){
+  char first[33],second[33];
+  memcpy(first,op->source_sha256,32);first[32]=0;
+  memcpy(second,op->source_sha256+32,32);second[32]=0;
+  textx(first,x,y,12,MINT);y+=21;
+  textx(second,x,y,12,MINT);y+=39;
+ }else{
+  textx("No document fingerprint supplied",x,y,13,RM_ORANGE);y+=52;
+ }
+ rule((float)x,(float)y,(float)inner);y+=25;
+ char response[96];
+ snprintf(response,sizeof(response),"HTTP %d / %s",
+  op->expected_status,
+  op->expected_content_type[0]?op->expected_content_type:"MIME not specified");
+ label(x,y,"DOCUMENTED RESPONSE CONTRACT");y+=24;
+ char cut[96];
+ cut_text(response,cut,sizeof(cut),inner,13);
+ textx(cut,x,y,13,RM_WHITE);y+=45;
+ if(button((Rectangle){(float)x,(float)y,(float)inner,53},
+           "COPY ROUTE TEMPLATE",AQUA,1)){
+  char copy[RM_MAX_PATH+140];
+  snprintf(copy,sizeof(copy),"curl -X %s '{{baseUrl}}%s'",op->method,op->path);
+  SetClipboardText(copy);
+  snprintf(ui->message,sizeof(ui->message),
+           "Copied illustrative template. Zero target requests.");
+ } y+=57;
+ textx("IMPORTED CONTRACT / NOT LIVE-VERIFIED",x,y,12,RM_ORANGE);
+}
+#endif
+
 int main(int argc,char **argv){
  int smoke=argc>1&&!strcmp(argv[1],"--smoke");
 #if defined(__ANDROID__) || defined(PLATFORM_ANDROID)
@@ -922,6 +1048,7 @@ int main(int argc,char **argv){
  /* Show actual imported routes first, rather than a desktop-sized
     authorization form that cannot perform remote checks on Android. */
  ui->tab=1;
+ ui->view=1;
 #endif
  int frames=0;
  while(!WindowShouldClose()&&(!smoke||frames++<60)){
@@ -955,7 +1082,7 @@ int main(int argc,char **argv){
    inspector(ui,right);
   }else{
 #if defined(__ANDROID__) || defined(PLATFORM_ANDROID)
-   const char *tabs[]={"01  SCOPE","02  ATLAS","03  EVIDENCE"};
+   const char *tabs[]={"01  DESK","02  ATLAS","03  EVIDENCE"};
 #else
    const char *tabs[]={"01  SCOPE","02  ATLAS","03  INSPECT"};
 #endif
@@ -965,9 +1092,15 @@ int main(int argc,char **argv){
     if(button(tab,tabs[i],i==ui->tab?MINT:AQUA,1))ui->tab=i;
    }
    Rectangle whole={19,155,(float)W-38,(float)H-226};
+#if defined(__ANDROID__) || defined(PLATFORM_ANDROID)
+   if(ui->tab==0)mobile_desk(ui,whole);
+   else if(ui->tab==1)graph(ui,whole);
+   else mobile_evidence(ui,whole);
+#else
    if(ui->tab==0)draw_scope(ui,whole,ui->task.active);
    else if(ui->tab==1)graph(ui,whole);
    else inspector(ui,whole);
+#endif
   }
   DrawRectangle(0,H-56,W,56,(Color){8,25,24,255});
   rule(0,H-56,(float)W);
