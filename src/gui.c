@@ -1082,7 +1082,7 @@ int main(int argc,char **argv){
    inspector(ui,right);
   }else{
 #if defined(__ANDROID__) || defined(PLATFORM_ANDROID)
-   const char *tabs[]={"01  SCOPE","02  ATLAS","03  EVIDENCE"};
+   const char *tabs[]={"01  DESK","02  ATLAS","03  EVIDENCE"};
 #else
    const char *tabs[]={"01  SCOPE","02  ATLAS","03  INSPECT"};
 #endif
